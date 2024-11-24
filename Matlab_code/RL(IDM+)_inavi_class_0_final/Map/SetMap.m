@@ -1,62 +1,65 @@
-function SetMap(Map)
-    
-    Center = Map.Center;
+function SetMap(Map, Setting)
+    % Grass 영역 계산 (고속도로 크기 + 마진)
+    Margin = Map.Margin;
+    GrassX = [-Map.Road/2 - Margin, Map.Road/2 + Margin, ...
+               Map.Road/2 + Margin, -Map.Road/2 - Margin];
+    GrassY = [-Map.Tile*Map.Lane/2 - Margin, -Map.Tile*Map.Lane/2 - Margin, ...
+               Map.Tile*Map.Lane/2 + Margin, Map.Tile*Map.Lane/2 + Margin];
 
-    Field(1,:) = [Map.Size/2 -Map.Size/2 -Map.Size/2 Map.Size/2];
-    Field(2,:) = [Map.Size/2 Map.Size/2 -Map.Size/2 -Map.Size/2];
-    
-    patch('XData',Field(1,:),'YData',Field(2,:),'FaceColor',Map.Color.Grass,'EdgeColor','none')
-    % Roads
-    for i = 1:4
-        LengthR = Map.Tile*Map.Lane + Map.Road + Map.Stop;
-        LengthL = Map.Tile*Map.Lane + Map.Road + Map.Stop;
-        for j = 1:Map.Lane
-            Road(1,:) = [LengthR -LengthL -LengthL LengthR];
-            Road(2,:) = [Map.Tile Map.Tile 0 0] + Map.Tile*(j-1);
-            Road = [0 -1;1 0]^i*Road + Center;
-            Line = [0 -1;1 0]^i*[-LengthL LengthR;Map.Tile*(j-1) Map.Tile*(j-1)] + Center;
-            patch('XData',Road(1,:),'YData',Road(2,:),'FaceColor',Map.Color.Road,'EdgeColor','none')
-            plot(Line(1,:),Line(2,:),'LineStyle','--','Color','white')
-        end
+    % Grass 그리기
+    patch('XData', GrassX, 'YData', GrassY, ...
+          'FaceColor', Map.Color.Grass, 'EdgeColor', 'none');
+
+    % 고속도로 중심 좌표
+    Center = [0; 0];
+    Length = Map.Road; % 도로의 길이
+    Width = Map.Tile * Map.Lane; % 도로 전체 폭
+
+    % 도로 영역 그리기
+    Road(1,:) = [-Length/2, Length/2, Length/2, -Length/2];
+    Road(2,:) = [-Width/2, -Width/2, Width/2, Width/2];
+    patch('XData', Road(1,:) + Center(1), 'YData', Road(2,:) + Center(2), ...
+          'FaceColor', Map.Color.Road, 'EdgeColor', 'none');
+
+    % Exit 도로 추가
+    for i = 1:length(Setting.Exit)
+        ExitStart = Setting.Exit(i); % Exit 시작 위치
+        ExitLaneStart = -Width/2; % Exit은 제일 아래 차선에서 시작
+        LaneWidth = Width / Map.Lane; % 차선 너비
+        RectWidth = 20; % Exit 직사각형의 너비
+        RectHeight = LaneWidth; % Exit 직사각형의 높이
+        RotationAngle = -18; % 회전 각도 (시계 방향)
+
+        % 1. 직사각형 좌표 생성
+        RectX = [0, RectWidth, RectWidth, 0];
+        RectY = [0, 0, -RectHeight, -RectHeight];
+
+        % 2. 좌표 회전
+        RotationMatrix = [cosd(RotationAngle), -sind(RotationAngle); ...
+                          sind(RotationAngle), cosd(RotationAngle)];
+        RotatedCoords = RotationMatrix * [RectX; RectY+4];
+
+        % 3. 기준점 이동
+        RotatedX = RotatedCoords(1, :) + ExitStart;
+        RotatedY = RotatedCoords(2, :) + ExitLaneStart;
+
+        % 4. Exit 도로 렌더링
+        patch('XData', RotatedX, 'YData', RotatedY, ...
+              'FaceColor', Map.Color.Road, 'EdgeColor', 'none');
+        
+        % 5. Exit 위치에 동그라미 추가
+        CircleX = ExitStart; % 동그라미의 X 좌표 (Exit 시작점)
+        CircleY = -Width/2 + LaneWidth/2;
+        CircleSize = 3; % 동그라미 크기
+        plot(CircleX, CircleY, 'o', 'MarkerSize', CircleSize, ...
+             'MarkerFaceColor', [0.6, 0.3, 0.1], 'MarkerEdgeColor', 'none'); % 갈색 동그라미
+
     end
-    % Stop Line
-    for i = 1:4
-        StopLoc = Map.Tile*Map.Lane+Map.Stop;
-        StopLine(1,:) = StopLoc + [0.5 -0.5 -0.5 0.5];
-        StopLine(2,:) = [Map.Tile*Map.Lane Map.Tile*Map.Lane 0 0];
-        StopLine = [0 -1;1 0]^i*StopLine + Center;
-        patch('XData',StopLine(1,:),'YData',StopLine(2,:),'FaceColor','white','EdgeColor','none')
+
+    % 차선 그리기
+    for j = 1:(Map.Lane - 1)
+        LineY = -Width/2 + Map.Tile * j;
+        plot([-Length/2, Length/2], [LineY, LineY], ...
+             'LineStyle', '--', 'Color', 'white', 'LineWidth', 1);
     end
-    % Right Turn
-    t = linspace(0,pi/2,50);
-    for i = 1:4
-        Curve = [];
-        Curve(1,:) = Map.Tile*Map.Lane+Map.Stop - Map.Stop*sin(t);
-        Curve(2,:) = Map.Tile*Map.Lane+Map.Stop - Map.Stop*cos(t);
-        Curve = [[Map.Tile*Map.Lane;Map.Tile*Map.Lane] Curve [Map.Tile*Map.Lane;Map.Tile*Map.Lane]];
-        Curve = [0 -1;1 0]^i*Curve + Center;
-        patch('XData',Curve(1,:),'YData',Curve(2,:),'FaceColor',Map.Color.Road,'EdgeColor','none')
-    end
-
-    % Black Line
-    for i = 1:4
-        LengthR = Map.Tile*Map.Lane + Map.Road + Map.Stop;
-        LengthL = Map.Tile*Map.Lane + Map.Road + Map.Stop;
-        Line = [0 -1;1 0]^i*[0 LengthR; 0 0] + Center;
-        plot(Line(1,:),Line(2,:),'LineStyle','-','Color','#FFE438','LineWidth',2)
-    end
-    % Fill Patch
-    StopHorz(1,:) = Center(1) + [Map.Tile*Map.Lane+Map.Stop -Map.Tile*Map.Lane-Map.Stop -Map.Tile*Map.Lane-Map.Stop Map.Tile*Map.Lane+Map.Stop];
-    StopHorz(2,:) = Center(2) + [Map.Tile*Map.Lane Map.Tile*Map.Lane -Map.Tile*Map.Lane -Map.Tile*Map.Lane];
-    patch('XData',StopHorz(1,:),'YData',StopHorz(2,:),'FaceColor',Map.Color.Road,'EdgeColor','none')
-    StopVert(1,:) = Center(1) + [Map.Tile*Map.Lane -Map.Tile*Map.Lane -Map.Tile*Map.Lane Map.Tile*Map.Lane];
-    StopVert(2,:) = Center(2) + [Map.Tile*Map.Lane+Map.Stop Map.Tile*Map.Lane+Map.Stop -Map.Tile*Map.Lane-Map.Stop -Map.Tile*Map.Lane-Map.Stop];
-    patch('XData',StopVert(1,:),'YData',StopVert(2,:),'FaceColor',Map.Color.Road,'EdgeColor','none')
-    Intersection(1,:) = Center(1) + [Map.Tile*Map.Lane -Map.Tile*Map.Lane -Map.Tile*Map.Lane Map.Tile*Map.Lane] + Center(1);
-    Intersection(2,:) = Center(2) + [Map.Tile*Map.Lane Map.Tile*Map.Lane -Map.Tile*Map.Lane -Map.Tile*Map.Lane] + Center(2);
-    patch('XData',Intersection(1,:),'YData',Intersection(2,:),'FaceColor',Map.Color.Road,'EdgeColor','none')
-
-
-
 end
-
