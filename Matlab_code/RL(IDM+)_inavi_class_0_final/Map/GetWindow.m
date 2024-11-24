@@ -1,4 +1,4 @@
-function GetWindow(Map, Setting)
+function GetWindow(Map, ~)
     % 고속도로 크기와 마진 계산
     Margin = Map.Margin;
     MapWidth = Map.Road + Margin * 2; % 고속도로 가로 크기
