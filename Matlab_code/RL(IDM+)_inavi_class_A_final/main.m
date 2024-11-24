@@ -19,6 +19,7 @@ Simulation.Setting.Iterations(1,:) = 1:Simulation.Setting.Datasets;
 Simulation.Setting.Iterations(2,:) = Simulation.Setting.Agents*ones(1,Simulation.Setting.Datasets);
 Simulation.Setting.Iterations(3,:) = [ones(1,1)]; % 2*ones(1,300) 3*ones(1,300) 4*ones(1,300) 5*ones(1,300) 6*ones(1,300) 7*ones(1,300) 8*ones(1,300) 9*ones(1,300) 10*ones(1,300) 11*ones(1,300) 12*ones(1,300) 13*ones(1,300) 14*ones(1,300) 15*ones(1,300) 16*ones(1,300) 17*ones(1,300) 18*ones(1,300) 19*ones(1,300) 20*ones(1,300)];
 Simulation.Setting.Iterations(4,:) = randperm(1000000,Simulation.Setting.Datasets);
+Simulation.Setting.Exit = [40,100];
 
 %% Set Simulation Parameters
 
@@ -38,7 +39,7 @@ for Iteration = 1:Simulation.Setting.Datasets
     else
         rng(Simulation.Setting.Seed)
     end
-    SetMap(Parameter.Map);
+    SetMap(Parameter.Map, Simulation.Setting);
 
     Seed.Vehicle = GetSeed(Simulation.Setting,Parameter,Iteration);
     Data{1,2} = Seed.Vehicle;
