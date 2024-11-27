@@ -68,9 +68,10 @@ for Iteration = 1:Simulation.Setting.Datasets
         if ~isempty(Seed.Vehicle)
             if int32(Time/Parameter.Physics) == int32(Seed.Vehicle(2,1)/Parameter.Physics)
                 List.Vehicle.Object{Seed.Vehicle(1,1)} = Vehicle(Seed.Vehicle(:,1),Time,Parameter);
-                Seed.Vehicle = Seed.Vehicle(:,2:end);
+                if ~isempty(Seed.Vehicle)
+                    Seed.Vehicle = Seed.Vehicle(:,2:end);
+                end
             end
-            disp(['Current Time: ', num2str(Time), ' Seed Time: ', num2str(Seed.Vehicle(2,1))]);
         end
     
         % Update Vehicle Data
@@ -144,6 +145,7 @@ for Iteration = 1:Simulation.Setting.Datasets
         end
         if isempty(Seed.Vehicle)
             if isempty(List.Vehicle.Active)
+                
                 break
             end
         end

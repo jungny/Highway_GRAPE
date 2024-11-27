@@ -24,11 +24,18 @@ function ObjectList = GetAcceleration(ObjectList, VehicleList, Parameter)
                         (VelocitySelf * VelocityDifference) / (2 * sqrt(Parameter.Accel(1) * Parameter.Accel(2)));
 
                     % 가속도 계산
-                    Acceleration = Parameter.Accel(1) * (1 - (VelocitySelf / Parameter.MaxVel)^Parameter.Exp - (DesiredDistance / LocationDifference)^2);
-
+                    Acceleration = Parameter.Accel(1) * (1 - (VelocitySelf / Parameter.MaxVel)^Parameter.Exp -...
+                                   (DesiredDistance / LocationDifference)^2);
+                    
+                    
                     % ObjectList에 가속도 저장
                     ObjectList{LaneData(j, 1)}.Acceleration = Acceleration;
                 end
+            end
+
+            for j = 1
+                Acceleration = Parameter.Accel(1) * (1 - (VelocitySelf / Parameter.MaxVel)^Parameter.Exp);
+                ObjectList{LaneData(j, 1)}.Acceleration = Acceleration;
             end
         end
     end
