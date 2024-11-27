@@ -1,7 +1,7 @@
 close all
 clear
 clc
-addpath('Map\','Vehicle\','Signal\','Manager\','v2v')
+addpath('Map\','Vehicle\','Signal\','Manager\','v2v\','GRAPE\')
 
 Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
@@ -21,7 +21,7 @@ Simulation.Setting.Iterations(1,:) = 1:Simulation.Setting.Datasets;
 Simulation.Setting.Iterations(2,:) = Simulation.Setting.Agents*ones(1,Simulation.Setting.Datasets);
 Simulation.Setting.Iterations(3,:) = [ones(1,1)]; % 2*ones(1,300) 3*ones(1,300) 4*ones(1,300) 5*ones(1,300) 6*ones(1,300) 7*ones(1,300) 8*ones(1,300) 9*ones(1,300) 10*ones(1,300) 11*ones(1,300) 12*ones(1,300) 13*ones(1,300) 14*ones(1,300) 15*ones(1,300) 16*ones(1,300) 17*ones(1,300) 18*ones(1,300) 19*ones(1,300) 20*ones(1,300)];
 Simulation.Setting.Iterations(4,:) = randperm(1000000,Simulation.Setting.Datasets);
-Simulation.Setting.Exit = [40,100];
+Simulation.Setting.Exit = [480];
 
 %% Set Simulation Parameters
 
@@ -34,6 +34,8 @@ Data = cell(Simulation.Setting.Datasets,2);
 Receive_V2V_check = false(Simulation.Setting.Vehicles, 1); % 3대 맞춤으로 되어있던것 수정함 아래도 동일
 V2V_cancel = false(Simulation.Setting.Vehicles, 1); 
 
+environment = struct();
+GRAPE_output = [];
 
 for Iteration = 1:Simulation.Setting.Datasets
     Data{Iteration} = cell(int32(Parameter.Sim.Time/Parameter.Physics +1),Simulation.Setting.Vehicles);
@@ -72,6 +74,37 @@ for Iteration = 1:Simulation.Setting.Datasets
                     Seed.Vehicle = Seed.Vehicle(:,2:end);
                 end
             end
+        end
+
+        % Call GRAPE_instance every cycle_GRAPE seconds.
+        cycle_GRAPE = 5;
+        if mod(Time, cycle_GRAPE) == cycle_GRAPE-1
+            disp("calling Grape Instance. . . | "+ Time);
+
+            % a_location 생성
+            a_location = zeros(size(List.Vehicle, 1), 2);
+            for i = 1:size(List.Vehicle.Active, 1)
+                vehicle_id = List.Vehicle.Active(i, 1);  % 현재 차량 ID
+                a_location(i, :) = [List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location, ...
+                                    (Parameter.Map.Lane-List.Vehicle.Object{List.Vehicle.Active(i,1)}.Lane+0.5) * Parameter.Map.Tile];  % 차량의 현재 (x, y) 위치
+            end
+
+            % t_location, t_demand 생성
+            t_location = zeros(Parameter.Map.Lane, 2);
+            for i = 1:Parameter.Map.Lane
+                t_location(i, :) = [0, (Parameter.Map.Lane-i+0.5) * Parameter.Map.Tile];  % (x, y) 좌표로 정의 (x는 0으로 고정)
+            end
+            t_demand = 100 * ones(Parameter.Map.Lane, 1);
+
+
+            environment.t_location = t_location;
+            environment.a_location = a_location;
+            environment.t_demand = t_demand;
+            
+            GRAPE_output = GRAPE_instance(environment);
+            % GRAPE_output.Alloc = [1,2] 의미 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
+
+            % GRAPE_instance;
         end
     
         % Update Vehicle Data
