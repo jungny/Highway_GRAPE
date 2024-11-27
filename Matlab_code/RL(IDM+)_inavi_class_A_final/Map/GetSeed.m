@@ -27,7 +27,7 @@ function Seed = GetSeed(Settings,Parameter,Iteration)
         Seed(2,:) = [0, 1.5];
 
         % Spawn Lane: 두 차량 모두 1차선
-        Seed(3,:) = [1, 1];
+        Seed(3,:) = [2, 2];
 
         % Direction: 두 차량 모두 직진(1)
         Seed(4,:) = [1, 1];
