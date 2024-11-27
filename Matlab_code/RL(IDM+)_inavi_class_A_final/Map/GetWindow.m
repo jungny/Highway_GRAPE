@@ -29,7 +29,7 @@ function GetWindow(Map,~)
 
     % 축 비율 유지
     axis equal;
-    xlim([-Map.Road/2 - Margin, Map.Road/2 + Margin]); % 가로 범위
+    xlim([- Margin, Map.Road + Margin]); % 가로 범위
     ylim([-Map.Tile*Map.Lane/2 - Margin, Map.Tile*Map.Lane/2 + Margin]); % 세로 범위
 
     % 플롯 영역을 창에 꽉 채우도록 조정

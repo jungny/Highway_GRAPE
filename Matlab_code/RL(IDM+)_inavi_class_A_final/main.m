@@ -6,11 +6,13 @@ addpath('Map\','Vehicle\','Signal\','Manager\','v2v')
 Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
 Simulation.Setting.Debug = 0;
-Simulation.Setting.Mode = 1;
+Simulation.Setting.Mode = 3;
 
     % 1: Dataset Generation
     % 2: Evaluation
-Simulation.Setting.Vehicles = 3;
+    % 3: Highway
+
+Simulation.Setting.Vehicles = 2;
 Simulation.Setting.Time = 50;
 Simulation.Setting.Datasets = 1;
 Simulation.Setting.Agents = 3;
@@ -29,12 +31,16 @@ Parameter.Trajectory = GetTrajectory(Parameter.Map,Simulation.Setting);
 Data = cell(Simulation.Setting.Datasets,2);
 
 %% Run Simulation
-Receive_V2V_check = [false;false;false];
-V2V_cancel = [false;false;false];
+Receive_V2V_check = false(Simulation.Setting.Vehicles, 1); % 3대 맞춤으로 되어있던것 수정함 아래도 동일
+V2V_cancel = false(Simulation.Setting.Vehicles, 1); 
+
 
 for Iteration = 1:Simulation.Setting.Datasets
     Data{Iteration} = cell(int32(Parameter.Sim.Time/Parameter.Physics +1),Simulation.Setting.Vehicles);
     if Simulation.Setting.Mode == 1
+        rng(randi(100000))
+    elseif Simulation.Setting.Mode == 3
+        disp('Mode 3: Highway Simulation')
         rng(randi(100000))
     else
         rng(Simulation.Setting.Seed)
@@ -44,13 +50,16 @@ for Iteration = 1:Simulation.Setting.Datasets
     Seed.Vehicle = GetSeed(Simulation.Setting,Parameter,Iteration);
     Data{1,2} = Seed.Vehicle;
     List.Vehicle.Object = cell(size(Seed.Vehicle,2),1);
-    List.Signal.Object = cell(4,1);
-    for i = 1:4
-        List.Signal.Object{i} = Signal(i,Parameter);
-    end
-    List.Signal.Data = UpdateData(List.Signal.Object,Parameter.Sim.Data);
-    Intersection = Manager(Parameter);
-    V2V.Object = cell(3,1);
+
+    % Intersection Signal 관련 코드는 불필요
+    % List.Signal.Object = cell(4,1);
+    % for i = 1:4
+    %     List.Signal.Object{i} = Signal(i,Parameter);
+    % end
+    % List.Signal.Data = UpdateData(List.Signal.Object,Parameter.Sim.Data);
+    % Intersection = Manager(Parameter);
+
+    V2V.Object = cell(Simulation.Setting.Vehicles, 1); % Setting.Vehicles에 따라 동적으로 조정.
 
     for Time = 0:Parameter.Physics:Parameter.Sim.Time
         title(sprintf('Time: %0.2f s', Time));
@@ -61,51 +70,52 @@ for Iteration = 1:Simulation.Setting.Datasets
                 List.Vehicle.Object{Seed.Vehicle(1,1)} = Vehicle(Seed.Vehicle(:,1),Time,Parameter);
                 Seed.Vehicle = Seed.Vehicle(:,2:end);
             end
+            disp(['Current Time: ', num2str(Time), ' Seed Time: ', num2str(Seed.Vehicle(2,1))]);
         end
     
         % Update Vehicle Data
         List.Vehicle.Data = UpdateData(List.Vehicle.Object,Parameter.Sim.Data);
         List.Vehicle.Active = List.Vehicle.Data(List.Vehicle.Data(:,2)>0,:);
-        List.Vehicle.Object = GetAcceleration(List.Vehicle.Object,List.Vehicle.Data,List.Signal.Data,Parameter.Veh);
+        List.Vehicle.Object = GetAcceleration(List.Vehicle.Object, List.Vehicle.Data, Parameter.Veh);
     
         % Msg generate & receive
-        if mod(int32(Time/Parameter.Physics),int32(Parameter.Control/Parameter.Physics)) == 0
-            for i = 1:size(List.Vehicle.Active,1)
-                if V2V_cancel(List.Vehicle.Active(i,1)) == false
-                    %generative msg
-                    Trajectory_len = size(List.Vehicle.Object{List.Vehicle.Active(i,1)}.Trajectory);
-                    if ~isempty(List.Vehicle.Object{List.Vehicle.Active(i,1)}) &&  List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location>1000 && List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location < Trajectory_len(2) - 7300
-                        V2V.Object{List.Vehicle.Active(i,1)} = V2VMsg(List.Vehicle.Object{List.Vehicle.Active(i,1)});
-                    elseif ~isempty(List.Vehicle.Object{List.Vehicle.Active(i,1)}) &&  List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location > Trajectory_len(2) - 7300
-                        V2V.Object{List.Vehicle.Active(i,1)} = {}; %예약 취소
-                        V2V_cancel(List.Vehicle.Active(i,1)) = true;
-                    end
-                    Receive_V2V{i}=[];
-                    for j = 1 : size(List.Vehicle.Active,1)
-                        if List.Vehicle.Active(j,1) ~= List.Vehicle.Active(i,1) && List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location > 1000
-                            if ~isempty(V2V.Object{List.Vehicle.Active(j,1)})
-                                Receive_V2V{i}(end+1, :) = ReceiveMsg(V2V.Object{List.Vehicle.Active(j,1)});
-                                Receive_V2V_check(i) = true;
-                            end
-                        end
-                    end
-                elseif V2V_cancel(List.Vehicle.Active(i,1)) == true
-                    List.Vehicle.Object{List.Vehicle.Active(i,1)}.State = 1;
-                    List.Vehicle.Object{List.Vehicle.Active(i,1)}.Patch = patch('XData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(1,:),'YData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(2,:),'FaceColor','#34FFA0','Parent',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Object);
-                end
+        % if mod(int32(Time/Parameter.Physics),int32(Parameter.Control/Parameter.Physics)) == 0
+        %     for i = 1:size(List.Vehicle.Active,1)
+        %         if V2V_cancel(List.Vehicle.Active(i,1)) == false
+        %             %generative msg
+        %             Trajectory_len = size(List.Vehicle.Object{List.Vehicle.Active(i,1)}.Trajectory);
+        %             if ~isempty(List.Vehicle.Object{List.Vehicle.Active(i,1)}) &&  List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location>1000 && List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location < Trajectory_len(2) - 7300
+        %                 V2V.Object{List.Vehicle.Active(i,1)} = V2VMsg(List.Vehicle.Object{List.Vehicle.Active(i,1)});
+        %             elseif ~isempty(List.Vehicle.Object{List.Vehicle.Active(i,1)}) &&  List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location > Trajectory_len(2) - 7300
+        %                 V2V.Object{List.Vehicle.Active(i,1)} = {}; %예약 취소
+        %                 V2V_cancel(List.Vehicle.Active(i,1)) = true;
+        %             end
+        %             Receive_V2V{i}=[];
+        %             for j = 1 : size(List.Vehicle.Active,1)
+        %                 if List.Vehicle.Active(j,1) ~= List.Vehicle.Active(i,1) && List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location > 1000
+        %                     if ~isempty(V2V.Object{List.Vehicle.Active(j,1)})
+        %                         Receive_V2V{i}(end+1, :) = ReceiveMsg(V2V.Object{List.Vehicle.Active(j,1)});
+        %                         Receive_V2V_check(i) = true;
+        %                     end
+        %                 end
+        %             end
+        %         elseif V2V_cancel(List.Vehicle.Active(i,1)) == true
+        %             List.Vehicle.Object{List.Vehicle.Active(i,1)}.State = 1;
+        %             List.Vehicle.Object{List.Vehicle.Active(i,1)}.Patch = patch('XData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(1,:),'YData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(2,:),'FaceColor','#34FFA0','Parent',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Object);
+        %         end
 
-            %priority eval
-                if ~isempty(List.Vehicle.Object{List.Vehicle.Active(i,1)}) &&  List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location>1000 && V2V_cancel(i) == false
-                    V2V.Object{List.Vehicle.Active(i,1)} = GetReserve(V2V.Object{List.Vehicle.Active(i,1)},Receive_V2V{List.Vehicle.Active(i,1)});
-                    if V2V.Object{List.Vehicle.Active(i,1)}.priority == 1
-                        List.Vehicle.Object{List.Vehicle.Active(i,1)}.State = 2;
-                        List.Vehicle.Object{List.Vehicle.Active(i,1)}.Patch = patch('XData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(1,:),'YData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(2,:),'FaceColor','#83D7EC','Parent',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Object);
-                    else
-                        List.Vehicle.Object{List.Vehicle.Active(i,1)}.Patch = patch('XData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(1,:),'YData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(2,:),'FaceColor','white','Parent',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Object);
-                    end
-                end
-            end
-        end
+        %     %priority eval
+        %         if ~isempty(List.Vehicle.Object{List.Vehicle.Active(i,1)}) &&  List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location>1000 && V2V_cancel(i) == false
+        %             V2V.Object{List.Vehicle.Active(i,1)} = GetReserve(V2V.Object{List.Vehicle.Active(i,1)},Receive_V2V{List.Vehicle.Active(i,1)});
+        %             if V2V.Object{List.Vehicle.Active(i,1)}.priority == 1
+        %                 List.Vehicle.Object{List.Vehicle.Active(i,1)}.State = 2;
+        %                 List.Vehicle.Object{List.Vehicle.Active(i,1)}.Patch = patch('XData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(1,:),'YData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(2,:),'FaceColor','#83D7EC','Parent',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Object);
+        %             else
+        %                 List.Vehicle.Object{List.Vehicle.Active(i,1)}.Patch = patch('XData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(1,:),'YData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(2,:),'FaceColor','white','Parent',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Object);
+        %             end
+        %         end
+        %     end
+        % end
 
     
         % Move Vehicle

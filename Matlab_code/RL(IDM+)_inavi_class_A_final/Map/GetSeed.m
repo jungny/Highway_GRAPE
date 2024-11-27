@@ -18,6 +18,26 @@ function Seed = GetSeed(Settings,Parameter,Iteration)
         end
         Seed(5,:) = [ones(1,Settings.Iterations(2,Iteration)) zeros(1,TotalVehicles-Settings.Iterations(2,Iteration))]; 
         Seed = sortrows(Seed',2)';
+
+    elseif Settings.Mode == 3 %Simple Highway example        
+        % Vehicle ID
+        Seed(1,:) = 1:TotalVehicles;
+        
+        % Spawn Time: (  )초 간격으로 설정
+        Seed(2,:) = [0, 1.5];
+
+        % Spawn Lane: 두 차량 모두 1차선
+        Seed(3,:) = [1, 1];
+
+        % Direction: 두 차량 모두 직진(1)
+        Seed(4,:) = [1, 1];
+
+        % Agent 여부: 모두 agent(1)
+        Seed(5,:) = [1, 1];
+
+        Seed = sortrows(Seed',2)';        
+
+
     else
         Seed = zeros(4,TotalVehicles);
         Seed(1,:) = 1:TotalVehicles;        

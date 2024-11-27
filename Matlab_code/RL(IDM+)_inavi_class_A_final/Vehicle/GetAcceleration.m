@@ -1,34 +1,36 @@
-function ObjectList = GetAcceleration(ObjectList,VehicleList,SignalList,Parameter)
-    
-    ObjectData = [SignalList;VehicleList];
-    
-    for i = 1:4
-        LaneData = ObjectData(ObjectData(:,3)==i,:);
-        LaneData = sortrows(LaneData,4,"descend");
+function ObjectList = GetAcceleration(ObjectList, VehicleList, Parameter)
 
-        if size(LaneData,1) > 1
-            for j = 2:size(LaneData,1)
-                if LaneData(j,1) > 0
-                    if LaneData(j,2) == 1
-                        LeadVehicle = LaneData(j-1,:);
-                        VelocitySelf = LaneData(j,5);
-                        VelocityLead = LeadVehicle(1,5);
-                        VelocityDifference = VelocityLead - VelocitySelf;
-                        LocationDifference = (LeadVehicle(1,4) - LaneData(j,4))/ObjectList{LaneData(j,1)}.DistanceStep  - Parameter.Size(1);
-                        DesiredDistance = Parameter.Safety + VelocitySelf*Parameter.Headway - ...
-                            (VelocitySelf*VelocityDifference)/(2*sqrt(Parameter.Accel(1)*Parameter.Accel(2)));
-    
-                        Acceleration = Parameter.Accel(1)*(1-(VelocitySelf/Parameter.MaxVel)^Parameter.Exp - (DesiredDistance/LocationDifference)^2);
-    
-                        ObjectList{LaneData(j,1)}.Acceleration = Acceleration;
-                    elseif LaneData(j,2) == 2
-                        ObjectList{LaneData(j,1)}.Acceleration = Parameter.Accel(1);
-                    end
+    % ObjectData는 VehicleList만 사용 (Signal 관련 제거)
+    ObjectData = VehicleList;
 
+    % 차선 개수를 동적으로 설정
+    MaxLane = max(ObjectData(:,3)); % VehicleList의 3번째 열이 차선 번호
+    for i = 1:MaxLane
+        % 현재 차선(i)에 있는 차량 데이터를 필터링
+        LaneData = ObjectData(ObjectData(:,3) == i, :);
+        LaneData = sortrows(LaneData, 4, "descend"); % 위치 기준 내림차순 정렬
+
+        % 차선에 차량이 여러 대 있는 경우만 처리
+        if size(LaneData, 1) > 1
+            for j = 2:size(LaneData, 1) % 두 번째 차량부터 처리
+                if LaneData(j, 1) > 0
+                    % 선두 차량 데이터를 사용해 계산
+                    LeadVehicle = LaneData(j-1, :);
+                    VelocitySelf = LaneData(j, 5);
+                    VelocityLead = LeadVehicle(1, 5);
+                    VelocityDifference = VelocityLead - VelocitySelf;
+                    LocationDifference = (LeadVehicle(1, 4) - LaneData(j, 4)) / ObjectList{LaneData(j, 1)}.DistanceStep - Parameter.Size(1);
+                    DesiredDistance = Parameter.Safety + VelocitySelf * Parameter.Headway - ...
+                        (VelocitySelf * VelocityDifference) / (2 * sqrt(Parameter.Accel(1) * Parameter.Accel(2)));
+
+                    % 가속도 계산
+                    Acceleration = Parameter.Accel(1) * (1 - (VelocitySelf / Parameter.MaxVel)^Parameter.Exp - (DesiredDistance / LocationDifference)^2);
+
+                    % ObjectList에 가속도 저장
+                    ObjectList{LaneData(j, 1)}.Acceleration = Acceleration;
                 end
             end
         end
     end
 
 end
-
