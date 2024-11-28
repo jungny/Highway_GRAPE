@@ -12,8 +12,9 @@ Simulation.Setting.Mode = 3;
     % 2: Evaluation
     % 3: Highway
 
-Simulation.Setting.Vehicles = 2;
-Simulation.Setting.Time = 50;
+Simulation.Setting.Vehicles = 6;
+cycle_GRAPE = 5;
+Simulation.Setting.Time = 500;
 Simulation.Setting.Datasets = 1;
 Simulation.Setting.Agents = 3;
 Simulation.Setting.Turns = 1;
@@ -88,14 +89,18 @@ for Iteration = 1:Simulation.Setting.Datasets
                 end
             end
         end
+    
+        % Update Vehicle Data
+        List.Vehicle.Data = UpdateData(List.Vehicle.Object,Parameter.Sim.Data);
+        List.Vehicle.Active = List.Vehicle.Data(List.Vehicle.Data(:,2)>0,:);
+        List.Vehicle.Object = GetAcceleration(List.Vehicle.Object, List.Vehicle.Data, Parameter.Veh);
 
         % Call GRAPE_instance every cycle_GRAPE seconds.
-        cycle_GRAPE = 10;
         if mod(Time, cycle_GRAPE) == cycle_GRAPE-1
             disp("calling Grape Instance. . . | "+ Time);
 
             % a_location 생성
-            a_location = zeros(size(List.Vehicle, 1), 2);
+            a_location = zeros(size(List.Vehicle.Active, 1), 2);
             for i = 1:size(List.Vehicle.Active, 1)
                 vehicle_id = List.Vehicle.Active(i, 1);  % 현재 차량 ID
                 a_location(i, :) = [List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location, ...
@@ -107,30 +112,32 @@ for Iteration = 1:Simulation.Setting.Datasets
             for i = 1:Parameter.Map.Lane
                 t_location(i, :) = [0, (Parameter.Map.Lane-i+0.5) * Parameter.Map.Tile];  % (x, y) 좌표로 정의 (x는 0으로 고정)
             end
-            t_demand = 100 * ones(Parameter.Map.Lane, 1);
+            t_demand = size(List.Vehicle.Active, 1) * 100 * ones(Parameter.Map.Lane, 1);
+
+            % Alloc_current 생성
+            Alloc_current = [];
+            for i = 1:size(List.Vehicle.Active, 1)
+                Alloc_current = [Alloc_current; List.Vehicle.Object{List.Vehicle.Active(i, 1)}.Lane];
+            end
 
 
             environment.t_location = t_location;
             environment.a_location = a_location;
             environment.t_demand = t_demand;
+            environment.Alloc_current = Alloc_current;
             
             try
                 GRAPE_output = GRAPE_instance(environment);
                 % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
                 lane_alloc = GRAPE_output.Alloc;
                 % lane_alloc = [1,2];
-                GRAPE_done = 1;
+                 GRAPE_done = 1;
 
             catch ME
                 
             end
 
         end
-    
-        % Update Vehicle Data
-        List.Vehicle.Data = UpdateData(List.Vehicle.Object,Parameter.Sim.Data);
-        List.Vehicle.Active = List.Vehicle.Data(List.Vehicle.Data(:,2)>0,:);
-        List.Vehicle.Object = GetAcceleration(List.Vehicle.Object, List.Vehicle.Data, Parameter.Veh);
     
         % Msg generate & receive
         % if mod(int32(Time/Parameter.Physics),int32(Parameter.Control/Parameter.Physics)) == 0
@@ -189,10 +196,14 @@ for Iteration = 1:Simulation.Setting.Datasets
     
         % Remove Processed Vehicles
         for i = 1:size(List.Vehicle.Active,1)
-            if List.Vehicle.Object{List.Vehicle.Active(i,1)}.State == 0
+            if List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location >= 40000 % exit으로 바꾸기
                 RemoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)})
                 List.Vehicle.Object{List.Vehicle.Active(i,1)} = [];
             end
+            % if List.Vehicle.Object{List.Vehicle.Active(i,1)}.State == 0
+            %     RemoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)})
+            %     List.Vehicle.Object{List.Vehicle.Active(i,1)} = [];
+            % end
         end
         % Process Data
         for i = 1:size(List.Vehicle.Object,1)

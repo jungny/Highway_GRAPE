@@ -154,14 +154,14 @@ function G = GRAPE_instance(environment)
         end
     end
 
-    Comm_distance = 5000; 
+    Comm_distance = 5000000; 
     % Neighbour agents within communication radius
     MST_ = (dist_agents <= Comm_distance);
     MST = MST_ - eye(n,n);
     % Note: MST will be used in Task_Allocation.m (Task_Allocation_SC_visual.m) to simulate communications between agents
 
     % Alloc_existing = zeros(n,1);    % Initial task assignment: every robot is assigned to void task
-    Alloc_existing = [1;1];
+    Alloc_existing = environment.Alloc_current;
 
     input.Alloc_existing = Alloc_existing;
     input.Flag_display = 1;

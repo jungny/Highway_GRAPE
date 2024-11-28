@@ -114,26 +114,26 @@ while a_satisfied~=n
         agent_(i).iteration = agent(i).iteration;
         agent_(i).util = agent(i).util;
         
-%         for j_=1:length(set_neighbour_agent_id)
-%             j = set_neighbour_agent_id(j_); % neighbour agent id
-%             % Send information from i to j
-%             if agent(i).iteration < agent(j).iteration % i's info is more recent
-%                 % Update using i's info                
-%                 agent_(i).Alloc = agent(j).Alloc;
-%                 agent_(i).time_stamp = agent(j).time_stamp;
-%                 agent_(i).iteration = agent(j).iteration;
-%                 agent_(i).satisfied_flag = 0;
-%             elseif agent(i).iteration == agent(j).iteration % when i = j is the same 
-%                 if agent(i).time_stamp < agent(j).time_stamp % if i's info is more eariler stamped
-%                 agent_(i).Alloc = agent(j).Alloc;
-%                 agent_(i).time_stamp = agent(j).time_stamp;
-%                 agent_(i).iteration = agent(j).iteration;
-%                 agent_(i).satisfied_flag = 0;                
-%                 end
-%             else % j's info is more recent
-%                 % Keep the current info
-%             end
-%         end
+        % for j_=1:length(set_neighbour_agent_id)
+        %     j = set_neighbour_agent_id(j_); % neighbour agent id
+        %     % Send information from i to j
+        %     if agent(i).iteration < agent(j).iteration % i's info is more recent
+        %         % Update using i's info                
+        %         agent_(i).Alloc = agent(j).Alloc;
+        %         agent_(i).time_stamp = agent(j).time_stamp;
+        %         agent_(i).iteration = agent(j).iteration;
+        %         agent_(i).satisfied_flag = 0;
+        %     elseif agent(i).iteration == agent(j).iteration % when i = j is the same 
+        %         if agent(i).time_stamp < agent(j).time_stamp % if i's info is more eariler stamped
+        %         agent_(i).Alloc = agent(j).Alloc;
+        %         agent_(i).time_stamp = agent(j).time_stamp;
+        %         agent_(i).iteration = agent(j).iteration;
+        %         agent_(i).satisfied_flag = 0;                
+        %         end
+        %     else % j's info is more recent
+        %         % Keep the current info
+        %     end
+        % end
 
 %       (Revision) To find out the local "deciding agent" amongst neighbour agents
         set_neighbour_agent_id_ = [set_neighbour_agent_id i];
