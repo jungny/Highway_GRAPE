@@ -38,6 +38,7 @@ environment = struct();
 GRAPE_output = [];
 
 for Iteration = 1:Simulation.Setting.Datasets
+    GRAPE_done = 0;
     Data{Iteration} = cell(int32(Parameter.Sim.Time/Parameter.Physics +1),Simulation.Setting.Vehicles);
     if Simulation.Setting.Mode == 1
         rng(randi(100000))
@@ -102,9 +103,14 @@ for Iteration = 1:Simulation.Setting.Datasets
             environment.t_demand = t_demand;
             
             GRAPE_output = GRAPE_instance(environment);
-            % GRAPE_output.Alloc = [1,2] 의미 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
+            % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
 
-            % GRAPE_instance;
+            % lane_alloc = GRAPE_output.Alloc;
+            lane_alloc = [1,2];
+            GRAPE_done = 1;
+
+
+            
         end
     
         % Update Vehicle Data
@@ -154,7 +160,17 @@ for Iteration = 1:Simulation.Setting.Datasets
     
         % Move Vehicle
         for i = 1:size(List.Vehicle.Active,1)
-            MoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)},Time)
+            if GRAPE_done == 1
+                vehicle_id = List.Vehicle.Active(i, 1); % 현재 차량 ID
+                current_lane = List.Vehicle.Object{vehicle_id}.Lane; % 차량의 현재 차선
+                desired_lane = lane_alloc(i); % lane_alloc에서 할당된 목표 차선
+            
+                if current_lane ~= desired_lane % 현재 차선과 다를 경우
+                    List.Vehicle.Object{vehicle_id}.TargetLane = desired_lane; % 목표 차선 설정
+                    List.Vehicle.Object{vehicle_id}.LaneChangeFlag = 1; % 차선 변경 플래그 활성화
+                end
+            end
+            MoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)},Time,Parameter)
         end
     
         % Remove Processed Vehicles

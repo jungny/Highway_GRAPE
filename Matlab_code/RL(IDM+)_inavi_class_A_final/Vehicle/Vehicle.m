@@ -14,6 +14,8 @@ classdef Vehicle < handle
         Data
         %Reward
         Destination
+        TargetLane
+        LaneChangeFlag
     end
 
     properties(Hidden = false) % Properties
@@ -101,7 +103,14 @@ classdef Vehicle < handle
             obj.Data = GetObservation(obj);
         end
 
-        function MoveVehicle(obj,Time)
+        function MoveVehicle(obj,Time,Parameter)
+            if obj.LaneChangeFlag == 1
+                % change lane to obj.TargetLane
+                new_y = (Parameter.Map.Lane-obj.TargetLane+0.5)*Parameter.Map.Tile;
+                obj.Trajectory(2, :) = linspace(obj.Trajectory(2, obj.Location), new_y, size(obj.Trajectory, 2));
+                obj.LaneChangeFlag = [];
+            end
+
             [nextVelocity,nextLocation] = GetDynamics(obj);
             obj.Data = GetObservation(obj);
             if nextLocation > size(obj.Trajectory,2)
