@@ -11,14 +11,14 @@ function Trajectory = GetTrajectory(Map,Setting)
         Trajectory.Source{i,1} = Trajectory.Source{i,1} + Center ;
     end
 
-    % 도착점(Sink) 경로 설정
-    for i = 1:Map.Lane
-        % Sink 경로: 도로 끝 → 출발점
-        Trajectory.Sink{i,1}(1,:) = Map.Road:-Map.Scale:0;  % X 좌표
-        Trajectory.Sink{i,1}(2,:) = Map.Lane*Map.Tile - zeros(1, size(Trajectory.Sink{i,1}(1,:), 2)) - (i - 0.5) * Map.Tile; % Y 좌표 (각 차선 중심)
-        % 도로 중심 보정
-        Trajectory.Sink{i,1} = Trajectory.Sink{i,1} + Center;
-    end
+    % % 도착점(Sink) 경로 설정
+    % for i = 1:Map.Lane
+    %     % Sink 경로: 도로 끝 → 출발점
+    %     Trajectory.Sink{i,1}(1,:) = Map.Road:-Map.Scale:0;  % X 좌표
+    %     Trajectory.Sink{i,1}(2,:) = Map.Lane*Map.Tile - zeros(1, size(Trajectory.Sink{i,1}(1,:), 2)) - (i - 0.5) * Map.Tile; % Y 좌표 (각 차선 중심)
+    %     % 도로 중심 보정
+    %     Trajectory.Sink{i,1} = Trajectory.Sink{i,1} + Center;
+    % end
 
     % for i = 1:4
     %     Length = Map.Tile*Map.Lane + Map.Road+Map.Margin+Map.Stop;
@@ -71,10 +71,10 @@ function Trajectory = GetTrajectory(Map,Setting)
         %     plot(Trajectory.Right{i,1}(1,:),Trajectory.Right{i,1}(2,:))
 
         % end
-        for i = 1:Map.Lane
-            plot(Trajectory.Source{i,1}(1,:), Trajectory.Source{i,1}(2,:), 'b'); % Source 경로 (파란색)
-            plot(Trajectory.Sink{i,1}(1,:), Trajectory.Sink{i,1}(2,:), 'r');     % Sink 경로 (빨간색)
-        end
+        % for i = 1:Map.Lane
+        %     plot(Trajectory.Source{i,1}(1,:), Trajectory.Source{i,1}(2,:), 'b'); % Source 경로 (파란색)
+        %     plot(Trajectory.Sink{i,1}(1,:), Trajectory.Sink{i,1}(2,:), 'r');     % Sink 경로 (빨간색)
+        % end
         title('Highway Trajectories');
         xlabel('X Coordinate');
         ylabel('Y Coordinate');

@@ -17,9 +17,9 @@ function P = GetParameters(Setting)
     P.Map.Color.Grass = '#B5E3AB';
 
     P.Map.Scale = 0.01;
-    P.Map.Lane = 1;
+    P.Map.Lane = 2;
     P.Map.Tile = 4;
-    P.Map.Road = 80;
+    P.Map.Road = 400;
     P.Map.Margin = 10;
     P.Map.Stop = 6;
     P.Map.Center = [0;0];
