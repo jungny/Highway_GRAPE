@@ -14,12 +14,18 @@ t_demand = environment.t_demand;
 
 %% Setting Utility Type
 % Util_type = 'Peaked_reward';
-Util_type = 'Logarithm_reward';
+%Util_type = 'Logarithm_reward';
 %Util_type = 'Constant_reward';
 %Util_type = 'Random';
+Util_type = 'Test';
 
 %%
 switch Util_type
+
+    case 'Test'
+        % Cost 
+        cost = abs(t_location(task_id, 2)- a_location(agent_id, 2)); % y coordinate difference
+        util_value = t_demand(task_id)/n_participants - cost;
     
     case 'Peaked_reward'
         % Cost

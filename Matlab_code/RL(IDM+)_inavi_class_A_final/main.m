@@ -105,8 +105,8 @@ for Iteration = 1:Simulation.Setting.Datasets
             GRAPE_output = GRAPE_instance(environment);
             % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
 
-            % lane_alloc = GRAPE_output.Alloc;
-            lane_alloc = [1,2];
+            lane_alloc = GRAPE_output.Alloc;
+            % lane_alloc = [1,2];
             GRAPE_done = 1;
 
 
