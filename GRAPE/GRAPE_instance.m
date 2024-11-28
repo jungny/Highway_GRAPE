@@ -137,8 +137,7 @@
 % flag_problem = output.flag_problem; % If the result has a problem, then 1. 
 
 
-% %% Minimum-guaranteed Global Utility (Theorem 3)
-% Minimum_Guaranteed_Optimality;
+
 
 function G = GRAPE_instance(environment)
     G.t_demand = environment.t_demand;
@@ -155,13 +154,14 @@ function G = GRAPE_instance(environment)
         end
     end
 
-    Comm_distance = 5000; 
+    Comm_distance = 5000000; 
     % Neighbour agents within communication radius
     MST_ = (dist_agents <= Comm_distance);
     MST = MST_ - eye(n,n);
     % Note: MST will be used in Task_Allocation.m (Task_Allocation_SC_visual.m) to simulate communications between agents
 
-    Alloc_existing = zeros(n,1);    % Initial task assignment: every robot is assigned to void task
+    % Alloc_existing = zeros(n,1);    % Initial task assignment: every robot is assigned to void task
+    Alloc_existing = environment.Alloc_current;
 
     input.Alloc_existing = Alloc_existing;
     input.Flag_display = 1;
@@ -179,4 +179,13 @@ function G = GRAPE_instance(environment)
     G.iteration = output.iteration;
     G.flag_problem = output.flag_problem; % If the result has a problem, then 1. 
 
+    Alloc = output.Alloc;
+    a_utility = output.a_utility;
+    iteration = output.iteration;
+    flag_problem = output.flag_problem;
+
+    %% Minimum-guaranteed Global Utility (Theorem 3)
+    Minimum_Guaranteed_Optimality;
+
 end
+

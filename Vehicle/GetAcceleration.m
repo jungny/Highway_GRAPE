@@ -37,6 +37,10 @@ function ObjectList = GetAcceleration(ObjectList, VehicleList, Parameter)
                 Acceleration = Parameter.Accel(1) * (1 - (VelocitySelf / Parameter.MaxVel)^Parameter.Exp);
                 ObjectList{LaneData(j, 1)}.Acceleration = Acceleration;
             end
+        elseif size(LaneData,1)==1
+            VelocitySelf = LaneData(1, 5);
+            Acceleration = Parameter.Accel(1) * (1 - (VelocitySelf / Parameter.MaxVel)^Parameter.Exp);
+            ObjectList{LaneData(1, 1)}.Acceleration = Acceleration;    
         end
     end
 

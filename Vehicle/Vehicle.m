@@ -109,8 +109,21 @@ classdef Vehicle < handle
             if obj.LaneChangeFlag == 1
                 % change lane to obj.TargetLane
                 new_y = (Parameter.Map.Lane-obj.TargetLane+0.5)*Parameter.Map.Tile;
-                obj.Trajectory(2, :) = linspace(obj.Trajectory(2, obj.Location), new_y, size(obj.Trajectory, 2));
+                
+                change_steps = 3000; 
+                start_idx = obj.Location; 
+                end_idx = min(obj.Location + change_steps - 1, size(obj.Trajectory, 2)); 
+                
+                % change_steps 동안 new_y에 도달
+                obj.Trajectory(2, start_idx:end_idx) = linspace(obj.Trajectory(2, start_idx), new_y, end_idx - start_idx + 1);
+                
+                % 이후 구간 고정
+                if end_idx < size(obj.Trajectory, 2)
+                    obj.Trajectory(2, end_idx+1:end) = new_y;
+                end
+
                 obj.LaneChangeFlag = [];
+                obj.Lane = obj.TargetLane;
                 
             end
 

@@ -12,8 +12,9 @@ Simulation.Setting.Mode = 3;
     % 2: Evaluation
     % 3: Highway
 
-Simulation.Setting.Vehicles = 2;
-Simulation.Setting.Time = 50;
+Simulation.Setting.Vehicles = 6;
+cycle_GRAPE = 5;
+Simulation.Setting.Time = 500;
 Simulation.Setting.Datasets = 1;
 Simulation.Setting.Agents = 3;
 Simulation.Setting.Turns = 1;
@@ -34,26 +35,25 @@ Data = cell(Simulation.Setting.Datasets,2);
 
 %% Run Simulation
 
-% 동영상 저장 설정
 if Simulation.Setting.Record == 1
-    % 날짜와 시간을 파일명에 포함
     timestamp = datestr(now, 'yymmdd_HH-MM-SS');
-    videoFilename = fullfile('C:\Users\user\Desktop\241119_1129\SimResults', ['1_MVP_' timestamp '.mp4']); % 경로 수정 가능
 
-    % 비디오 객체 생성
+    videoFilename = fullfile('C:\Users\user\Desktop\241119_1129\SimResults', ...
+    ['v1_a' num2str(Simulation.Setting.Vehicles) '_t' num2str(Parameter.Map.Lane) '_' timestamp '.mp4']);
+
     videoWriter = VideoWriter(videoFilename, 'MPEG-4');
-    videoWriter.FrameRate = 30; % 프레임 속도 설정 (10 FPS)
+    videoWriter.FrameRate = 30; 
     open(videoWriter);
 end
 
-Receive_V2V_check = false(Simulation.Setting.Vehicles, 1); % 3대 맞춤으로 되어있던것 수정함 아래도 동일
+Receive_V2V_check = false(Simulation.Setting.Vehicles, 1);
 V2V_cancel = false(Simulation.Setting.Vehicles, 1); 
 
 environment = struct();
 GRAPE_output = [];
 
 for Iteration = 1:Simulation.Setting.Datasets
-    GRAPE_done = 0;
+    
     Data{Iteration} = cell(int32(Parameter.Sim.Time/Parameter.Physics +1),Simulation.Setting.Vehicles);
     if Simulation.Setting.Mode == 1
         rng(randi(100000))
@@ -80,6 +80,7 @@ for Iteration = 1:Simulation.Setting.Datasets
     V2V.Object = cell(Simulation.Setting.Vehicles, 1); % Setting.Vehicles에 따라 동적으로 조정.
 
     for Time = 0:Parameter.Physics:Parameter.Sim.Time
+        GRAPE_done = 0;
         title(sprintf('Time: %0.2f s', Time));
         
         % Generate Vehicles
@@ -91,14 +92,18 @@ for Iteration = 1:Simulation.Setting.Datasets
                 end
             end
         end
+    
+        % Update Vehicle Data
+        List.Vehicle.Data = UpdateData(List.Vehicle.Object,Parameter.Sim.Data);
+        List.Vehicle.Active = List.Vehicle.Data(List.Vehicle.Data(:,2)>0,:);
+        List.Vehicle.Object = GetAcceleration(List.Vehicle.Object, List.Vehicle.Data, Parameter.Veh);
 
         % Call GRAPE_instance every cycle_GRAPE seconds.
-        cycle_GRAPE = 5;
-        if mod(Time, cycle_GRAPE) == cycle_GRAPE-1 
+        if mod(Time, cycle_GRAPE) == cycle_GRAPE-1
             disp("calling Grape Instance. . . | "+ Time);
 
             % a_location 생성
-            a_location = zeros(size(List.Vehicle, 1), 2);
+            a_location = zeros(size(List.Vehicle.Active, 1), 2);
             for i = 1:size(List.Vehicle.Active, 1)
                 vehicle_id = List.Vehicle.Active(i, 1);  % 현재 차량 ID
                 a_location(i, :) = [List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location, ...
@@ -110,18 +115,24 @@ for Iteration = 1:Simulation.Setting.Datasets
             for i = 1:Parameter.Map.Lane
                 t_location(i, :) = [0, (Parameter.Map.Lane-i+0.5) * Parameter.Map.Tile];  % (x, y) 좌표로 정의 (x는 0으로 고정)
             end
-            t_demand = 100 * ones(Parameter.Map.Lane, 1);
+            t_demand = size(List.Vehicle.Active, 1) * 100 * ones(Parameter.Map.Lane, 1);
+
+            % Alloc_current 생성
+            Alloc_current = [];
+            for i = 1:size(List.Vehicle.Active, 1)
+                Alloc_current = [Alloc_current; List.Vehicle.Object{List.Vehicle.Active(i, 1)}.Lane];
+            end
 
 
             environment.t_location = t_location;
             environment.a_location = a_location;
             environment.t_demand = t_demand;
+            environment.Alloc_current = Alloc_current;
             
             try
                 GRAPE_output = GRAPE_instance(environment);
                 % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
                 lane_alloc = GRAPE_output.Alloc;
-                % lane_alloc = [1,2];
                 GRAPE_done = 1;
 
             catch ME
@@ -129,11 +140,6 @@ for Iteration = 1:Simulation.Setting.Datasets
             end
 
         end
-    
-        % Update Vehicle Data
-        List.Vehicle.Data = UpdateData(List.Vehicle.Object,Parameter.Sim.Data);
-        List.Vehicle.Active = List.Vehicle.Data(List.Vehicle.Data(:,2)>0,:);
-        List.Vehicle.Object = GetAcceleration(List.Vehicle.Object, List.Vehicle.Data, Parameter.Veh);
     
         % Msg generate & receive
         % if mod(int32(Time/Parameter.Physics),int32(Parameter.Control/Parameter.Physics)) == 0
@@ -178,13 +184,13 @@ for Iteration = 1:Simulation.Setting.Datasets
         % Move Vehicle
         for i = 1:size(List.Vehicle.Active,1)
             if GRAPE_done == 1
-                vehicle_id = List.Vehicle.Active(i, 1); % 현재 차량 ID
-                current_lane = List.Vehicle.Object{vehicle_id}.Lane; % 차량의 현재 차선
-                desired_lane = lane_alloc(i); % lane_alloc에서 할당된 목표 차선
+                vehicle_id = List.Vehicle.Active(i, 1); 
+                current_lane = List.Vehicle.Object{vehicle_id}.Lane; 
+                desired_lane = lane_alloc(i);
             
-                if current_lane ~= desired_lane % 현재 차선과 다를 경우
-                    List.Vehicle.Object{vehicle_id}.TargetLane = desired_lane; % 목표 차선 설정
-                    List.Vehicle.Object{vehicle_id}.LaneChangeFlag = 1; % 차선 변경 플래그 활성화
+                if current_lane ~= desired_lane 
+                    List.Vehicle.Object{vehicle_id}.TargetLane = desired_lane;
+                    List.Vehicle.Object{vehicle_id}.LaneChangeFlag = 1; 
                 end
             end
             MoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)},Time,Parameter)
@@ -192,10 +198,14 @@ for Iteration = 1:Simulation.Setting.Datasets
     
         % Remove Processed Vehicles
         for i = 1:size(List.Vehicle.Active,1)
-            if List.Vehicle.Object{List.Vehicle.Active(i,1)}.State == 0
+            if List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location >= 40000 % exit으로 바꾸기
                 RemoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)})
                 List.Vehicle.Object{List.Vehicle.Active(i,1)} = [];
             end
+            % if List.Vehicle.Object{List.Vehicle.Active(i,1)}.State == 0
+            %     RemoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)})
+            %     List.Vehicle.Object{List.Vehicle.Active(i,1)} = [];
+            % end
         end
         % Process Data
         for i = 1:size(List.Vehicle.Object,1)
@@ -209,11 +219,10 @@ for Iteration = 1:Simulation.Setting.Datasets
             drawnow();
             pause(0.01)
             
-            % 프레임을 동영상에 저장
             if Simulation.Setting.Record == 1 && mod(int32(Time/Parameter.Physics), 2) == 0
-                frame = getframe(gcf); % 현재 Figure의 프레임 캡처
+                frame = getframe(gcf); 
                 % frame.cdata = imresize(frame.cdata, 0.5);
-                writeVideo(videoWriter, frame); % 비디오에 프레임 추가
+                writeVideo(videoWriter, frame); 
             end
         end
         if isempty(Seed.Vehicle)
@@ -245,7 +254,6 @@ for Iteration = 1:Simulation.Setting.Datasets
 
 end
 
-% 비디오 저장 종료
 if Simulation.Setting.Record == 1
     close(videoWriter);
     disp(['Simulation video saved to: ', videoFilename]);
