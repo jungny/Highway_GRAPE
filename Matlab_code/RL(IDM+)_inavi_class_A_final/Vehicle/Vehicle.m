@@ -62,8 +62,10 @@ classdef Vehicle < handle
 
             % 고속도로에서는 방향(Destination) 관련 로직 불필요
             % 경로(Trajectory) 설정: 출발점(Source) → 도착점(Sink)
-            obj.Trajectory = [Parameter.Trajectory.Source{obj.Lane}, ...
-            Parameter.Trajectory.Sink{obj.Lane}];
+            % obj.Trajectory = [Parameter.Trajectory.Source{obj.Lane}, ...
+            % Parameter.Trajectory.Sink{obj.Lane}];
+
+            obj.Trajectory = [Parameter.Trajectory.Source{obj.Lane}];
 
             % if Seed(4) == 1 % 직진 - 여기만 실행
             %     obj.Destination = obj.Index(obj.Lane+2);
@@ -109,6 +111,7 @@ classdef Vehicle < handle
                 new_y = (Parameter.Map.Lane-obj.TargetLane+0.5)*Parameter.Map.Tile;
                 obj.Trajectory(2, :) = linspace(obj.Trajectory(2, obj.Location), new_y, size(obj.Trajectory, 2));
                 obj.LaneChangeFlag = [];
+                
             end
 
             [nextVelocity,nextLocation] = GetDynamics(obj);

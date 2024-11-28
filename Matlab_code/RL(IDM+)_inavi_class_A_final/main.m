@@ -21,7 +21,9 @@ Simulation.Setting.Iterations(1,:) = 1:Simulation.Setting.Datasets;
 Simulation.Setting.Iterations(2,:) = Simulation.Setting.Agents*ones(1,Simulation.Setting.Datasets);
 Simulation.Setting.Iterations(3,:) = [ones(1,1)]; % 2*ones(1,300) 3*ones(1,300) 4*ones(1,300) 5*ones(1,300) 6*ones(1,300) 7*ones(1,300) 8*ones(1,300) 9*ones(1,300) 10*ones(1,300) 11*ones(1,300) 12*ones(1,300) 13*ones(1,300) 14*ones(1,300) 15*ones(1,300) 16*ones(1,300) 17*ones(1,300) 18*ones(1,300) 19*ones(1,300) 20*ones(1,300)];
 Simulation.Setting.Iterations(4,:) = randperm(1000000,Simulation.Setting.Datasets);
-Simulation.Setting.Exit = [480];
+Simulation.Setting.Exit = [380];
+Simulation.Setting.Record = 1;
+    % 1: start recording
 
 %% Set Simulation Parameters
 
@@ -31,6 +33,19 @@ Parameter.Trajectory = GetTrajectory(Parameter.Map,Simulation.Setting);
 Data = cell(Simulation.Setting.Datasets,2);
 
 %% Run Simulation
+
+% 동영상 저장 설정
+if Simulation.Setting.Record == 1
+    % 날짜와 시간을 파일명에 포함
+    timestamp = datestr(now, 'yyyy-mm-dd_HH-MM-SS');
+    videoFilename = fullfile('C:\Users\user\Desktop\241119_1129\SimResults', ['1_MVP' timestamp '.mp4']); % 경로 수정 가능
+
+    % 비디오 객체 생성
+    videoWriter = VideoWriter(videoFilename, 'MPEG-4');
+    videoWriter.FrameRate = 30; % 프레임 속도 설정 (10 FPS)
+    open(videoWriter);
+end
+
 Receive_V2V_check = false(Simulation.Setting.Vehicles, 1); % 3대 맞춤으로 되어있던것 수정함 아래도 동일
 V2V_cancel = false(Simulation.Setting.Vehicles, 1); 
 
@@ -79,7 +94,7 @@ for Iteration = 1:Simulation.Setting.Datasets
 
         % Call GRAPE_instance every cycle_GRAPE seconds.
         cycle_GRAPE = 5;
-        if mod(Time, cycle_GRAPE) == cycle_GRAPE-1
+        if mod(Time, cycle_GRAPE) == cycle_GRAPE-1 
             disp("calling Grape Instance. . . | "+ Time);
 
             % a_location 생성
@@ -102,15 +117,17 @@ for Iteration = 1:Simulation.Setting.Datasets
             environment.a_location = a_location;
             environment.t_demand = t_demand;
             
-            GRAPE_output = GRAPE_instance(environment);
-            % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
+            try
+                GRAPE_output = GRAPE_instance(environment);
+                % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
+                lane_alloc = GRAPE_output.Alloc;
+                % lane_alloc = [1,2];
+                GRAPE_done = 1;
 
-            lane_alloc = GRAPE_output.Alloc;
-            % lane_alloc = [1,2];
-            GRAPE_done = 1;
+            catch ME
+                
+            end
 
-
-            
         end
     
         % Update Vehicle Data
@@ -191,6 +208,13 @@ for Iteration = 1:Simulation.Setting.Datasets
         if Simulation.Setting.Draw == 1
             drawnow();
             pause(0.01)
+            
+            % 프레임을 동영상에 저장
+            if Simulation.Setting.Record == 1 && mod(int32(Time/Parameter.Physics), 2) == 0
+                frame = getframe(gcf); % 현재 Figure의 프레임 캡처
+                % frame.cdata = imresize(frame.cdata, 0.5);
+                writeVideo(videoWriter, frame); % 비디오에 프레임 추가
+            end
         end
         if isempty(Seed.Vehicle)
             if isempty(List.Vehicle.Active)
@@ -219,4 +243,10 @@ for Iteration = 1:Simulation.Setting.Datasets
     end
 
 
+end
+
+% 비디오 저장 종료
+if Simulation.Setting.Record == 1
+    close(videoWriter);
+    disp(['Simulation video saved to: ', videoFilename]);
 end
