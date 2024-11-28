@@ -37,8 +37,8 @@ Data = cell(Simulation.Setting.Datasets,2);
 % 동영상 저장 설정
 if Simulation.Setting.Record == 1
     % 날짜와 시간을 파일명에 포함
-    timestamp = datestr(now, 'yyyy-mm-dd_HH-MM-SS');
-    videoFilename = fullfile('C:\Users\user\Desktop\241119_1129\SimResults', ['1_MVP' timestamp '.mp4']); % 경로 수정 가능
+    timestamp = datestr(now, 'yymmdd_HH-MM-SS');
+    videoFilename = fullfile('C:\Users\user\Desktop\241119_1129\SimResults', ['1_MVP_' timestamp '.mp4']); % 경로 수정 가능
 
     % 비디오 객체 생성
     videoWriter = VideoWriter(videoFilename, 'MPEG-4');
