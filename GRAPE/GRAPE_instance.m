@@ -160,7 +160,8 @@ function G = GRAPE_instance(environment)
     MST = MST_ - eye(n,n);
     % Note: MST will be used in Task_Allocation.m (Task_Allocation_SC_visual.m) to simulate communications between agents
 
-    Alloc_existing = zeros(n,1);    % Initial task assignment: every robot is assigned to void task
+    % Alloc_existing = zeros(n,1);    % Initial task assignment: every robot is assigned to void task
+    Alloc_existing = [1;1];
 
     input.Alloc_existing = Alloc_existing;
     input.Flag_display = 1;

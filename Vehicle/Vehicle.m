@@ -109,8 +109,11 @@ classdef Vehicle < handle
             if obj.LaneChangeFlag == 1
                 % change lane to obj.TargetLane
                 new_y = (Parameter.Map.Lane-obj.TargetLane+0.5)*Parameter.Map.Tile;
-                obj.Trajectory(2, :) = linspace(obj.Trajectory(2, obj.Location), new_y, size(obj.Trajectory, 2));
+                obj.Trajectory(2, :) = linspace(obj.Trajectory(2, obj.Location), ...
+                                                new_y, ...
+                                                size(obj.Trajectory, 2));
                 obj.LaneChangeFlag = [];
+                obj.Lane = obj.TargetLane;
                 
             end
 

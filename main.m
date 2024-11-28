@@ -34,13 +34,9 @@ Data = cell(Simulation.Setting.Datasets,2);
 
 %% Run Simulation
 
-% 동영상 저장 설정
 if Simulation.Setting.Record == 1
-    % 날짜와 시간을 파일명에 포함
     timestamp = datestr(now, 'yymmdd_HH-MM-SS');
     videoFilename = fullfile('C:\Users\user\Desktop\241119_1129\SimResults', ['1_MVP_' timestamp '.mp4']); % 경로 수정 가능
-
-    % 비디오 객체 생성
     videoWriter = VideoWriter(videoFilename, 'MPEG-4');
     videoWriter.FrameRate = 30; % 프레임 속도 설정 (10 FPS)
     open(videoWriter);
@@ -53,7 +49,7 @@ environment = struct();
 GRAPE_output = [];
 
 for Iteration = 1:Simulation.Setting.Datasets
-    GRAPE_done = 0;
+    
     Data{Iteration} = cell(int32(Parameter.Sim.Time/Parameter.Physics +1),Simulation.Setting.Vehicles);
     if Simulation.Setting.Mode == 1
         rng(randi(100000))
@@ -80,6 +76,7 @@ for Iteration = 1:Simulation.Setting.Datasets
     V2V.Object = cell(Simulation.Setting.Vehicles, 1); % Setting.Vehicles에 따라 동적으로 조정.
 
     for Time = 0:Parameter.Physics:Parameter.Sim.Time
+        GRAPE_done = 0;
         title(sprintf('Time: %0.2f s', Time));
         
         % Generate Vehicles
@@ -93,8 +90,8 @@ for Iteration = 1:Simulation.Setting.Datasets
         end
 
         % Call GRAPE_instance every cycle_GRAPE seconds.
-        cycle_GRAPE = 5;
-        if mod(Time, cycle_GRAPE) == cycle_GRAPE-1 
+        cycle_GRAPE = 50;
+        if mod(Time, cycle_GRAPE) == 5
             disp("calling Grape Instance. . . | "+ Time);
 
             % a_location 생성
@@ -117,16 +114,16 @@ for Iteration = 1:Simulation.Setting.Datasets
             environment.a_location = a_location;
             environment.t_demand = t_demand;
             
-            %try
+            try
                 GRAPE_output = GRAPE_instance(environment);
                 % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
                 lane_alloc = GRAPE_output.Alloc;
                 % lane_alloc = [1,2];
                 GRAPE_done = 1;
 
-            %catch ME
+            catch ME
                 
-            %end
+            end
 
         end
     
