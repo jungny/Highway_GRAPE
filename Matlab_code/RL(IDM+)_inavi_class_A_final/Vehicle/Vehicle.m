@@ -14,6 +14,8 @@ classdef Vehicle < handle
         Data
         %Reward
         Destination
+        TargetLane
+        LaneChangeFlag
     end
 
     properties(Hidden = false) % Properties
@@ -52,23 +54,29 @@ classdef Vehicle < handle
     
     methods
         function obj = Vehicle(Seed,Time,Parameter)
-            obj.Index = [1 2 3 4 1 2 3 4];
+            % obj.Index = [1 2 3 4 1 2 3 4];
             obj.ID = Seed(1);
             obj.Agent = Seed(5);
             obj.EntryTime = Time;
             obj.Lane = Seed(3);
-            if Seed(4) == 1
-                obj.Destination = obj.Index(obj.Lane+2);
-                obj.Trajectory = [Parameter.Trajectory.Source{obj.Lane} Parameter.Trajectory.Through{obj.Lane} Parameter.Trajectory.Sink{obj.Lane}];
-            elseif Seed(4) == 2
-                obj.Destination = obj.Index(obj.Lane+3);
-                obj.Trajectory = [Parameter.Trajectory.Source{obj.Lane} Parameter.Trajectory.Left{obj.Lane} Parameter.Trajectory.Sink{obj.Index(obj.Lane+1)}];
-            elseif Seed(4) == 3
-                obj.Destination = obj.Index(obj.Lane+1);
-                obj.Trajectory = [Parameter.Trajectory.Source{obj.Lane} Parameter.Trajectory.Right{obj.Lane} Parameter.Trajectory.Sink{obj.Index(obj.Lane+3)}];
-            end
-            obj.EnterControl = size(Parameter.Trajectory.Source{obj.Lane},2);
-            obj.ExitControl = size(obj.Trajectory,2) - size(Parameter.Trajectory.Sink{obj.Lane},2);
+
+            % 고속도로에서는 방향(Destination) 관련 로직 불필요
+            % 경로(Trajectory) 설정: 출발점(Source) → 도착점(Sink)
+            obj.Trajectory = [Parameter.Trajectory.Source{obj.Lane}, ...
+            Parameter.Trajectory.Sink{obj.Lane}];
+
+            % if Seed(4) == 1 % 직진 - 여기만 실행
+            %     obj.Destination = obj.Index(obj.Lane+2);
+            %     obj.Trajectory = [Parameter.Trajectory.Source{obj.Lane} Parameter.Trajectory.Through{obj.Lane} Parameter.Trajectory.Sink{obj.Lane}];
+            % elseif Seed(4) == 2 % 좌회전 - 안쓰임
+            %     obj.Destination = obj.Index(obj.Lane+3);
+            %     obj.Trajectory = [Parameter.Trajectory.Source{obj.Lane} Parameter.Trajectory.Left{obj.Lane} Parameter.Trajectory.Sink{obj.Index(obj.Lane+1)}];
+            % elseif Seed(4) == 3 % 우회전 - 안쓰임
+            %     obj.Destination = obj.Index(obj.Lane+1);
+            %     obj.Trajectory = [Parameter.Trajectory.Source{obj.Lane} Parameter.Trajectory.Right{obj.Lane} Parameter.Trajectory.Sink{obj.Index(obj.Lane+3)}];
+            % end
+            % obj.EnterControl = size(Parameter.Trajectory.Source{obj.Lane},2);
+            % obj.ExitControl = size(obj.Trajectory,2) - size(Parameter.Trajectory.Sink{obj.Lane},2);
 
             obj.Object = hgtransform;
             obj.Size(1,:) = [Parameter.Veh.Size(1)-Parameter.Veh.Size(3) -Parameter.Veh.Size(3) -Parameter.Veh.Size(3) Parameter.Veh.Size(1)-Parameter.Veh.Size(3)];
@@ -95,7 +103,14 @@ classdef Vehicle < handle
             obj.Data = GetObservation(obj);
         end
 
-        function MoveVehicle(obj,Time)
+        function MoveVehicle(obj,Time,Parameter)
+            if obj.LaneChangeFlag == 1
+                % change lane to obj.TargetLane
+                new_y = (Parameter.Map.Lane-obj.TargetLane+0.5)*Parameter.Map.Tile;
+                obj.Trajectory(2, :) = linspace(obj.Trajectory(2, obj.Location), new_y, size(obj.Trajectory, 2));
+                obj.LaneChangeFlag = [];
+            end
+
             [nextVelocity,nextLocation] = GetDynamics(obj);
             obj.Data = GetObservation(obj);
             if nextLocation > size(obj.Trajectory,2)

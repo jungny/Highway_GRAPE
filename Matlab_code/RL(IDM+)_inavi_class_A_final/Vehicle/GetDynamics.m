@@ -10,6 +10,10 @@ function [nextVelocity,nextLocation] = GetDynamics(obj,ghostAcceleration,ghostVe
         Acceleration = obj.Acceleration;
     end
 
+    if isempty(Acceleration)
+        Acceleration = 0; % 빈 값이면 가속도를 0으로 설정
+    end
+
 
 
     if Velocity + obj.TimeStep*Acceleration > obj.Parameter.MaxVel
