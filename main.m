@@ -36,7 +36,7 @@ Data = cell(Simulation.Setting.Datasets,2);
 
 if Simulation.Setting.Record == 1
     timestamp = datestr(now, 'yymmdd_HH-MM-SS');
-    videoFilename = fullfile('C:\Users\user\Desktop\241119_1129\SimResults', ['1_MVP_' timestamp '.mp4']);
+    videoFilename = fullfile('C:\Users\user\Desktop\241119_1129\SimResults', ['v1_' timestamp '.mp4']);
     videoWriter = VideoWriter(videoFilename, 'MPEG-4');
     videoWriter.FrameRate = 30; 
     open(videoWriter);
@@ -90,7 +90,7 @@ for Iteration = 1:Simulation.Setting.Datasets
         end
 
         % Call GRAPE_instance every cycle_GRAPE seconds.
-        cycle_GRAPE = 5;
+        cycle_GRAPE = 10;
         if mod(Time, cycle_GRAPE) == cycle_GRAPE-1
             disp("calling Grape Instance. . . | "+ Time);
 
@@ -241,7 +241,6 @@ for Iteration = 1:Simulation.Setting.Datasets
 
 end
 
-% 비디오 저장 종료
 if Simulation.Setting.Record == 1
     close(videoWriter);
     disp(['Simulation video saved to: ', videoFilename]);
