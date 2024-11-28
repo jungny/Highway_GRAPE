@@ -35,7 +35,7 @@ function P = GetParameters(Setting)
         P.Veh.State.Rejected = 1;
         P.Veh.State.Reserved = 2;
         P.Veh.State.Signal = 3;
-    P.Veh.Safety = 7; % Original: 2
+    P.Veh.Safety = 5; % Original: 2
     P.Veh.Headway = 1.6; % Original: 1.6
     P.Veh.Exp = 2; %4
 
