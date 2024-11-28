@@ -36,13 +36,13 @@ Data = cell(Simulation.Setting.Datasets,2);
 
 if Simulation.Setting.Record == 1
     timestamp = datestr(now, 'yymmdd_HH-MM-SS');
-    videoFilename = fullfile('C:\Users\user\Desktop\241119_1129\SimResults', ['1_MVP_' timestamp '.mp4']); % 경로 수정 가능
+    videoFilename = fullfile('C:\Users\user\Desktop\241119_1129\SimResults', ['1_MVP_' timestamp '.mp4']);
     videoWriter = VideoWriter(videoFilename, 'MPEG-4');
-    videoWriter.FrameRate = 30; % 프레임 속도 설정 (10 FPS)
+    videoWriter.FrameRate = 30; 
     open(videoWriter);
 end
 
-Receive_V2V_check = false(Simulation.Setting.Vehicles, 1); % 3대 맞춤으로 되어있던것 수정함 아래도 동일
+Receive_V2V_check = false(Simulation.Setting.Vehicles, 1);
 V2V_cancel = false(Simulation.Setting.Vehicles, 1); 
 
 environment = struct();
@@ -90,8 +90,8 @@ for Iteration = 1:Simulation.Setting.Datasets
         end
 
         % Call GRAPE_instance every cycle_GRAPE seconds.
-        cycle_GRAPE = 50;
-        if mod(Time, cycle_GRAPE) == 5
+        cycle_GRAPE = 5;
+        if mod(Time, cycle_GRAPE) == cycle_GRAPE-1
             disp("calling Grape Instance. . . | "+ Time);
 
             % a_location 생성
@@ -175,13 +175,13 @@ for Iteration = 1:Simulation.Setting.Datasets
         % Move Vehicle
         for i = 1:size(List.Vehicle.Active,1)
             if GRAPE_done == 1
-                vehicle_id = List.Vehicle.Active(i, 1); % 현재 차량 ID
-                current_lane = List.Vehicle.Object{vehicle_id}.Lane; % 차량의 현재 차선
-                desired_lane = lane_alloc(i); % lane_alloc에서 할당된 목표 차선
+                vehicle_id = List.Vehicle.Active(i, 1); 
+                current_lane = List.Vehicle.Object{vehicle_id}.Lane; 
+                desired_lane = lane_alloc(i);
             
-                if current_lane ~= desired_lane % 현재 차선과 다를 경우
-                    List.Vehicle.Object{vehicle_id}.TargetLane = desired_lane; % 목표 차선 설정
-                    List.Vehicle.Object{vehicle_id}.LaneChangeFlag = 1; % 차선 변경 플래그 활성화
+                if current_lane ~= desired_lane 
+                    List.Vehicle.Object{vehicle_id}.TargetLane = desired_lane;
+                    List.Vehicle.Object{vehicle_id}.LaneChangeFlag = 1; 
                 end
             end
             MoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)},Time,Parameter)
@@ -206,11 +206,10 @@ for Iteration = 1:Simulation.Setting.Datasets
             drawnow();
             pause(0.01)
             
-            % 프레임을 동영상에 저장
             if Simulation.Setting.Record == 1 && mod(int32(Time/Parameter.Physics), 2) == 0
-                frame = getframe(gcf); % 현재 Figure의 프레임 캡처
+                frame = getframe(gcf); 
                 % frame.cdata = imresize(frame.cdata, 0.5);
-                writeVideo(videoWriter, frame); % 비디오에 프레임 추가
+                writeVideo(videoWriter, frame); 
             end
         end
         if isempty(Seed.Vehicle)
