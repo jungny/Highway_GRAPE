@@ -137,8 +137,7 @@
 % flag_problem = output.flag_problem; % If the result has a problem, then 1. 
 
 
-% %% Minimum-guaranteed Global Utility (Theorem 3)
-% Minimum_Guaranteed_Optimality;
+
 
 function G = GRAPE_instance(environment)
     G.t_demand = environment.t_demand;
@@ -179,4 +178,13 @@ function G = GRAPE_instance(environment)
     G.iteration = output.iteration;
     G.flag_problem = output.flag_problem; % If the result has a problem, then 1. 
 
+    Alloc = output.Alloc;
+    a_utility = output.a_utility;
+    iteration = output.iteration;
+    flag_problem = output.flag_problem;
+
+    %% Minimum-guaranteed Global Utility (Theorem 3)
+    Minimum_Guaranteed_Optimality;
+
 end
+
