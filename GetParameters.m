@@ -17,12 +17,13 @@ function P = GetParameters(Setting)
     P.Map.Color.Grass = '#B5E3AB';
 
     P.Map.Scale = 0.01;
-    P.Map.Lane = 2;
+    P.Map.Lane = 3;
     P.Map.Tile = 4;
     P.Map.Road = 400;
     P.Map.Margin = 10;
     P.Map.Stop = 6;
     P.Map.Center = [0;0];
+    P.Map.Exit = [280, 350];
 
     % Vehicle
     P.Veh.MaxVel = 10; % Original: 10

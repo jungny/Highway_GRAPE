@@ -8,6 +8,7 @@ function DataList = UpdateData(ObjectList,DataSize)
             DataList(i,3) = ObjectList{i}.Lane;
             DataList(i,4) = ObjectList{i}.Location;
             DataList(i,5) = ObjectList{i}.Velocity;
+            DataList(i,6) = ObjectList{i}.Exit;
         end
     end
     

@@ -4,6 +4,7 @@ classdef Vehicle < handle
         ID
         Lane
         Agent
+        Exit
     end
 
     properties % Data
@@ -59,6 +60,7 @@ classdef Vehicle < handle
             obj.Agent = Seed(5);
             obj.EntryTime = Time;
             obj.Lane = Seed(3);
+            obj.Exit = Seed(6);
 
             % 고속도로에서는 방향(Destination) 관련 로직 불필요
             % 경로(Trajectory) 설정: 출발점(Source) → 도착점(Sink)
