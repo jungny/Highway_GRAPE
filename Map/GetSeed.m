@@ -33,6 +33,7 @@ function Seed = GetSeed(Settings,Parameter,Iteration)
         % Seed(3,:) = [1, 1];
         % Seed(3,:) = [1, 1, 1, 2, 2, 2];
         Seed(3,:) = randi([1,Parameter.Map.Lane],[1,TotalVehicles]);
+        
 
         % Direction: 두 차량 모두 직진(1)
         Seed(4,:) = ones(1,TotalVehicles);
@@ -42,6 +43,7 @@ function Seed = GetSeed(Settings,Parameter,Iteration)
 
         % Exit: Parameter의 Map.Exit 중 하나를 부여
         Seed(6,:) = Parameter.Map.Exit(randi(length(Parameter.Map.Exit), 1, TotalVehicles));
+        Seed(6,:) = [380, 240, 380, 240, 240, 380];
 
         Seed = sortrows(Seed',2)';        
 

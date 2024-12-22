@@ -200,24 +200,32 @@ end
 %% Last Check: If Alloc is consensused?
 a_utility = zeros(n,1);
 output.flag_problem = 0;
-for i=1:n
-    if i==1
-    Alloc_1 = agent(i).Alloc;
-    iteration_1 = agent(i).iteration;
-    time_stamp_1 = agent(i).time_stamp;
-    else
-        Alloc = agent(i).Alloc;        
-        iteration = agent(i).iteration;
-        time_stamp = agent(i).time_stamp;
-        
-        if (sum(Alloc_1 == Alloc) == n)&&(iteration_1 == iteration)&&(time_stamp_1 == time_stamp)
-            % Consensus OK
+
+if n==1
+    Alloc = agent(1).Alloc;
+    iteration = agent(1).iteration;
+    time_stamp = agent(1).time_stamp;
+    a_utility(1) = agent(1).util;
+else
+    for i=1:n
+        if i==1
+        Alloc_1 = agent(i).Alloc;
+        iteration_1 = agent(i).iteration;
+        time_stamp_1 = agent(i).time_stamp;
         else
-            disp(['Problem: Non Consensus with Agent#1 and Agent#',num2str(i)]);
-            output.flag_problem = 1;
-        end        
+            Alloc = agent(i).Alloc;        
+            iteration = agent(i).iteration;
+            time_stamp = agent(i).time_stamp;
+            
+            if (sum(Alloc_1 == Alloc) == n)&&(iteration_1 == iteration)&&(time_stamp_1 == time_stamp)
+                % Consensus OK
+            else
+                disp(['Problem: Non Consensus with Agent#1 and Agent#',num2str(i)]);
+                output.flag_problem = 1;
+            end        
+        end
+        a_utility(i) = agent(i).util;
     end
-    a_utility(i) = agent(i).util;
 end
 
 
