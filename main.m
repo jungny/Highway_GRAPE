@@ -12,7 +12,7 @@ Simulation.Setting.Mode = 3;
     % 2: Evaluation
     % 3: Highway
 
-Simulation.Setting.Vehicles = 6;
+Simulation.Setting.Vehicles = 14;
 cycle_GRAPE = 5;
 Simulation.Setting.Time = 500;
 Simulation.Setting.Datasets = 1;
@@ -37,8 +37,8 @@ Data = cell(Simulation.Setting.Datasets,2);
 if Simulation.Setting.Record == 1
     timestamp = datestr(now, 'yymmdd_HH-MM-SS');
 
-    videoFilename = fullfile('C:\Users\user\Desktop\241119_1129\SimResults', ...
-    ['v1_a' num2str(Simulation.Setting.Vehicles) '_t' num2str(Parameter.Map.Lane) '_' timestamp '.mp4']);
+    videoFilename = fullfile('C:\Users\user\Desktop\241129_1223\SimResults', ...
+    ['v2_no_c_v' num2str(Simulation.Setting.Vehicles) '_t' num2str(Parameter.Map.Lane) '_' timestamp '.mp4']);
 
     videoWriter = VideoWriter(videoFilename, 'MPEG-4');
     videoWriter.FrameRate = 30; 
@@ -144,7 +144,7 @@ for Iteration = 1:Simulation.Setting.Datasets
                 % t_demand에 반영
                 for lane = 1:Parameter.Map.Lane
                     normalized_weights(lane) = floor(weights(lane)*100)/100;
-                    t_demand(lane, i) = normalized_weights(lane);  % 100을 곱해 비율 유지
+                    t_demand(lane, i) = size(List.Vehicle.Active, 1)*normalized_weights(lane);  % vehicle 수 곱해 비율 유지
                 end
             end
             
@@ -164,7 +164,6 @@ for Iteration = 1:Simulation.Setting.Datasets
             environment.Alloc_current = Alloc_current;
 
             GRAPE_output = GRAPE_instance(environment);
-            % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
             lane_alloc = GRAPE_output.Alloc;
             GRAPE_done = 1;
             
