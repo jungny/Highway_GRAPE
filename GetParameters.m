@@ -1,5 +1,6 @@
 function P = GetParameters(Setting)
     
+    P.ExitThreshold = 50;
     P.Physics = 0.1;
     P.Control = 0.1;
     
@@ -17,12 +18,13 @@ function P = GetParameters(Setting)
     P.Map.Color.Grass = '#B5E3AB';
 
     P.Map.Scale = 0.01;
-    P.Map.Lane = 2;
+    P.Map.Lane = 3;
     P.Map.Tile = 4;
     P.Map.Road = 400;
     P.Map.Margin = 10;
     P.Map.Stop = 6;
     P.Map.Center = [0;0];
+    P.Map.Exit = [240, 380];
 
     % Vehicle
     P.Veh.MaxVel = 10; % Original: 10
@@ -38,6 +40,7 @@ function P = GetParameters(Setting)
     P.Veh.Safety = 5; % Original: 2
     P.Veh.Headway = 1.6; % Original: 1.6
     P.Veh.Exp = 2; %4
+    P.Veh.SafeDistance = 9;
 
     % Signal
     P.Sig = 0;

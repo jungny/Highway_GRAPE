@@ -22,8 +22,8 @@ function SetMap(Map, Setting)
           'FaceColor', Map.Color.Road, 'EdgeColor', 'none');
 
     % Exit 도로 추가
-    for i = 1:length(Setting.Exit)
-        ExitStart = Setting.Exit(i); % Exit 시작 위치
+    for i = 1:length(Map.Exit)
+        ExitStart = Map.Exit(i); % Exit 시작 위치
         ExitLaneStart = 0; % Exit은 제일 아래 차선에서 시작
         LaneWidth = Width / Map.Lane; % 차선 너비
         RectWidth = 20; % Exit 직사각형의 너비

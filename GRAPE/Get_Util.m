@@ -9,7 +9,7 @@ function [util_value] = Get_Util(agent_id, task_id, n_participants, environment)
 
 a_location = environment.a_location;
 t_location = environment.t_location;
-t_demand = environment.t_demand;
+t_demand = environment.t_demand(:,agent_id);
 %global a_location t_location t_demand table_rand_util
 
 %% Setting Utility Type
@@ -25,8 +25,8 @@ switch Util_type
     case 'Test'
         % Cost 
         cost = abs(t_location(task_id, 2)- a_location(agent_id, 2)); % y coordinate difference
-        util_value = t_demand(task_id)/n_participants - cost;
-    
+        %util_value = t_demand(task_id)/n_participants;
+        util_value = t_demand(task_id)/n_participants - cost/20;
     case 'Peaked_reward'
         % Cost
         cost = 1*norm(t_location(task_id,:)-a_location(agent_id,:));

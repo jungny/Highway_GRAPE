@@ -185,7 +185,9 @@ function G = GRAPE_instance(environment)
     flag_problem = output.flag_problem;
 
     %% Minimum-guaranteed Global Utility (Theorem 3)
-    Minimum_Guaranteed_Optimality;
+    if n>1
+        Minimum_Guaranteed_Optimality;
+    end
 
 end
 

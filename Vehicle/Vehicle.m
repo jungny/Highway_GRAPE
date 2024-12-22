@@ -4,6 +4,7 @@ classdef Vehicle < handle
         ID
         Lane
         Agent
+        Exit
     end
 
     properties % Data
@@ -35,11 +36,13 @@ classdef Vehicle < handle
         Location
         Velocity
         Acceleration
+        ExitState
     end
 
     properties(Hidden = true) % Control
         EnterControl
         ExitControl
+        Text
     end
 
     properties(Hidden = true) % Reservation
@@ -59,6 +62,8 @@ classdef Vehicle < handle
             obj.Agent = Seed(5);
             obj.EntryTime = Time;
             obj.Lane = Seed(3);
+            obj.Exit = Seed(6);
+            obj.ExitState = -1;
 
             % 고속도로에서는 방향(Destination) 관련 로직 불필요
             % 경로(Trajectory) 설정: 출발점(Source) → 도착점(Sink)
@@ -90,6 +95,21 @@ classdef Vehicle < handle
             else
                 obj.Patch = patch('XData',obj.Size(1,:),'YData',obj.Size(2,:),'FaceColor','#FFF38C','Parent',obj.Object);
             end
+
+            x_center = mean(obj.Size(1,:));
+            y_center = mean(obj.Size(2,:));
+            exit_index = find(Parameter.Map.Exit == obj.Exit, 1);
+            if isempty(exit_index)
+                exit_index = -1;
+            end
+
+            obj.Text = text(x_center+3, y_center+0.1, sprintf('%d   %d', obj.ID, exit_index), ...
+                'HorizontalAlignment', 'center', ...
+                'VerticalAlignment', 'middle', ...
+                'Parent', obj.Object, ...
+                'FontSize', 9, 'Color', 'black');
+
+
             obj.Parameter = Parameter.Veh;
             obj.TimeStep = Parameter.Physics;
             obj.DistanceStep = 1/Parameter.Map.Scale;
@@ -105,10 +125,114 @@ classdef Vehicle < handle
             obj.Data = GetObservation(obj);
         end
 
-        function MoveVehicle(obj,Time,Parameter)
+        function feasible = CheckLaneChangeFeasibility(obj, targetLane, List, Parameter)
+            % 현재 차량 위치와 목표 차선의 선행/후행 차량 간 거리 계산
+            feasible = false;  % 기본값: 변경 불가
+            current_x = obj.Location * Parameter.Map.Scale;  % 현재 차량의 x 좌표
+            lane_vehicles = List.Vehicle.Active(List.Vehicle.Active(:,3) == targetLane, :);  % 목표 차선의 차량
+        
+            % 목표 차선의 선행/후행 차량 찾기
+            distances = lane_vehicles(:,4)*Parameter.Map.Scale - current_x;
+            front_distances = distances(distances > 0);
+            rear_distances = distances(distances < 0);
+        
+            % 안전 거리 조건
+            safe_distance = Parameter.Veh.SafeDistance;
+            if isempty(front_distances) || min(front_distances) > safe_distance
+                if isempty(rear_distances) || abs(max(rear_distances)) > safe_distance
+                    feasible = true;  % 선행/후행 모두 안전 거리 만족
+                end
+            end
+        end
+        
+        function [front_vehicle, front_distance] = GetFrontVehicle(obj, List, Parameter)
+            % 현재 차선의 선행 차량 찾기
+            current_x = obj.Location * Parameter.Map.Scale;
+        
+            % 목표 차선의 차량 필터링
+            lane_vehicles = List.Vehicle.Active(List.Vehicle.Active(:,3) == obj.TargetLane, :);
+        
+            % 모든 차량의 거리 계산
+            distances = lane_vehicles(:,4) * Parameter.Map.Scale - current_x;
+        
+            % 선행 차량 거리 필터링
+            front_distances = distances(distances > 0);
+        
+            % 초기화
+            front_vehicle = [];
+            front_distance = inf;
+        
+            if ~isempty(front_distances)
+                % 가장 가까운 선행 차량 거리와 인덱스 찾기
+                [front_distance, ~] = min(front_distances);
+        
+                % front_distances 값이 distances에서의 원래 인덱스 찾기
+                tolerance = 1e-6; % 부동소수점 오차 허용
+                original_idx = find(abs(distances - front_distance) < tolerance, 1, 'first');
+        
+                % 해당 인덱스의 차량 정보 추출
+                front_vehicle = lane_vehicles(original_idx, :);
+            end
+        end
+
+        
+        function [rear_vehicle, rear_distance] = GetRearVehicle(obj, List, Parameter)
+            % 현재 차선의 후행 차량 찾기
+            current_x = obj.Location * Parameter.Map.Scale;
+        
+            % 목표 차선 차량 필터링
+            lane_vehicles = List.Vehicle.Active(List.Vehicle.Active(:,3) == obj.TargetLane, :);
+        
+            % 모든 차량의 거리 계산
+            distances = lane_vehicles(:,4) * Parameter.Map.Scale - current_x;
+        
+            % 후행 차량 거리 필터링
+            rear_distances = distances(distances < 0);
+        
+            % 초기화
+            rear_vehicle = [];
+            rear_distance = inf;
+        
+            if ~isempty(rear_distances)
+                % rear_distances 값이 distances에서의 원래 인덱스 찾기
+                [rear_distance, ~] = max(rear_distances);
+                tolerance = 1e-6;
+                original_idx = find(abs(distances - rear_distance) < tolerance, 1, 'first'); % 동일 거리의 원래 인덱스
+        
+                % 해당 인덱스의 차량 정보 추출
+                rear_vehicle = lane_vehicles(original_idx, :);
+            end
+        end
+
+        
+
+        function MoveVehicle(obj,Time,Parameter,List)
             if obj.LaneChangeFlag == 1
+                if obj.Lane > obj.TargetLane
+                    % LaneChangeLeft = 1;
+                    targetLane = obj.Lane - 1;
+                elseif obj.Lane < obj.TargetLane
+                    % LaneChangeLeft = 0;
+                    targetLane = obj.Lane + 1;
+                end
+
+                if obj.CheckLaneChangeFeasibility(targetLane, List, Parameter)
+
+                else
+                    % 안전 거리를 만족하지 못하면 감속/가속
+                    [front_vehicle, front_distance] = GetFrontVehicle(obj, List, Parameter);
+                    [rear_vehicle, rear_distance] = GetRearVehicle(obj, List, Parameter);
+                    if ~isempty(front_vehicle) && front_distance < Parameter.Veh.SafeDistance
+                        obj.Velocity = max(obj.Velocity - obj.Parameter.Accel(1), 0);  % 감속
+                    elseif ~isempty(rear_vehicle) && abs(rear_distance) < Parameter.Veh.SafeDistance
+                        obj.Velocity = min(obj.Velocity + obj.Parameter.Accel(1), obj.Parameter.MaxVel);  % 가속
+                    else
+                        disp("error case!");
+                        % obj.CheckLaneChangeFeasibility(targetLane, List, Parameter);
+                    end
+                end
                 % change lane to obj.TargetLane
-                new_y = (Parameter.Map.Lane-obj.TargetLane+0.5)*Parameter.Map.Tile;
+                new_y = (Parameter.Map.Lane-targetLane+0.5)*Parameter.Map.Tile;
                 
                 change_steps = 3000; 
                 start_idx = obj.Location; 
@@ -123,8 +247,17 @@ classdef Vehicle < handle
                 end
 
                 obj.LaneChangeFlag = [];
-                obj.Lane = obj.TargetLane;
+                obj.Lane = targetLane;
+                obj.TargetLane = [];
                 
+            end
+
+            if ~isempty(obj.ExitState)
+                if obj.ExitState == 1
+                    set(obj.Patch, 'FaceColor', 'green');
+                elseif obj.ExitState == 0
+                    set(obj.Patch, 'FaceColor', '#6b6b6b');
+                end
             end
 
             [nextVelocity,nextLocation] = GetDynamics(obj);
@@ -143,6 +276,11 @@ classdef Vehicle < handle
                 obj.Object.Matrix(1:2,4) = obj.Trajectory(:,obj.Location);
                 obj.Object.Matrix(1:2,1:2) = GetRotation(obj);
             end
+
+            x_center = mean(obj.Size(1,:));
+            y_center = mean(obj.Size(2,:));
+            set(obj.Text, 'Position', [x_center+3, y_center+0.1]);
+
         end
 
 

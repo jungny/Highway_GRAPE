@@ -12,7 +12,7 @@ Simulation.Setting.Mode = 3;
     % 2: Evaluation
     % 3: Highway
 
-Simulation.Setting.Vehicles = 6;
+Simulation.Setting.Vehicles = 10;
 cycle_GRAPE = 5;
 Simulation.Setting.Time = 500;
 Simulation.Setting.Datasets = 1;
@@ -22,7 +22,6 @@ Simulation.Setting.Iterations(1,:) = 1:Simulation.Setting.Datasets;
 Simulation.Setting.Iterations(2,:) = Simulation.Setting.Agents*ones(1,Simulation.Setting.Datasets);
 Simulation.Setting.Iterations(3,:) = [ones(1,1)]; % 2*ones(1,300) 3*ones(1,300) 4*ones(1,300) 5*ones(1,300) 6*ones(1,300) 7*ones(1,300) 8*ones(1,300) 9*ones(1,300) 10*ones(1,300) 11*ones(1,300) 12*ones(1,300) 13*ones(1,300) 14*ones(1,300) 15*ones(1,300) 16*ones(1,300) 17*ones(1,300) 18*ones(1,300) 19*ones(1,300) 20*ones(1,300)];
 Simulation.Setting.Iterations(4,:) = randperm(1000000,Simulation.Setting.Datasets);
-Simulation.Setting.Exit = [380];
 Simulation.Setting.Record = 1;
     % 1: start recording
 
@@ -38,8 +37,8 @@ Data = cell(Simulation.Setting.Datasets,2);
 if Simulation.Setting.Record == 1
     timestamp = datestr(now, 'yymmdd_HH-MM-SS');
 
-    videoFilename = fullfile('C:\Users\user\Desktop\241119_1129\SimResults', ...
-    ['v1_a' num2str(Simulation.Setting.Vehicles) '_t' num2str(Parameter.Map.Lane) '_' timestamp '.mp4']);
+    videoFilename = fullfile('C:\Users\user\Desktop\241129_1223\SimResults', ...
+    ['revCA_v' num2str(Simulation.Setting.Vehicles) '_t' num2str(Parameter.Map.Lane) '_' timestamp '.mp4']);
 
     videoWriter = VideoWriter(videoFilename, 'MPEG-4');
     videoWriter.FrameRate = 30; 
@@ -99,7 +98,7 @@ for Iteration = 1:Simulation.Setting.Datasets
         List.Vehicle.Object = GetAcceleration(List.Vehicle.Object, List.Vehicle.Data, Parameter.Veh);
 
         % Call GRAPE_instance every cycle_GRAPE seconds.
-        if mod(Time, cycle_GRAPE) == cycle_GRAPE-1
+        if mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0
             disp("calling Grape Instance. . . | "+ Time);
 
             % a_location 생성
@@ -115,7 +114,42 @@ for Iteration = 1:Simulation.Setting.Datasets
             for i = 1:Parameter.Map.Lane
                 t_location(i, :) = [0, (Parameter.Map.Lane-i+0.5) * Parameter.Map.Tile];  % (x, y) 좌표로 정의 (x는 0으로 고정)
             end
-            t_demand = size(List.Vehicle.Active, 1) * 100 * ones(Parameter.Map.Lane, 1);
+
+            t_demand = zeros(Parameter.Map.Lane, size(List.Vehicle.Active,1));  
+            % t_demand(:) = 100*size(List.Vehicle.Active, 1);
+            
+            transition_distance = 150;
+            raw_weights = zeros(Parameter.Map.Lane,1);
+
+            for i = 1:size(List.Vehicle.Active, 1)
+                vehicle_id = List.Vehicle.Active(i, 1);  % 차량 ID
+                distance_to_exit = List.Vehicle.Object{vehicle_id}.Exit - ...
+                                   List.Vehicle.Object{vehicle_id}.Location * Parameter.Map.Scale;  % Exit까지 거리
+
+                % Case 1: Distance greater than transition distance (uniform weights)
+                if distance_to_exit > transition_distance
+                    weights = ones(Parameter.Map.Lane, 1) / Parameter.Map.Lane;  % 균일 분포
+                else
+                    % Case 2: Distance less than or equal to transition distance
+                    for lane = 1:Parameter.Map.Lane
+                        k = 5; % k 작을수록 lane별 더 극단적인 차이가 발생 
+                        % Weight increases as lane number increases
+                        raw_weights(lane) = exp(-(transition_distance - distance_to_exit) / (k * lane));
+                    end
+                    
+                    % Normalize weights to ensure they sum to 1
+                    weights = raw_weights / sum(raw_weights);
+                end
+            
+                % t_demand에 반영
+                for lane = 1:Parameter.Map.Lane
+                    normalized_weights(lane) = floor(weights(lane)*100)/100;
+                    t_demand(lane, i) = size(List.Vehicle.Active, 1)*normalized_weights(lane);  % vehicle 수 곱해 비율 유지
+                end
+            end
+            
+
+            % t_demand = size(List.Vehicle.Active, 1) * 100 * ones(Parameter.Map.Lane, 1);
 
             % Alloc_current 생성
             Alloc_current = [];
@@ -128,17 +162,20 @@ for Iteration = 1:Simulation.Setting.Datasets
             environment.a_location = a_location;
             environment.t_demand = t_demand;
             environment.Alloc_current = Alloc_current;
+
+            GRAPE_output = GRAPE_instance(environment);
+            lane_alloc = GRAPE_output.Alloc;
+            GRAPE_done = 1;
             
-            try
-                GRAPE_output = GRAPE_instance(environment);
-                % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
-                lane_alloc = GRAPE_output.Alloc;
-                GRAPE_done = 1;
+            %try
+            %    GRAPE_output = GRAPE_instance(environment);
+            %    % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
+            %    lane_alloc = GRAPE_output.Alloc;
+            %    GRAPE_done = 1;
 
-            catch ME
+            %catch ME
                 
-            end
-
+            %end
         end
     
         % Msg generate & receive
@@ -183,9 +220,10 @@ for Iteration = 1:Simulation.Setting.Datasets
     
         % Move Vehicle
         for i = 1:size(List.Vehicle.Active,1)
+            vehicle_id = List.Vehicle.Active(i, 1); 
+            current_lane = List.Vehicle.Object{vehicle_id}.Lane; 
+            
             if GRAPE_done == 1
-                vehicle_id = List.Vehicle.Active(i, 1); 
-                current_lane = List.Vehicle.Object{vehicle_id}.Lane; 
                 desired_lane = lane_alloc(i);
             
                 if current_lane ~= desired_lane 
@@ -193,12 +231,26 @@ for Iteration = 1:Simulation.Setting.Datasets
                     List.Vehicle.Object{vehicle_id}.LaneChangeFlag = 1; 
                 end
             end
-            MoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)},Time,Parameter)
+            
+            if List.Vehicle.Object{vehicle_id}.Exit - List.Vehicle.Object{vehicle_id}.Location * Parameter.Map.Scale <= Parameter.ExitThreshold 
+                if current_lane == Parameter.Map.Lane
+                    List.Vehicle.Object{vehicle_id}.ExitState = 1;
+                else
+                    List.Vehicle.Object{vehicle_id}.ExitState = 0;
+                end
+            end
+
+            MoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)},Time,Parameter,List)
         end
     
         % Remove Processed Vehicles
         for i = 1:size(List.Vehicle.Active,1)
             if List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location >= 40000 % exit으로 바꾸기
+                RemoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)})
+                List.Vehicle.Object{List.Vehicle.Active(i,1)} = [];
+            end
+
+            if List.Vehicle.Object{List.Vehicle.Active(i,1)}.ExitState >= 0 && List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location * Parameter.Map.Scale >= List.Vehicle.Object{List.Vehicle.Active(i,1)}.Exit - 5 
                 RemoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)})
                 List.Vehicle.Object{List.Vehicle.Active(i,1)} = [];
             end
