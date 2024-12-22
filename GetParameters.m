@@ -1,5 +1,6 @@
 function P = GetParameters(Setting)
     
+    P.ExitThreshold = 50;
     P.Physics = 0.1;
     P.Control = 0.1;
     
@@ -23,7 +24,7 @@ function P = GetParameters(Setting)
     P.Map.Margin = 10;
     P.Map.Stop = 6;
     P.Map.Center = [0;0];
-    P.Map.Exit = [280, 350];
+    P.Map.Exit = [240, 380];
 
     % Vehicle
     P.Veh.MaxVel = 10; % Original: 10

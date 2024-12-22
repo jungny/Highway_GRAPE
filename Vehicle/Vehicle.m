@@ -36,6 +36,7 @@ classdef Vehicle < handle
         Location
         Velocity
         Acceleration
+        ExitState
     end
 
     properties(Hidden = true) % Control
@@ -61,6 +62,7 @@ classdef Vehicle < handle
             obj.EntryTime = Time;
             obj.Lane = Seed(3);
             obj.Exit = Seed(6);
+            obj.ExitState = -1;
 
             % 고속도로에서는 방향(Destination) 관련 로직 불필요
             % 경로(Trajectory) 설정: 출발점(Source) → 도착점(Sink)
@@ -127,6 +129,14 @@ classdef Vehicle < handle
                 obj.LaneChangeFlag = [];
                 obj.Lane = obj.TargetLane;
                 
+            end
+
+            if ~isempty(obj.ExitState)
+                if obj.ExitState == 1
+                    set(obj.Patch, 'FaceColor', 'green');
+                elseif obj.ExitState == 0
+                    set(obj.Patch, 'FaceColor', '#6b6b6b');
+                end
             end
 
             [nextVelocity,nextLocation] = GetDynamics(obj);

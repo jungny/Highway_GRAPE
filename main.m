@@ -181,9 +181,10 @@ for Iteration = 1:Simulation.Setting.Datasets
     
         % Move Vehicle
         for i = 1:size(List.Vehicle.Active,1)
+            vehicle_id = List.Vehicle.Active(i, 1); 
+            current_lane = List.Vehicle.Object{vehicle_id}.Lane; 
+            
             if GRAPE_done == 1
-                vehicle_id = List.Vehicle.Active(i, 1); 
-                current_lane = List.Vehicle.Object{vehicle_id}.Lane; 
                 desired_lane = lane_alloc(i);
             
                 if current_lane ~= desired_lane 
@@ -191,12 +192,26 @@ for Iteration = 1:Simulation.Setting.Datasets
                     List.Vehicle.Object{vehicle_id}.LaneChangeFlag = 1; 
                 end
             end
+            
+            if List.Vehicle.Object{vehicle_id}.Exit - List.Vehicle.Object{vehicle_id}.Location * Parameter.Map.Scale <= Parameter.ExitThreshold 
+                if current_lane == Parameter.Map.Lane
+                    List.Vehicle.Object{vehicle_id}.ExitState = 1;
+                else
+                    List.Vehicle.Object{vehicle_id}.ExitState = 0;
+                end
+            end
+
             MoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)},Time,Parameter)
         end
     
         % Remove Processed Vehicles
         for i = 1:size(List.Vehicle.Active,1)
             if List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location >= 40000 % exit으로 바꾸기
+                RemoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)})
+                List.Vehicle.Object{List.Vehicle.Active(i,1)} = [];
+            end
+
+            if List.Vehicle.Object{List.Vehicle.Active(i,1)}.ExitState >= 0 && List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location * Parameter.Map.Scale >= List.Vehicle.Object{List.Vehicle.Active(i,1)}.Exit - 5 
                 RemoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)})
                 List.Vehicle.Object{List.Vehicle.Active(i,1)} = [];
             end

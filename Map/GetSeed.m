@@ -8,6 +8,7 @@ function Seed = GetSeed(Settings,Parameter,Iteration)
     % Direction: 1:Through 2:Left 3:Right
     % Agent: 1:Agent 0:Environment
     % Exit
+    % ExitState
     if Settings.Mode == 1
         Seed(1,:) = 1:TotalVehicles;        
         Seed(2,:) = ((randperm(21,TotalVehicles)-1)*Parameter.Physics);            
