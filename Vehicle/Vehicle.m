@@ -42,6 +42,7 @@ classdef Vehicle < handle
     properties(Hidden = true) % Control
         EnterControl
         ExitControl
+        Text
     end
 
     properties(Hidden = true) % Reservation
@@ -94,6 +95,21 @@ classdef Vehicle < handle
             else
                 obj.Patch = patch('XData',obj.Size(1,:),'YData',obj.Size(2,:),'FaceColor','#FFF38C','Parent',obj.Object);
             end
+
+            x_center = mean(obj.Size(1,:));
+            y_center = mean(obj.Size(2,:));
+            exit_index = find(Parameter.Map.Exit == obj.Exit, 1);
+            if isempty(exit_index)
+                exit_index = -1;
+            end
+
+            obj.Text = text(x_center, y_center+0.1, sprintf('%d', exit_index), ...
+                'HorizontalAlignment', 'center', ...
+                'VerticalAlignment', 'middle', ...
+                'Parent', obj.Object, ...
+                'FontSize', 9, 'Color', 'black');
+
+
             obj.Parameter = Parameter.Veh;
             obj.TimeStep = Parameter.Physics;
             obj.DistanceStep = 1/Parameter.Map.Scale;
@@ -155,6 +171,11 @@ classdef Vehicle < handle
                 obj.Object.Matrix(1:2,4) = obj.Trajectory(:,obj.Location);
                 obj.Object.Matrix(1:2,1:2) = GetRotation(obj);
             end
+
+            x_center = mean(obj.Size(1,:));
+            y_center = mean(obj.Size(2,:));
+            set(obj.Text, 'Position', [x_center, y_center+0.1]);
+
         end
 
 
