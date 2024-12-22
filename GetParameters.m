@@ -40,6 +40,7 @@ function P = GetParameters(Setting)
     P.Veh.Safety = 5; % Original: 2
     P.Veh.Headway = 1.6; % Original: 1.6
     P.Veh.Exp = 2; %4
+    P.Veh.SafeDistance = 9;
 
     % Signal
     P.Sig = 0;

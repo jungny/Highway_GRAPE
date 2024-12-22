@@ -22,7 +22,7 @@ Simulation.Setting.Iterations(1,:) = 1:Simulation.Setting.Datasets;
 Simulation.Setting.Iterations(2,:) = Simulation.Setting.Agents*ones(1,Simulation.Setting.Datasets);
 Simulation.Setting.Iterations(3,:) = [ones(1,1)]; % 2*ones(1,300) 3*ones(1,300) 4*ones(1,300) 5*ones(1,300) 6*ones(1,300) 7*ones(1,300) 8*ones(1,300) 9*ones(1,300) 10*ones(1,300) 11*ones(1,300) 12*ones(1,300) 13*ones(1,300) 14*ones(1,300) 15*ones(1,300) 16*ones(1,300) 17*ones(1,300) 18*ones(1,300) 19*ones(1,300) 20*ones(1,300)];
 Simulation.Setting.Iterations(4,:) = randperm(1000000,Simulation.Setting.Datasets);
-Simulation.Setting.Record = 0;
+Simulation.Setting.Record = 1;
     % 1: start recording
 
 %% Set Simulation Parameters
@@ -38,7 +38,7 @@ if Simulation.Setting.Record == 1
     timestamp = datestr(now, 'yymmdd_HH-MM-SS');
 
     videoFilename = fullfile('C:\Users\user\Desktop\241129_1223\SimResults', ...
-    ['v2_v' num2str(Simulation.Setting.Vehicles) '_t' num2str(Parameter.Map.Lane) '_' timestamp '.mp4']);
+    ['revCA_v' num2str(Simulation.Setting.Vehicles) '_t' num2str(Parameter.Map.Lane) '_' timestamp '.mp4']);
 
     videoWriter = VideoWriter(videoFilename, 'MPEG-4');
     videoWriter.FrameRate = 30; 
@@ -118,7 +118,7 @@ for Iteration = 1:Simulation.Setting.Datasets
             t_demand = zeros(Parameter.Map.Lane, size(List.Vehicle.Active,1));  
             % t_demand(:) = 100*size(List.Vehicle.Active, 1);
             
-            transition_distance = 100;
+            transition_distance = 150;
             raw_weights = zeros(Parameter.Map.Lane,1);
 
             for i = 1:size(List.Vehicle.Active, 1)
@@ -240,7 +240,7 @@ for Iteration = 1:Simulation.Setting.Datasets
                 end
             end
 
-            MoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)},Time,Parameter)
+            MoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)},Time,Parameter,List)
         end
     
         % Remove Processed Vehicles

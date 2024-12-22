@@ -26,14 +26,15 @@ function Seed = GetSeed(Settings,Parameter,Iteration)
         Seed(1,:) = 1:TotalVehicles;
         
         % Spawn Time: (  )초 간격으로 설정
-        Seed(2,:) = [0, 1.5, 3.5, 6, 8, 11, 14, 15.5, 16.3, 19];
+        Seed(2,:) = [0, 1.5, 1, 3, 5, 4.3, 7, 8, 8.2, 9];
         %Seed(2,:) = ((randperm(21,TotalVehicles)-1)*Parameter.Physics);
 
         % Spawn Lane: 두 차량 모두 1차선
         % Seed(3,:) = [1, 1];
         % Seed(3,:) = [1, 1, 1, 2, 2, 2];
         %Seed(3,:) = randi([1,Parameter.Map.Lane],[1,TotalVehicles]);
-        Seed(3,:) = [2,3,2,1,2,1,3,3,2,3];
+        % good example Seed(3,:) = [2,3,2,1,2,1,3,3,2,3];
+        Seed(3,:) = [2,1,2,1,1,3,1,3,2,3];
 
         % Direction: 두 차량 모두 직진(1)
         Seed(4,:) = ones(1,TotalVehicles);
