@@ -12,7 +12,7 @@ Simulation.Setting.Mode = 3;
     % 2: Evaluation
     % 3: Highway
 
-Simulation.Setting.Vehicles = 14;
+Simulation.Setting.Vehicles = 10;
 cycle_GRAPE = 5;
 Simulation.Setting.Time = 500;
 Simulation.Setting.Datasets = 1;
@@ -38,7 +38,7 @@ if Simulation.Setting.Record == 1
     timestamp = datestr(now, 'yymmdd_HH-MM-SS');
 
     videoFilename = fullfile('C:\Users\user\Desktop\241129_1223\SimResults', ...
-    ['v2_no_c_v' num2str(Simulation.Setting.Vehicles) '_t' num2str(Parameter.Map.Lane) '_' timestamp '.mp4']);
+    ['v2_v' num2str(Simulation.Setting.Vehicles) '_t' num2str(Parameter.Map.Lane) '_' timestamp '.mp4']);
 
     videoWriter = VideoWriter(videoFilename, 'MPEG-4');
     videoWriter.FrameRate = 30; 
@@ -98,7 +98,7 @@ for Iteration = 1:Simulation.Setting.Datasets
         List.Vehicle.Object = GetAcceleration(List.Vehicle.Object, List.Vehicle.Data, Parameter.Veh);
 
         % Call GRAPE_instance every cycle_GRAPE seconds.
-        if mod(Time, cycle_GRAPE) == cycle_GRAPE-1
+        if mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0
             disp("calling Grape Instance. . . | "+ Time);
 
             % a_location 생성

@@ -230,7 +230,7 @@ end
 
 
 %% Interface (Output)
-
+% disp(Alloc);
 output.Alloc = Alloc;
 output.a_utility = a_utility;
 output.iteration = iteration;
