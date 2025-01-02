@@ -17,6 +17,7 @@ classdef Vehicle < handle
         Destination
         TargetLane
         LaneChangeFlag
+        PolitenessFactor
     end
 
     properties(Hidden = false) % Properties
@@ -64,6 +65,7 @@ classdef Vehicle < handle
             obj.Lane = Seed(3);
             obj.Exit = Seed(6);
             obj.ExitState = -1;
+            obj.PolitenessFactor = Seed(7);
 
             % 고속도로에서는 방향(Destination) 관련 로직 불필요
             % 경로(Trajectory) 설정: 출발점(Source) → 도착점(Sink)
@@ -144,7 +146,7 @@ classdef Vehicle < handle
                 end
             end
         end
-        
+
         function [front_vehicle, front_distance] = GetFrontVehicle(obj, targetLane, List, Parameter)
             % 현재 차선의 선행 차량 찾기
             current_x = obj.Location * Parameter.Map.Scale;
@@ -234,25 +236,20 @@ classdef Vehicle < handle
 
         function MoveVehicle(obj,Time,Parameter,List)
             if obj.LaneChangeFlag == 1
-                if obj.Lane > obj.TargetLane
-                    % LaneChangeLeft = 1;
-                    targetLane = obj.Lane - 1;
-                elseif obj.Lane < obj.TargetLane
-                    % LaneChangeLeft = 0;
-                    targetLane = obj.Lane + 1;
-                end
 
-                if  ~obj.CheckLaneChangeFeasibility(targetLane, List, Parameter)
-                    [~, ~, QuitFlag, objVelocity] = LaneChangeWhenNoFeasible(obj,targetLane,Parameter,List);
-                    if QuitFlag
-                        disp('this never happens but added for just in case');
-                    else
-                        obj.Velocity = objVelocity;
-                    end
+                targetLane = obj.TargetLane;
+
+                % if  ~obj.CheckLaneChangeFeasibility(targetLane, List, Parameter)
+                %     [~, ~, QuitFlag, objVelocity] = LaneChangeWhenNoFeasible(obj,targetLane,Parameter,List);
+                %     if QuitFlag
+                %         disp('this never happens but added for just in case');
+                %     else
+                %         obj.Velocity = objVelocity;
+                %     end
                     
-                else
+                % else
                     
-                end
+                % end
                 % change lane to obj.TargetLane
                 new_y = (Parameter.Map.Lane-targetLane+0.5)*Parameter.Map.Tile;
                 

@@ -1,7 +1,7 @@
 function Seed = GetSeed(Settings,Parameter,Iteration)
     
     TotalVehicles = Settings.Vehicles;
-    Seed = zeros(6,TotalVehicles);
+    Seed = zeros(7,TotalVehicles);
     % Vehicle ID
     % Spawn Time
     % Spawn Lane
@@ -9,6 +9,7 @@ function Seed = GetSeed(Settings,Parameter,Iteration)
     % Agent: 1:Agent 0:Environment
     % Exit
     % ExitState
+    % Politeness Factor
     if Settings.Mode == 1
         Seed(1,:) = 1:TotalVehicles;        
         Seed(2,:) = ((randperm(21,TotalVehicles)-1)*Parameter.Physics);            
@@ -45,6 +46,12 @@ function Seed = GetSeed(Settings,Parameter,Iteration)
         % Exit: Parameter의 Map.Exit 중 하나를 부여
         %Seed(6,:) = Parameter.Map.Exit(randi(length(Parameter.Map.Exit), 1, TotalVehicles));
         Seed(6,:) = [380, 240, 240, 380, 240, 240, 380, 240, 380, 380];
+
+        % Politeness Factor: degree of altruism
+        % 0: selfish lane-hoppers
+        % p>1: altruistic drivers who do not change if that woule deteriorate
+        %      the overall traffic situation considering the followers, while they ...
+        Seed(7,:) = 0*ones(1,TotalVehicles);
 
         Seed = sortrows(Seed',2)';        
 

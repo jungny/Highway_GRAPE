@@ -1,7 +1,7 @@
 function P = GetParameters(Setting)
     
     P.ExitThreshold = 50;
-    P.Physics = 0.1;
+    P.Physics = 0.1; % 한 시뮬레이션 타임스텝이 0.1초.
     P.Control = 0.1;
     
     % Sim
@@ -41,6 +41,7 @@ function P = GetParameters(Setting)
     P.Veh.Headway = 1.6; % Original: 1.6
     P.Veh.Exp = 2; %4
     P.Veh.SafeDistance = 9;
+    P.Veh.AccelThreshold = -20;
 
     % Signal
     P.Sig = 0;
