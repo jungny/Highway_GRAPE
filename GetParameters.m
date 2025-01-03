@@ -3,6 +3,7 @@ function P = GetParameters(Setting)
     P.ExitThreshold = 50;
     P.Physics = 0.1;
     P.Control = 0.1;
+    P.Label = 1; % 1: label 보임, 0: 안보임
     
     % Sim
     P.Sim.Time = Setting.Time;
@@ -20,11 +21,12 @@ function P = GetParameters(Setting)
     P.Map.Scale = 0.01;
     P.Map.Lane = 3;
     P.Map.Tile = 8; %4
-    P.Map.Road = 2000;
+    P.Map.Road = 2000; %400
     P.Map.Margin = 10;
     P.Map.Stop = 6;
     P.Map.Center = [0;0];
     P.Map.Exit = [1040, 1970];
+    %P.Map.Exit = [240,380];
 
     % Vehicle
     P.Veh.MaxVel = 33; % Original: 10

@@ -37,8 +37,8 @@ Data = cell(Simulation.Setting.Datasets,2);
 if Simulation.Setting.Record == 1
     timestamp = datestr(now, 'yymmdd_HH-MM-SS');
 
-    videoFilename = fullfile('C:\Users\user\Desktop\241129_1223\SimResults', ...
-    ['v2_final_v' num2str(Simulation.Setting.Vehicles) '_t' num2str(Parameter.Map.Lane) '_' timestamp '.mp4']);
+    videoFilename = fullfile('C:\Users\user\Desktop\', ...
+    ['v3_road2000_ahead_' timestamp '.mp4']);
 
     videoWriter = VideoWriter(videoFilename, 'MPEG-4');
     videoWriter.FrameRate = 30; 
@@ -118,7 +118,7 @@ for Iteration = 1:Simulation.Setting.Datasets
             t_demand = zeros(Parameter.Map.Lane, size(List.Vehicle.Active,1));  
             % t_demand(:) = 100*size(List.Vehicle.Active, 1);
             
-            transition_distance = 150;
+            transition_distance = 300;
             raw_weights = zeros(Parameter.Map.Lane,1);
 
             for i = 1:size(List.Vehicle.Active, 1)
@@ -162,20 +162,21 @@ for Iteration = 1:Simulation.Setting.Datasets
             environment.a_location = a_location;
             environment.t_demand = t_demand;
             environment.Alloc_current = Alloc_current;
+            environment.vehicles_ahead = GetVehiclesAhead(List,Parameter);
 
-            GRAPE_output = GRAPE_instance(environment);
-            lane_alloc = GRAPE_output.Alloc;
-            GRAPE_done = 1;
+            %GRAPE_output = GRAPE_instance(environment);
+            %lane_alloc = GRAPE_output.Alloc;
+            %GRAPE_done = 1;
             
-            %try
-            %    GRAPE_output = GRAPE_instance(environment);
-            %    % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
-            %    lane_alloc = GRAPE_output.Alloc;
-            %    GRAPE_done = 1;
+            try
+                GRAPE_output = GRAPE_instance(environment);
+                % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
+                lane_alloc = GRAPE_output.Alloc;
+                GRAPE_done = 1;
 
-            %catch ME
+            catch ME
                 
-            %end
+            end
         end
     
         % Msg generate & receive
