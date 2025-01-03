@@ -64,11 +64,20 @@ while a_satisfied~=n
         
         Candidate = ones(m,1)*(-inf);
         for t=1:m
-            % Check member agent ID in the selected task
-            current_members = (Alloc_ == ones(n,1)*t);
-            current_members(i) = 1; % including oneself
-            % Cardinality of the coalition
-            n_participants = sum(current_members);
+
+            Type = 'Ahead';
+
+            switch Type
+                case 'Default'
+                    % Check member agent ID in the selected task
+                    current_members = (Alloc_ == ones(n,1)*t);
+                    current_members(i) = 1; % including oneself
+                    % Cardinality of the coalition
+                    n_participants = sum(current_members);
+                case 'Ahead'
+                    % 현재 agent i가 선택한 task(차선)의 앞에 있는 차량 수
+                    n_participants = environment.vehicles_ahead(i,t);
+            end
             
             % Obtain possible individual utility value
             Candidate(t) = Get_Util(i, t, n_participants,environment);

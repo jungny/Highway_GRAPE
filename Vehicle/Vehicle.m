@@ -105,11 +105,13 @@ classdef Vehicle < handle
                 exit_index = -1;
             end
 
-            %obj.Text = text(x_center+3, y_center+0.1, sprintf('%d   %d', obj.ID, exit_index), ...
-            %    'HorizontalAlignment', 'center', ...
-            %    'VerticalAlignment', 'middle', ...
-            %    'Parent', obj.Object, ...
-            %    'FontSize', 9, 'Color', 'black');
+            if Parameter.Label
+                obj.Text = text(x_center+3, y_center+0.1, sprintf('%d   %d', obj.ID, exit_index), ...
+                    'HorizontalAlignment', 'center', ...
+                    'VerticalAlignment', 'middle', ...
+                    'Parent', obj.Object, ...
+                    'FontSize', 9, 'Color', 'black');
+            end
 
 
             obj.Parameter = Parameter.Veh;
@@ -298,7 +300,10 @@ classdef Vehicle < handle
 
             x_center = mean(obj.Size(1,:));
             y_center = mean(obj.Size(2,:));
-            %set(obj.Text, 'Position', [x_center+3, y_center+0.1]);
+
+            if Parameter.Label
+                set(obj.Text, 'Position', [x_center+3, y_center+0.1]);
+            end
 
         end
 
