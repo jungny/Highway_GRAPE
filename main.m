@@ -263,7 +263,7 @@ for Iteration = 1:Simulation.Setting.Datasets
     
         % Remove Processed Vehicles
         for i = 1:size(List.Vehicle.Active,1)
-            if List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location >= 40000 % exit으로 바꾸기
+            if List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location >= 300000 % exit으로 바꾸기
                 RemoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)})
                 List.Vehicle.Object{List.Vehicle.Active(i,1)} = [];
             end
