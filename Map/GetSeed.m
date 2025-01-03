@@ -44,7 +44,9 @@ function Seed = GetSeed(Settings,Parameter,Iteration)
 
         % Exit: Parameter의 Map.Exit 중 하나를 부여
         %Seed(6,:) = Parameter.Map.Exit(randi(length(Parameter.Map.Exit), 1, TotalVehicles));
-        Seed(6,:) = [380, 240, 240, 380, 240, 240, 380, 240, 380, 380];
+        e1 = Parameter.Map.Exit(1)
+        e2 = Parameter.Map.Exit(2)
+        Seed(6,:) = [e2, e1, e1, e2, e1, e1, e2, e1, e2, e2];
 
         Seed = sortrows(Seed',2)';        
 
