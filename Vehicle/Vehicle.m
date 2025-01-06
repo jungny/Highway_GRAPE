@@ -145,12 +145,12 @@ classdef Vehicle < handle
             end
         end
         
-        function [front_vehicle, front_distance] = GetFrontVehicle(obj, List, Parameter)
+        function [front_vehicle, front_distance] = GetFrontVehicle(obj, targetLane, List, Parameter)
             % 현재 차선의 선행 차량 찾기
             current_x = obj.Location * Parameter.Map.Scale;
         
             % 목표 차선의 차량 필터링
-            lane_vehicles = List.Vehicle.Active(List.Vehicle.Active(:,3) == obj.TargetLane, :);
+            lane_vehicles = List.Vehicle.Active(List.Vehicle.Active(:,3) == targetLane, :);
         
             % 모든 차량의 거리 계산
             distances = lane_vehicles(:,4) * Parameter.Map.Scale - current_x;
@@ -176,12 +176,12 @@ classdef Vehicle < handle
         end
 
         
-        function [rear_vehicle, rear_distance] = GetRearVehicle(obj, List, Parameter)
+        function [rear_vehicle, rear_distance] = GetRearVehicle(obj, targetLane, List, Parameter)
             % 현재 차선의 후행 차량 찾기
             current_x = obj.Location * Parameter.Map.Scale;
         
             % 목표 차선 차량 필터링
-            lane_vehicles = List.Vehicle.Active(List.Vehicle.Active(:,3) == obj.TargetLane, :);
+            lane_vehicles = List.Vehicle.Active(List.Vehicle.Active(:,3) == targetLane, :);
         
             % 모든 차량의 거리 계산
             distances = lane_vehicles(:,4) * Parameter.Map.Scale - current_x;
@@ -204,6 +204,32 @@ classdef Vehicle < handle
             end
         end
 
+        function [AccelFlag, DecelFlag, QuitFlag, objVelocity]= LaneChangeWhenNoFeasible(obj,targetLane, Parameter,List)
+            AccelFlag = 0;
+            DecelFlag = 0;
+            QuitFlag = 0;
+
+            % 안전 거리를 만족하지 못하면 감속/가속
+            [front_vehicle, front_distance] = GetFrontVehicle(obj, targetLane, List, Parameter);
+            [rear_vehicle, rear_distance] = GetRearVehicle(obj, targetLane, List, Parameter);
+
+            if isempty(front_vehicle) || front_distance > Parameter.Veh.SafeDistance
+                objVelocity = min(obj.Velocity + obj.Parameter.Accel(1), obj.Parameter.MaxVel);  % 가속해서 합류하기
+                AccelFlag = 1;
+            
+            elseif isempty(rear_vehicle) || abs(rear_distance) > Parameter.Veh.SafeDistance
+                objVelocity = max(obj.Velocity - obj.Parameter.Accel(1), obj.Parameter.MinVel);  % 감속해서 합류하기
+                DecelFlag = 1;
+
+            else
+                objVelocity = obj.Velocity;
+                QuitFlag = 1;
+                disp("error case!");
+            
+                % obj.CheckLaneChangeFeasibility(targetLane, List, Parameter);
+            end
+        end
+
         
 
         function MoveVehicle(obj,Time,Parameter,List)
@@ -216,20 +242,16 @@ classdef Vehicle < handle
                     targetLane = obj.Lane + 1;
                 end
 
-                if obj.CheckLaneChangeFeasibility(targetLane, List, Parameter)
-
-                else
-                    % 안전 거리를 만족하지 못하면 감속/가속
-                    [front_vehicle, front_distance] = GetFrontVehicle(obj, List, Parameter);
-                    [rear_vehicle, rear_distance] = GetRearVehicle(obj, List, Parameter);
-                    if ~isempty(front_vehicle) && front_distance < Parameter.Veh.SafeDistance
-                        obj.Velocity = max(obj.Velocity - obj.Parameter.Accel(1), 0);  % 감속
-                    elseif ~isempty(rear_vehicle) && abs(rear_distance) < Parameter.Veh.SafeDistance
-                        obj.Velocity = min(obj.Velocity + obj.Parameter.Accel(1), obj.Parameter.MaxVel);  % 가속
+                if  ~obj.CheckLaneChangeFeasibility(targetLane, List, Parameter)
+                    [~, ~, QuitFlag, objVelocity] = LaneChangeWhenNoFeasible(obj,targetLane,Parameter,List);
+                    if QuitFlag
+                        disp('this never happens but added for just in case');
                     else
-                        disp("error case!");
-                        % obj.CheckLaneChangeFeasibility(targetLane, List, Parameter);
+                        obj.Velocity = objVelocity;
                     end
+                    
+                else
+                    
                 end
                 % change lane to obj.TargetLane
                 new_y = (Parameter.Map.Lane-targetLane+0.5)*Parameter.Map.Tile;

@@ -38,7 +38,7 @@ if Simulation.Setting.Record == 1
     timestamp = datestr(now, 'yymmdd_HH-MM-SS');
 
     videoFilename = fullfile('C:\Users\user\Desktop\241129_1223\SimResults', ...
-    ['revCA_v' num2str(Simulation.Setting.Vehicles) '_t' num2str(Parameter.Map.Lane) '_' timestamp '.mp4']);
+    ['v2_final_v' num2str(Simulation.Setting.Vehicles) '_t' num2str(Parameter.Map.Lane) '_' timestamp '.mp4']);
 
     videoWriter = VideoWriter(videoFilename, 'MPEG-4');
     videoWriter.FrameRate = 30; 
