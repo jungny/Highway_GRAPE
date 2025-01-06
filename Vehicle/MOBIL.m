@@ -48,7 +48,7 @@ function [feasible, a_c_sim] = MOBIL(vehicle, target_lane, List, Parameter)
 
     % 최종 판단
     feasible = safety_flag && incentive_flag;
-    fprintf('Vehicle %d | to %d | feasible: %d   safety_flag: %d\n', vehicle.ID, target_lane, feasible, safety_flag);
+    % fprintf('Vehicle %d | to %d | feasible: %d   safety_flag: %d\n', vehicle.ID, target_lane, feasible, safety_flag);
 end
 
 function vehicle_acceleration = ComputeAcceleration(vehicle, front_vehicle, front_distance, List, Parameter)

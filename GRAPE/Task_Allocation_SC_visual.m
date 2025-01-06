@@ -65,7 +65,7 @@ while a_satisfied~=n
         Candidate = ones(m,1)*(-inf);
         for t=1:m
 
-            Type = 'Ahead';
+            Type = 'Default';
 
             switch Type
                 case 'Default'
@@ -75,8 +75,9 @@ while a_satisfied~=n
                     % Cardinality of the coalition
                     n_participants = sum(current_members);
                 case 'Ahead'
-                    % 현재 agent i가 선택한 task(차선)의 앞에 있는 차량 수
-                    n_participants = environment.vehicles_ahead(i,t);
+                    % 현재 agent i가 선택한 task(차선)의 앞에 있는 차량 수, including
+                    % oneself
+                    n_participants = environment.vehicles_ahead(i,t)+1;
             end
             
             % Obtain possible individual utility value
