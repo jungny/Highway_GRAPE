@@ -1,4 +1,4 @@
-function environment = GRAPE_main(List, Parameter,Setting)
+function environment = GRAPE_main(List, Parameter,Setting,testiteration)
     % a_location 생성
     a_location = zeros(size(List.Vehicle.Active, 1), 2);
     for i = 1:size(List.Vehicle.Active, 1)
@@ -61,6 +61,8 @@ function environment = GRAPE_main(List, Parameter,Setting)
     environment.t_demand = t_demand;
     environment.Alloc_current = Alloc_current;
     environment.Type = Setting.NumberOfParticipants;
+    environment.LogFile = Setting.LogFile;
+    environment.test_iteration = testiteration;
     environment.vehicles_ahead = GetVehiclesAhead(List,Parameter);
 
 

@@ -94,7 +94,7 @@ while a_satisfied~=n
             Alloc_(i,1) = 0; % Go th the void
         else
             Alloc_(i,1) = Best_task;
-        end
+        %end
         agent(i).util = Best_utility;
         %
         if current_task == Alloc_(i,1) % if this choice is the same as remaining

@@ -22,38 +22,41 @@ function Seed = GetSeed(Settings,Parameter,Iteration)
         Seed(5,:) = [ones(1,Settings.Iterations(2,Iteration)) zeros(1,TotalVehicles-Settings.Iterations(2,Iteration))]; 
         Seed = sortrows(Seed',2)';
 
-    elseif Settings.Mode == 3 %Simple Highway example        
+    elseif Settings.Mode == 3 %Simple Highway example       
+        
+       
+        TotalVehicles = randi([2,50]);
+        Seed = zeros(7,TotalVehicles);
+
         % Vehicle ID
         Seed(1,:) = 1:TotalVehicles;
         
-        % Spawn Time: (  )초 간격으로 설정
-        Seed(2,:) = [0, 1.5, 1, 3, 5, 4.3, 7, 8, 8.2, 9];
-        %Seed(2,:) = ((randperm(21,TotalVehicles)-1)*Parameter.Physics);
+        % Spawn Time: 일정 간격(0.5초 ~ 2초) + 약간의 랜덤 오프셋
+        min_interval = 0.5;
+        max_interval = 2;
+        SpawnTimes = cumsum(min_interval + (max_interval - min_interval) * rand(1, TotalVehicles));
+        Seed(2, :) = SpawnTimes;
 
-        % Spawn Lane: 두 차량 모두 1차선
-        % Seed(3,:) = [1, 1];
-        % Seed(3,:) = [1, 1, 1, 2, 2, 2];
-        %Seed(3,:) = randi([1,Parameter.Map.Lane],[1,TotalVehicles]);
-        % good example Seed(3,:) = [2,3,2,1,2,1,3,3,2,3];
-        Seed(3,:) = [2,1,2,1,1,3,1,3,2,3];
+        % Spawn Lane: 1 ~ 총 차선 수 사이에서 랜덤하게 설정
+        Seed(3, :) = randi([1, Parameter.Map.Lane], [1, TotalVehicles]);
 
-        % Direction: 두 차량 모두 직진(1)
-        Seed(4,:) = ones(1,TotalVehicles);
+        % Direction: 모두 직진(1)으로 설정
+        Seed(4, :) = ones(1, TotalVehicles);
 
         % Agent 여부: 모두 agent(1)
-        Seed(5,:) = ones(1,TotalVehicles);
+        Seed(5, :) = ones(1, TotalVehicles);
 
-        % Exit: Parameter의 Map.Exit 중 하나를 부여
-        %Seed(6,:) = Parameter.Map.Exit(randi(length(Parameter.Map.Exit), 1, TotalVehicles));
-        e1 = Parameter.Map.Exit(1);
-        e2 = Parameter.Map.Exit(2);
-        Seed(6,:) = [e2, e1, e1, e2, e1, e1, e2, e1, e2, e2];
+        % Exit: Parameter의 Map.Exit 중 하나를 무작위로 선택
+        NumExits = length(Parameter.Map.Exit);
+        Seed(6, :) = Parameter.Map.Exit(randi(NumExits, 1, TotalVehicles));
 
-        % Politeness Factor: degree of altruism
-        % 0: selfish lane-hoppers
-        Seed(7,:) = 0*ones(1,TotalVehicles);
+        % Politeness Factor: 0으로 설정 (selfish)
+        Seed(7, :) = zeros(1, TotalVehicles);
 
-        Seed = sortrows(Seed',2)';        
+        % Spawn Time 기준으로 정렬
+        Seed = sortrows(Seed', 2)';
+
+
 
 
     else
@@ -63,6 +66,37 @@ function Seed = GetSeed(Settings,Parameter,Iteration)
         Seed(3,:) = randi([1,4],[1,TotalVehicles]);                
         Seed(4,:) = randi([1,3],[1,TotalVehicles]); 
         Seed(5,:) = randi([0,1],[1,TotalVehicles]);  
+                % Vehicle ID
+                Seed(1,:) = 1:TotalVehicles;
+        
+                % Spawn Time: (  )초 간격으로 설정
+                Seed(2,:) = [0, 1.5, 1, 3, 5, 4.3, 7, 8, 8.2, 9];
+                %Seed(2,:) = ((randperm(21,TotalVehicles)-1)*Parameter.Physics);
+        
+                % Spawn Lane: 두 차량 모두 1차선
+                % Seed(3,:) = [1, 1];
+                % Seed(3,:) = [1, 1, 1, 2, 2, 2];
+                %Seed(3,:) = randi([1,Parameter.Map.Lane],[1,TotalVehicles]);
+                % good example Seed(3,:) = [2,3,2,1,2,1,3,3,2,3];
+                Seed(3,:) = [2,1,2,1,1,3,1,3,2,3];
+        
+                % Direction: 두 차량 모두 직진(1)
+                Seed(4,:) = ones(1,TotalVehicles);
+        
+                % Agent 여부: 모두 agent(1)
+                Seed(5,:) = ones(1,TotalVehicles);
+        
+                % Exit: Parameter의 Map.Exit 중 하나를 부여
+                %Seed(6,:) = Parameter.Map.Exit(randi(length(Parameter.Map.Exit), 1, TotalVehicles));
+                e1 = Parameter.Map.Exit(1);
+                e2 = Parameter.Map.Exit(2);
+                Seed(6,:) = [e2, e1, e1, e2, e1, e1, e2, e1, e2, e2];
+        
+                % Politeness Factor: degree of altruism
+                % 0: selfish lane-hoppers
+                Seed(7,:) = 0*ones(1,TotalVehicles);
+        
+                Seed = sortrows(Seed',2)';       
     end
 end
 

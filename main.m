@@ -7,6 +7,7 @@ Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
 Simulation.Setting.Debug = 0;
 Simulation.Setting.Mode = 3;
+Simulation.Setting.LogFile = 'C:\Users\user\Desktop\250103_0109\Simulations\0106\log.txt';  % 파일 경로
 
     % 1: Dataset Generation
     % 2: Evaluation
@@ -18,12 +19,18 @@ Simulation.Setting.Time = 500;
 Simulation.Setting.Datasets = 1;
 Simulation.Setting.Agents = 3;
 Simulation.Setting.Turns = 1;
+
+
 Simulation.Setting.Iterations(1,:) = 1:Simulation.Setting.Datasets;
 Simulation.Setting.Iterations(2,:) = Simulation.Setting.Agents*ones(1,Simulation.Setting.Datasets);
 Simulation.Setting.Iterations(3,:) = [ones(1,1)]; % 2*ones(1,300) 3*ones(1,300) 4*ones(1,300) 5*ones(1,300) 6*ones(1,300) 7*ones(1,300) 8*ones(1,300) 9*ones(1,300) 10*ones(1,300) 11*ones(1,300) 12*ones(1,300) 13*ones(1,300) 14*ones(1,300) 15*ones(1,300) 16*ones(1,300) 17*ones(1,300) 18*ones(1,300) 19*ones(1,300) 20*ones(1,300)];
 Simulation.Setting.Iterations(4,:) = randperm(1000000,Simulation.Setting.Datasets);
 
-Simulation.Setting.NumberOfParticipants = 'Default'; % 'Default' or 'Ahead'
+
+
+
+% Simulation.Setting.NumberOfParticipants = 'Default'; % 'Default' or 'Ahead'
+Simulation.Setting.NumberOfParticipants = 'Ahead'; % 'Default' or 'Ahead'
 % Simulation.Setting.LaneChangeMode = 'MOBIL'; % 'MOBIL' or 'SimpleLaneChange'
 Simulation.Setting.LaneChangeMode = 'SimpleLaneChange'; % 'MOBIL' or 'SimpleLaneChange'
 Simulation.Setting.Record = 0;
@@ -31,46 +38,67 @@ Simulation.Setting.Record = 0;
 
 %% Set Simulation Parameters
 
-Parameter = GetParameters(Simulation.Setting);
-GetWindow(Parameter.Map,Simulation.Setting)
-Parameter.Trajectory = GetTrajectory(Parameter.Map,Simulation.Setting);
+%Parameter = GetParameters(Simulation.Setting);
+%GetWindow(Parameter.Map,Simulation.Setting)
+%Parameter.Trajectory = GetTrajectory(Parameter.Map,Simulation.Setting);
 Data = cell(Simulation.Setting.Datasets,2);
 
 %% Run Simulation
+% 새 파일을 만들어서 첫 줄에 헤더 기록 (w 모드는 새로 파일을 만듦)
+fileID = fopen(Simulation.Setting.LogFile, 'w');
+fprintf(fileID, 'a');
+fclose(fileID);
+fileID = fopen(Simulation.Setting.LogFile, 'w');
 
-if Simulation.Setting.Record == 1
-    timestamp = datestr(now, 'yymmdd_HH-MM-SS');
+fprintf(fileID, 'Simulation Log - s\n');
+fclose(fileID);
 
-    videoFilename = fullfile('C:\Users\user\Desktop\', ...
-    ['v3_road2000_ahead_' timestamp '.mp4']);
 
-    videoWriter = VideoWriter(videoFilename, 'MPEG-4');
-    videoWriter.FrameRate = 30; 
-    open(videoWriter);
-end
-
-Receive_V2V_check = false(Simulation.Setting.Vehicles, 1);
-V2V_cancel = false(Simulation.Setting.Vehicles, 1); 
+%Receive_V2V_check = false(Simulation.Setting.Vehicles, 1);
+%V2V_cancel = false(Simulation.Setting.Vehicles, 1); 
 
 environment = struct();
 GRAPE_output = [];
 
 for Iteration = 1:Simulation.Setting.Datasets
+    rng(59724)
+    %rng(59700+Iteration)
+
+    fileID = fopen(Simulation.Setting.LogFile, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
+    fprintf(fileID, '\n===== Iteration %d 시작 =====\n', Iteration);
+    fclose(fileID);
+
+    Parameter = GetParameters(Simulation.Setting);
+    GetWindow(Parameter.Map,Simulation.Setting)
+    Parameter.Trajectory = GetTrajectory(Parameter.Map,Simulation.Setting);
+
+    if Simulation.Setting.Record == 1
+        timestamp = datestr(now, 'HH-MM-SS');
     
-    Data{Iteration} = cell(int32(Parameter.Sim.Time/Parameter.Physics +1),Simulation.Setting.Vehicles);
+        videoFilename = fullfile('C:\Users\user\Desktop\250103_0109\Simulations\0106\', ...
+        [ 'Seed' num2str(Iteration) '_' timestamp '.mp4']);
+    
+        videoWriter = VideoWriter(videoFilename, 'MPEG-4');
+        videoWriter.FrameRate = 30; 
+        open(videoWriter);
+    end
+    
+    %Data{Iteration} = cell(int32(Parameter.Sim.Time/Parameter.Physics +1),Simulation.Setting.Vehicles);
     if Simulation.Setting.Mode == 1
         rng(randi(100000))
     elseif Simulation.Setting.Mode == 3
         disp('Mode 3: Highway Simulation')
-        rng(randi(100000))
+        fprintf('%d th Iteration', Iteration)
     else
         rng(Simulation.Setting.Seed)
     end
     SetMap(Parameter.Map, Simulation.Setting);
 
     Seed.Vehicle = GetSeed(Simulation.Setting,Parameter,Iteration);
+    TotalVehicles = size(Seed.Vehicle, 2); 
     Data{1,2} = Seed.Vehicle;
     List.Vehicle.Object = cell(size(Seed.Vehicle,2),1);
+    Data{Iteration} = cell(int32(Parameter.Sim.Time/Parameter.Physics +1),TotalVehicles);
 
     % Intersection Signal 관련 코드는 불필요
     % List.Signal.Object = cell(4,1);
@@ -80,7 +108,7 @@ for Iteration = 1:Simulation.Setting.Datasets
     % List.Signal.Data = UpdateData(List.Signal.Object,Parameter.Sim.Data);
     % Intersection = Manager(Parameter);
 
-    V2V.Object = cell(Simulation.Setting.Vehicles, 1); % Setting.Vehicles에 따라 동적으로 조정.
+    %V2V.Object = cell(Simulation.Setting.Vehicles, 1); % Setting.Vehicles에 따라 동적으로 조정.
 
     for Time = 0:Parameter.Physics:Parameter.Sim.Time
         GRAPE_done = 0;
@@ -105,7 +133,7 @@ for Iteration = 1:Simulation.Setting.Datasets
         if mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0
             disp("calling Grape Instance. . . | "+ Time);
 
-            environment = GRAPE_main(List,Parameter,Simulation.Setting);
+            environment = GRAPE_main(List,Parameter,Simulation.Setting,Iteration);
 
             %GRAPE_output = GRAPE_instance(environment);
             %lane_alloc = GRAPE_output.Alloc;
@@ -115,6 +143,11 @@ for Iteration = 1:Simulation.Setting.Datasets
                 GRAPE_output = GRAPE_instance(environment);
                 % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
                 lane_alloc = GRAPE_output.Alloc;
+                if any(lane_alloc == 0)
+                    fileID = fopen(Simulation.Setting.LogFile, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
+                    fprintf(fileID, 'VOID TASK at %d \n', Iteration);
+                    fclose(fileID);
+                end
                 GRAPE_done = 1;
 
             catch ME
@@ -232,7 +265,7 @@ for Iteration = 1:Simulation.Setting.Datasets
         % Finalize Time Step
         if Simulation.Setting.Draw == 1
             drawnow();
-            pause(0.01)
+            %pause(0.001)
             
             if Simulation.Setting.Record == 1 && mod(int32(Time/Parameter.Physics), 2) == 0
                 frame = getframe(gcf); 
@@ -242,7 +275,7 @@ for Iteration = 1:Simulation.Setting.Datasets
         end
         if isempty(Seed.Vehicle)
             if isempty(List.Vehicle.Active)
-                
+
                 break
             end
         end
@@ -254,22 +287,22 @@ for Iteration = 1:Simulation.Setting.Datasets
         ;
     end
 
-     for i = 1:size(Data{Iteration},1)
-        for ii = 1:size(List.Vehicle.Object,1)
-            if isempty(Data{Iteration}{i,ii})
-                if ii < Simulation.Setting.Iterations(2,Iteration) + 1
-                    Data{Iteration}{i,ii} = zeros(1,7);        
-                else
-                    Data{Iteration}{i,ii} = zeros(1,5);
-                end
-            end
-        end
+    %  for i = 1:size(Data{Iteration},1)
+    %     for ii = 1:size(List.Vehicle.Object,1)
+    %         if isempty(Data{Iteration}{i,ii})
+    %             if ii < Simulation.Setting.Iterations(2,Iteration) + 1
+    %                 Data{Iteration}{i,ii} = zeros(1,7);        
+    %             else
+    %                 Data{Iteration}{i,ii} = zeros(1,5);
+    %             end
+    %         end
+    %     end
+    % end
+
+    if Simulation.Setting.Record == 1
+        close(videoWriter);
+        disp(['Simulation video saved to: ', videoFilename]);
     end
 
-
 end
 
-if Simulation.Setting.Record == 1
-    close(videoWriter);
-    disp(['Simulation video saved to: ', videoFilename]);
-end
