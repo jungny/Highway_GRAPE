@@ -65,7 +65,7 @@ while a_satisfied~=n
         Candidate = ones(m,1)*(-inf);
         for t=1:m
 
-            Type = 'Default';
+            Type = environment.Type;
 
             switch Type
                 case 'Default'

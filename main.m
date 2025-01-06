@@ -22,6 +22,10 @@ Simulation.Setting.Iterations(1,:) = 1:Simulation.Setting.Datasets;
 Simulation.Setting.Iterations(2,:) = Simulation.Setting.Agents*ones(1,Simulation.Setting.Datasets);
 Simulation.Setting.Iterations(3,:) = [ones(1,1)]; % 2*ones(1,300) 3*ones(1,300) 4*ones(1,300) 5*ones(1,300) 6*ones(1,300) 7*ones(1,300) 8*ones(1,300) 9*ones(1,300) 10*ones(1,300) 11*ones(1,300) 12*ones(1,300) 13*ones(1,300) 14*ones(1,300) 15*ones(1,300) 16*ones(1,300) 17*ones(1,300) 18*ones(1,300) 19*ones(1,300) 20*ones(1,300)];
 Simulation.Setting.Iterations(4,:) = randperm(1000000,Simulation.Setting.Datasets);
+
+Simulation.Setting.NumberOfParticipants = 'Default'; % 'Default' or 'Ahead'
+% Simulation.Setting.LaneChangeMode = 'MOBIL'; % 'MOBIL' or 'SimpleLaneChange'
+Simulation.Setting.LaneChangeMode = 'SimpleLaneChange'; % 'MOBIL' or 'SimpleLaneChange'
 Simulation.Setting.Record = 0;
     % 1: start recording
 
@@ -101,68 +105,7 @@ for Iteration = 1:Simulation.Setting.Datasets
         if mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0
             disp("calling Grape Instance. . . | "+ Time);
 
-            % a_location 생성
-            a_location = zeros(size(List.Vehicle.Active, 1), 2);
-            for i = 1:size(List.Vehicle.Active, 1)
-                vehicle_id = List.Vehicle.Active(i, 1);  % 현재 차량 ID
-                a_location(i, :) = [List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location, ...
-                                    (Parameter.Map.Lane-List.Vehicle.Object{List.Vehicle.Active(i,1)}.Lane+0.5) * Parameter.Map.Tile];  % 차량의 현재 (x, y) 위치
-            end
-
-            % t_location, t_demand 생성
-            t_location = zeros(Parameter.Map.Lane, 2);
-            for i = 1:Parameter.Map.Lane
-                t_location(i, :) = [0, (Parameter.Map.Lane-i+0.5) * Parameter.Map.Tile];  % (x, y) 좌표로 정의 (x는 0으로 고정)
-            end
-
-            t_demand = zeros(Parameter.Map.Lane, size(List.Vehicle.Active,1));  
-            % t_demand(:) = 100*size(List.Vehicle.Active, 1);
-            
-            transition_distance = 300;
-            raw_weights = zeros(Parameter.Map.Lane,1);
-
-            for i = 1:size(List.Vehicle.Active, 1)
-                vehicle_id = List.Vehicle.Active(i, 1);  % 차량 ID
-                distance_to_exit = List.Vehicle.Object{vehicle_id}.Exit - ...
-                                   List.Vehicle.Object{vehicle_id}.Location * Parameter.Map.Scale;  % Exit까지 거리
-
-                % Case 1: Distance greater than transition distance (uniform weights)
-                if distance_to_exit > transition_distance
-                    weights = ones(Parameter.Map.Lane, 1) / Parameter.Map.Lane;  % 균일 분포
-                else
-                    % Case 2: Distance less than or equal to transition distance
-                    for lane = 1:Parameter.Map.Lane
-                        k = 5; % k 작을수록 lane별 더 극단적인 차이가 발생 
-                        % Weight increases as lane number increases
-                        raw_weights(lane) = exp(-(transition_distance - distance_to_exit) / (k * lane));
-                    end
-                    
-                    % Normalize weights to ensure they sum to 1
-                    weights = raw_weights / sum(raw_weights);
-                end
-            
-                % t_demand에 반영
-                for lane = 1:Parameter.Map.Lane
-                    normalized_weights(lane) = floor(weights(lane)*100)/100;
-                    t_demand(lane, i) = size(List.Vehicle.Active, 1)*normalized_weights(lane);  % vehicle 수 곱해 비율 유지
-                end
-            end
-            
-
-            % t_demand = size(List.Vehicle.Active, 1) * 100 * ones(Parameter.Map.Lane, 1);
-
-            % Alloc_current 생성
-            Alloc_current = [];
-            for i = 1:size(List.Vehicle.Active, 1)
-                Alloc_current = [Alloc_current; List.Vehicle.Object{List.Vehicle.Active(i, 1)}.Lane];
-            end
-
-
-            environment.t_location = t_location;
-            environment.a_location = a_location;
-            environment.t_demand = t_demand;
-            environment.Alloc_current = Alloc_current;
-            environment.vehicles_ahead = GetVehiclesAhead(List,Parameter);
+            environment = GRAPE_main(List,Parameter,Simulation.Setting);
 
             %GRAPE_output = GRAPE_instance(environment);
             %lane_alloc = GRAPE_output.Alloc;
@@ -222,14 +165,33 @@ for Iteration = 1:Simulation.Setting.Datasets
         % Move Vehicle
         for i = 1:size(List.Vehicle.Active,1)
             vehicle_id = List.Vehicle.Active(i, 1); 
+            current_vehicle = List.Vehicle.Object{vehicle_id};
             current_lane = List.Vehicle.Object{vehicle_id}.Lane; 
             
             if GRAPE_done == 1
                 desired_lane = lane_alloc(i);
-            
+           
                 if current_lane ~= desired_lane 
-                    List.Vehicle.Object{vehicle_id}.TargetLane = desired_lane;
-                    List.Vehicle.Object{vehicle_id}.LaneChangeFlag = 1; 
+                    %List.Vehicle.Object{vehicle_id}.TargetLane = desired_lane;
+                    %List.Vehicle.Object{vehicle_id}.LaneChangeFlag = 1; 
+                    if current_lane > desired_lane
+                        desired_lane = current_lane - 1;
+                    elseif current_lane < desired_lane
+                        desired_lane = current_lane + 1;
+                    end
+
+                    if strcmp(Simulation.Setting.LaneChangeMode, 'MOBIL')
+                        [feasible, a_c_sim] = MOBIL(current_vehicle, desired_lane, List, Parameter);
+                    elseif strcmp(Simulation.Setting.LaneChangeMode, 'SimpleLaneChange')
+                        [feasible] = SimpleLaneChange(current_vehicle, desired_lane, List, Parameter);
+                    end
+
+                    if feasible
+                        current_vehicle.TargetLane = desired_lane;
+                        current_vehicle.LaneChangeFlag = 1;
+                    else
+                        current_vehicle.LaneChangeFlag = 0;
+                    end
                 end
             end
             

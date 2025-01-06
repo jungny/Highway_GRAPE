@@ -1,7 +1,7 @@
 function P = GetParameters(Setting)
     
     P.ExitThreshold = 50;
-    P.Physics = 0.1;
+    P.Physics = 0.1; % 한 시뮬레이션 타임스텝이 0.1초초
     P.Control = 0.1;
     P.Label = 1; % 1: label 보임, 0: 안보임
     
@@ -32,7 +32,7 @@ function P = GetParameters(Setting)
     P.Veh.MaxVel = 33; % Original: 10
     P.Veh.DecVel = 1;
     P.Veh.MinVel = 8; % 8
-    P.Veh.Accel = [-3 3]; % [1.5 3]
+    P.Veh.Accel = [-1 3]; % [1.5 3]
     P.Veh.Size = [4.5 1.9 1.2];
     P.Veh.Buffer = [2.5 0.5];
         P.Veh.State.Out = 0;
@@ -43,6 +43,7 @@ function P = GetParameters(Setting)
     P.Veh.Headway = 1.6; % Original: 1.6
     P.Veh.Exp = 4; %4
     P.Veh.SafeDistance = 9;
+    P.Veh.AccelThreshold = -20;
 
     % Signal
     P.Sig = 0;
