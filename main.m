@@ -65,9 +65,9 @@ for Iteration = 1:Simulation.Setting.Datasets
         close all;
         Simulation.Setting.NumberOfParticipants = char(participantsMode);
         %rng(46)
-        random_seed = 105;
+        random_seed = 373;
         rng(random_seed);
-        %random_seed = 110 + Iteration;
+        %random_seed = 200 + Iteration;
         %rng(random_seed)
     
         fileID = fopen(Simulation.Setting.LogFile, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
@@ -80,7 +80,7 @@ for Iteration = 1:Simulation.Setting.Datasets
         Parameter.Trajectory = GetTrajectory(Parameter.Map,Simulation.Setting);
     
         if Simulation.Setting.Record == 1
-            timestamp = datestr(now, 'HH-MM-SS');
+            timestamp = datestr(now, 'HH-MM');
         
             videoFilename = fullfile('C:\Users\user\Desktop\250103_0109\Simulations\0106\', ...
             [ num2str(random_seed) '_' Simulation.Setting.NumberOfParticipants '_'  timestamp '.mp4']);
@@ -274,7 +274,8 @@ for Iteration = 1:Simulation.Setting.Datasets
                 drawnow();
                 %pause(0.01) %pause(0.01)
                 
-                if Simulation.Setting.Record == 1 && mod(int32(Time/Parameter.Physics), 2) == 0
+                %if Simulation.Setting.Record == 1 && mod(int32(Time/Parameter.Physics), 2) == 0
+                if Simulation.Setting.Record == 1 
                     frame = getframe(gcf); 
                     % frame.cdata = imresize(frame.cdata, 0.5);
                     writeVideo(videoWriter, frame); 
