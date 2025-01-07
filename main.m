@@ -16,7 +16,7 @@ Simulation.Setting.LogFile = 'C:\Users\user\Desktop\250103_0109\Simulations\0106
 Simulation.Setting.Vehicles = 10;
 cycle_GRAPE = 5;
 Simulation.Setting.Time = 500;
-Simulation.Setting.Datasets = 500;
+Simulation.Setting.Datasets = 2;
 Simulation.Setting.Agents = 3;
 Simulation.Setting.Turns = 1;
 
@@ -33,7 +33,7 @@ Simulation.Setting.NumberOfParticipants = 'Default'; % 'Default' or 'Ahead'
 %Simulation.Setting.NumberOfParticipants = 'Ahead'; % 'Default' or 'Ahead'
 % Simulation.Setting.LaneChangeMode = 'MOBIL'; % 'MOBIL' or 'SimpleLaneChange'
 Simulation.Setting.LaneChangeMode = 'SimpleLaneChange'; % 'MOBIL' or 'SimpleLaneChange'
-Simulation.Setting.Record = 0;
+Simulation.Setting.Record = 1;
     % 1: start recording
 
 %% Set Simulation Parameters
@@ -61,258 +61,253 @@ environment = struct();
 GRAPE_output = [];
 
 for Iteration = 1:Simulation.Setting.Datasets
-    close all;
-    %rng(46)
-    random_seed = Iteration;
-    rng(random_seed)
-
-    if mod(random_seed,2)==0
-        %Simulation.Setting.NumberOfParticipants = 'Default';
-        Simulation.Setting.NumberOfParticipants = 'Ahead';
-    else
-        Simulation.Setting.NumberOfParticipants = 'Ahead';
-    end
-
-    fileID = fopen(Simulation.Setting.LogFile, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
-    fprintf(fileID, '\n=====   Random Seed  %d  ||  %s   ===== %s \n', ...
-            random_seed, Simulation.Setting.NumberOfParticipants, datestr(now, 'HH시 MM분 SS초'));
-    fclose(fileID);
-
-    Parameter = GetParameters(Simulation.Setting);
-    GetWindow(Parameter.Map,Simulation.Setting)
-    Parameter.Trajectory = GetTrajectory(Parameter.Map,Simulation.Setting);
-
-    if Simulation.Setting.Record == 1
-        timestamp = datestr(now, 'HH-MM-SS');
+    for participantsMode = ["Default", "Ahead"]
+        close all;
+        Simulation.Setting.NumberOfParticipants = char(participantsMode);
+        %rng(46)
+        random_seed = 0 + Iteration;
+        rng(random_seed)
     
-        videoFilename = fullfile('C:\Users\user\Desktop\250103_0109\Simulations\0106\', ...
-        [ 'Seed' num2str(Iteration) '_' timestamp '.mp4']);
+        fileID = fopen(Simulation.Setting.LogFile, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
+        fprintf(fileID, '\n=====   Random Seed  %d  ||  %s   ===== %s \n', ...
+                random_seed, Simulation.Setting.NumberOfParticipants, datestr(now, 'HH시 MM분 SS초'));
+        fclose(fileID);
     
-        videoWriter = VideoWriter(videoFilename, 'MPEG-4');
-        videoWriter.FrameRate = 30; 
-        open(videoWriter);
-    end
+        Parameter = GetParameters(Simulation.Setting);
+        GetWindow(Parameter.Map,Simulation.Setting)
+        Parameter.Trajectory = GetTrajectory(Parameter.Map,Simulation.Setting);
     
-    %Data{Iteration} = cell(int32(Parameter.Sim.Time/Parameter.Physics +1),Simulation.Setting.Vehicles);
-    if Simulation.Setting.Mode == 1
-        rng(randi(100000))
-    elseif Simulation.Setting.Mode == 3
-        disp('Mode 3: Highway Simulation')
-        fprintf('%d th Iteration', Iteration)
-    else
-        rng(Simulation.Setting.Seed)
-    end
-    SetMap(Parameter.Map, Simulation.Setting);
-
-    Seed.Vehicle = GetSeed(Simulation.Setting,Parameter,Iteration);
-    TotalVehicles = size(Seed.Vehicle, 2); 
-    Data{1,2} = Seed.Vehicle;
-    List.Vehicle.Object = cell(size(Seed.Vehicle,2),1);
-    Data{Iteration} = cell(int32(Parameter.Sim.Time/Parameter.Physics +1),TotalVehicles);
-
-    % Intersection Signal 관련 코드는 불필요
-    % List.Signal.Object = cell(4,1);
-    % for i = 1:4
-    %     List.Signal.Object{i} = Signal(i,Parameter);
-    % end
-    % List.Signal.Data = UpdateData(List.Signal.Object,Parameter.Sim.Data);
-    % Intersection = Manager(Parameter);
-
-    %V2V.Object = cell(Simulation.Setting.Vehicles, 1); % Setting.Vehicles에 따라 동적으로 조정.
-
-    for Time = 0:Parameter.Physics:Parameter.Sim.Time
-        GRAPE_done = 0;
-        title(sprintf('Time: %0.2f s', Time));
+        if Simulation.Setting.Record == 1
+            timestamp = datestr(now, 'HH-MM-SS');
         
-        % Generate Vehicles
-        if ~isempty(Seed.Vehicle)
-            if int32(Time/Parameter.Physics) == int32(Seed.Vehicle(2,1)/Parameter.Physics)
-                List.Vehicle.Object{Seed.Vehicle(1,1)} = Vehicle(Seed.Vehicle(:,1),Time,Parameter);
-                if ~isempty(Seed.Vehicle)
-                    Seed.Vehicle = Seed.Vehicle(:,2:end);
-                end
-            end
+            videoFilename = fullfile('C:\Users\user\Desktop\250103_0109\Simulations\0106\', ...
+            [ num2str(random_seed) '_' Simulation.Setting.NumberOfParticipants '_'  timestamp '.mp4']);
+        
+            videoWriter = VideoWriter(videoFilename, 'MPEG-4');
+            videoWriter.FrameRate = 30; 
+            open(videoWriter);
         end
+        
+        %Data{Iteration} = cell(int32(Parameter.Sim.Time/Parameter.Physics +1),Simulation.Setting.Vehicles);
+        if Simulation.Setting.Mode == 1
+            rng(randi(100000))
+        elseif Simulation.Setting.Mode == 3
+            disp('Mode 3: Highway Simulation')
+            fprintf('%d th Iteration', Iteration)
+        else
+            rng(Simulation.Setting.Seed)
+        end
+        SetMap(Parameter.Map, Simulation.Setting);
     
-        % Update Vehicle Data
-        List.Vehicle.Data = UpdateData(List.Vehicle.Object,Parameter.Sim.Data);
-        List.Vehicle.Active = List.Vehicle.Data(List.Vehicle.Data(:,2)>0,:);
-        List.Vehicle.Object = GetAcceleration(List.Vehicle.Object, List.Vehicle.Data, Parameter.Veh);
-
-        % Call GRAPE_instance every cycle_GRAPE seconds.
-        if mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0
-            disp("calling Grape Instance. . . | "+ Time);
-
-            environment = GRAPE_main(List,Parameter,Simulation.Setting,Iteration);
-
-            %GRAPE_output = GRAPE_instance(environment);
-            %lane_alloc = GRAPE_output.Alloc;
-            %GRAPE_done = 1;
+        Seed.Vehicle = GetSeed(Simulation.Setting,Parameter,Iteration);
+        TotalVehicles = size(Seed.Vehicle, 2); 
+        Data{1,2} = Seed.Vehicle;
+        List.Vehicle.Object = cell(size(Seed.Vehicle,2),1);
+        Data{Iteration} = cell(int32(Parameter.Sim.Time/Parameter.Physics +1),TotalVehicles);
+    
+        % Intersection Signal 관련 코드는 불필요
+        % List.Signal.Object = cell(4,1);
+        % for i = 1:4
+        %     List.Signal.Object{i} = Signal(i,Parameter);
+        % end
+        % List.Signal.Data = UpdateData(List.Signal.Object,Parameter.Sim.Data);
+        % Intersection = Manager(Parameter);
+    
+        %V2V.Object = cell(Simulation.Setting.Vehicles, 1); % Setting.Vehicles에 따라 동적으로 조정.
+    
+        for Time = 0:Parameter.Physics:Parameter.Sim.Time
+            GRAPE_done = 0;
+            title(sprintf('Time: %0.2f s', Time));
             
-            try
-                GRAPE_output = GRAPE_instance(environment);
-                % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
-                lane_alloc = GRAPE_output.Alloc;
-                if any(lane_alloc == 0)
-                    fileID = fopen(Simulation.Setting.LogFile, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
-                    fprintf(fileID, 'VOID TASK at %d \n', Iteration);
-                    fclose(fileID);
+            % Generate Vehicles
+            if ~isempty(Seed.Vehicle)
+                if int32(Time/Parameter.Physics) == int32(Seed.Vehicle(2,1)/Parameter.Physics)
+                    List.Vehicle.Object{Seed.Vehicle(1,1)} = Vehicle(Seed.Vehicle(:,1),Time,Parameter);
+                    if ~isempty(Seed.Vehicle)
+                        Seed.Vehicle = Seed.Vehicle(:,2:end);
+                    end
                 end
-                GRAPE_done = 1;
-
-            catch ME
-                
             end
+        
+            % Update Vehicle Data
+            List.Vehicle.Data = UpdateData(List.Vehicle.Object,Parameter.Sim.Data);
+            List.Vehicle.Active = List.Vehicle.Data(List.Vehicle.Data(:,2)>0,:);
+            List.Vehicle.Object = GetAcceleration(List.Vehicle.Object, List.Vehicle.Data, Parameter.Veh);
+    
+            % Call GRAPE_instance every cycle_GRAPE seconds.
+            if mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0
+                disp("calling Grape Instance. . . | "+ Time);
+    
+                environment = GRAPE_main(List,Parameter,Simulation.Setting,Iteration);
+    
+                %GRAPE_output = GRAPE_instance(environment);
+                %lane_alloc = GRAPE_output.Alloc;
+                %GRAPE_done = 1;
+                
+                try
+                    GRAPE_output = GRAPE_instance(environment);
+                    % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
+                    lane_alloc = GRAPE_output.Alloc;
+                    if any(lane_alloc == 0)
+                        fileID = fopen(Simulation.Setting.LogFile, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
+                        fprintf(fileID, 'VOID TASK at %d \n', Iteration);
+                        fclose(fileID);
+                    end
+                    GRAPE_done = 1;
+    
+                catch ME
+                    
+                end
+            end
+        
+            % Msg generate & receive
+            % if mod(int32(Time/Parameter.Physics),int32(Parameter.Control/Parameter.Physics)) == 0
+            %     for i = 1:size(List.Vehicle.Active,1)
+            %         if V2V_cancel(List.Vehicle.Active(i,1)) == false
+            %             %generative msg
+            %             Trajectory_len = size(List.Vehicle.Object{List.Vehicle.Active(i,1)}.Trajectory);
+            %             if ~isempty(List.Vehicle.Object{List.Vehicle.Active(i,1)}) &&  List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location>1000 && List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location < Trajectory_len(2) - 7300
+            %                 V2V.Object{List.Vehicle.Active(i,1)} = V2VMsg(List.Vehicle.Object{List.Vehicle.Active(i,1)});
+            %             elseif ~isempty(List.Vehicle.Object{List.Vehicle.Active(i,1)}) &&  List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location > Trajectory_len(2) - 7300
+            %                 V2V.Object{List.Vehicle.Active(i,1)} = {}; %예약 취소
+            %                 V2V_cancel(List.Vehicle.Active(i,1)) = true;
+            %             end
+            %             Receive_V2V{i}=[];
+            %             for j = 1 : size(List.Vehicle.Active,1)
+            %                 if List.Vehicle.Active(j,1) ~= List.Vehicle.Active(i,1) && List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location > 1000
+            %                     if ~isempty(V2V.Object{List.Vehicle.Active(j,1)})
+            %                         Receive_V2V{i}(end+1, :) = ReceiveMsg(V2V.Object{List.Vehicle.Active(j,1)});
+            %                         Receive_V2V_check(i) = true;
+            %                     end
+            %                 end
+            %             end
+            %         elseif V2V_cancel(List.Vehicle.Active(i,1)) == true
+            %             List.Vehicle.Object{List.Vehicle.Active(i,1)}.State = 1;
+            %             List.Vehicle.Object{List.Vehicle.Active(i,1)}.Patch = patch('XData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(1,:),'YData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(2,:),'FaceColor','#34FFA0','Parent',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Object);
+            %         end
+    
+            %     %priority eval
+            %         if ~isempty(List.Vehicle.Object{List.Vehicle.Active(i,1)}) &&  List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location>1000 && V2V_cancel(i) == false
+            %             V2V.Object{List.Vehicle.Active(i,1)} = GetReserve(V2V.Object{List.Vehicle.Active(i,1)},Receive_V2V{List.Vehicle.Active(i,1)});
+            %             if V2V.Object{List.Vehicle.Active(i,1)}.priority == 1
+            %                 List.Vehicle.Object{List.Vehicle.Active(i,1)}.State = 2;
+            %                 List.Vehicle.Object{List.Vehicle.Active(i,1)}.Patch = patch('XData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(1,:),'YData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(2,:),'FaceColor','#83D7EC','Parent',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Object);
+            %             else
+            %                 List.Vehicle.Object{List.Vehicle.Active(i,1)}.Patch = patch('XData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(1,:),'YData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(2,:),'FaceColor','white','Parent',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Object);
+            %             end
+            %         end
+            %     end
+            % end
+    
+        
+            % Move Vehicle
+            for i = 1:size(List.Vehicle.Active,1)
+                vehicle_id = List.Vehicle.Active(i, 1); 
+                current_vehicle = List.Vehicle.Object{vehicle_id};
+                current_lane = List.Vehicle.Object{vehicle_id}.Lane; 
+                
+                if GRAPE_done == 1
+                    desired_lane = lane_alloc(i);
+               
+                    if current_lane ~= desired_lane 
+                        %List.Vehicle.Object{vehicle_id}.TargetLane = desired_lane;
+                        %List.Vehicle.Object{vehicle_id}.LaneChangeFlag = 1; 
+                        if current_lane > desired_lane
+                            desired_lane = current_lane - 1;
+                        elseif current_lane < desired_lane
+                            desired_lane = current_lane + 1;
+                        end
+    
+                        if strcmp(Simulation.Setting.LaneChangeMode, 'MOBIL')
+                            [feasible, a_c_sim] = MOBIL(current_vehicle, desired_lane, List, Parameter);
+                        elseif strcmp(Simulation.Setting.LaneChangeMode, 'SimpleLaneChange')
+                            [feasible] = SimpleLaneChange(current_vehicle, desired_lane, List, Parameter);
+                        end
+    
+                        if feasible
+                            current_vehicle.TargetLane = desired_lane;
+                            current_vehicle.LaneChangeFlag = 1;
+                        else
+                            current_vehicle.LaneChangeFlag = 0;
+                        end
+                    end
+                end
+                
+                if List.Vehicle.Object{vehicle_id}.Exit - List.Vehicle.Object{vehicle_id}.Location * Parameter.Map.Scale <= Parameter.ExitThreshold 
+                    if current_lane == Parameter.Map.Lane
+                        List.Vehicle.Object{vehicle_id}.ExitState = 1;
+                    else
+                        List.Vehicle.Object{vehicle_id}.ExitState = 0;
+                    end
+                end
+    
+                MoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)},Time,Parameter,List)
+            end
+        
+            % Remove Processed Vehicles
+            for i = 1:size(List.Vehicle.Active,1)
+                if List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location >= 300000 % exit으로 바꾸기
+                    RemoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)})
+                    List.Vehicle.Object{List.Vehicle.Active(i,1)} = [];
+                end
+    
+                if List.Vehicle.Object{List.Vehicle.Active(i,1)}.ExitState >= 0 && List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location * Parameter.Map.Scale >= List.Vehicle.Object{List.Vehicle.Active(i,1)}.Exit - 5 
+                    RemoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)})
+                    List.Vehicle.Object{List.Vehicle.Active(i,1)} = [];
+                end
+                % if List.Vehicle.Object{List.Vehicle.Active(i,1)}.State == 0
+                %     RemoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)})
+                %     List.Vehicle.Object{List.Vehicle.Active(i,1)} = [];
+                % end
+            end
+            % Process Data
+            for i = 1:size(List.Vehicle.Object,1)
+                if ~isempty(List.Vehicle.Object{i})
+                    Data{Iteration}{int32(Time/Parameter.Physics+1),i} = List.Vehicle.Object{i}.Data;
+                end
+            end
+        
+            % Finalize Time Step
+            if Simulation.Setting.Draw == 1
+                drawnow();
+                %pause(0.01) %pause(0.01)
+                
+                if Simulation.Setting.Record == 1 && mod(int32(Time/Parameter.Physics), 2) == 0
+                    frame = getframe(gcf); 
+                    % frame.cdata = imresize(frame.cdata, 0.5);
+                    writeVideo(videoWriter, frame); 
+                end
+            end
+            if isempty(Seed.Vehicle)
+                if isempty(List.Vehicle.Active)
+    
+                    break
+                end
+            end
+    
         end
     
-        % Msg generate & receive
-        % if mod(int32(Time/Parameter.Physics),int32(Parameter.Control/Parameter.Physics)) == 0
-        %     for i = 1:size(List.Vehicle.Active,1)
-        %         if V2V_cancel(List.Vehicle.Active(i,1)) == false
-        %             %generative msg
-        %             Trajectory_len = size(List.Vehicle.Object{List.Vehicle.Active(i,1)}.Trajectory);
-        %             if ~isempty(List.Vehicle.Object{List.Vehicle.Active(i,1)}) &&  List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location>1000 && List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location < Trajectory_len(2) - 7300
-        %                 V2V.Object{List.Vehicle.Active(i,1)} = V2VMsg(List.Vehicle.Object{List.Vehicle.Active(i,1)});
-        %             elseif ~isempty(List.Vehicle.Object{List.Vehicle.Active(i,1)}) &&  List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location > Trajectory_len(2) - 7300
-        %                 V2V.Object{List.Vehicle.Active(i,1)} = {}; %예약 취소
-        %                 V2V_cancel(List.Vehicle.Active(i,1)) = true;
-        %             end
-        %             Receive_V2V{i}=[];
-        %             for j = 1 : size(List.Vehicle.Active,1)
-        %                 if List.Vehicle.Active(j,1) ~= List.Vehicle.Active(i,1) && List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location > 1000
-        %                     if ~isempty(V2V.Object{List.Vehicle.Active(j,1)})
-        %                         Receive_V2V{i}(end+1, :) = ReceiveMsg(V2V.Object{List.Vehicle.Active(j,1)});
-        %                         Receive_V2V_check(i) = true;
-        %                     end
-        %                 end
-        %             end
-        %         elseif V2V_cancel(List.Vehicle.Active(i,1)) == true
-        %             List.Vehicle.Object{List.Vehicle.Active(i,1)}.State = 1;
-        %             List.Vehicle.Object{List.Vehicle.Active(i,1)}.Patch = patch('XData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(1,:),'YData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(2,:),'FaceColor','#34FFA0','Parent',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Object);
-        %         end
-
-        %     %priority eval
-        %         if ~isempty(List.Vehicle.Object{List.Vehicle.Active(i,1)}) &&  List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location>1000 && V2V_cancel(i) == false
-        %             V2V.Object{List.Vehicle.Active(i,1)} = GetReserve(V2V.Object{List.Vehicle.Active(i,1)},Receive_V2V{List.Vehicle.Active(i,1)});
-        %             if V2V.Object{List.Vehicle.Active(i,1)}.priority == 1
-        %                 List.Vehicle.Object{List.Vehicle.Active(i,1)}.State = 2;
-        %                 List.Vehicle.Object{List.Vehicle.Active(i,1)}.Patch = patch('XData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(1,:),'YData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(2,:),'FaceColor','#83D7EC','Parent',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Object);
+        disp("Iteration: " + Iteration)
+        if Time > Parameter.Sim.Time - Parameter.Physics
+            ;
+        end
+    
+        %  for i = 1:size(Data{Iteration},1)
+        %     for ii = 1:size(List.Vehicle.Object,1)
+        %         if isempty(Data{Iteration}{i,ii})
+        %             if ii < Simulation.Setting.Iterations(2,Iteration) + 1
+        %                 Data{Iteration}{i,ii} = zeros(1,7);        
         %             else
-        %                 List.Vehicle.Object{List.Vehicle.Active(i,1)}.Patch = patch('XData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(1,:),'YData',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Size(2,:),'FaceColor','white','Parent',List.Vehicle.Object{List.Vehicle.Active(i,1)}.Object);
+        %                 Data{Iteration}{i,ii} = zeros(1,5);
         %             end
         %         end
         %     end
         % end
-
     
-        % Move Vehicle
-        for i = 1:size(List.Vehicle.Active,1)
-            vehicle_id = List.Vehicle.Active(i, 1); 
-            current_vehicle = List.Vehicle.Object{vehicle_id};
-            current_lane = List.Vehicle.Object{vehicle_id}.Lane; 
-            
-            if GRAPE_done == 1
-                desired_lane = lane_alloc(i);
-           
-                if current_lane ~= desired_lane 
-                    %List.Vehicle.Object{vehicle_id}.TargetLane = desired_lane;
-                    %List.Vehicle.Object{vehicle_id}.LaneChangeFlag = 1; 
-                    if current_lane > desired_lane
-                        desired_lane = current_lane - 1;
-                    elseif current_lane < desired_lane
-                        desired_lane = current_lane + 1;
-                    end
-
-                    if strcmp(Simulation.Setting.LaneChangeMode, 'MOBIL')
-                        [feasible, a_c_sim] = MOBIL(current_vehicle, desired_lane, List, Parameter);
-                    elseif strcmp(Simulation.Setting.LaneChangeMode, 'SimpleLaneChange')
-                        [feasible] = SimpleLaneChange(current_vehicle, desired_lane, List, Parameter);
-                    end
-
-                    if feasible
-                        current_vehicle.TargetLane = desired_lane;
-                        current_vehicle.LaneChangeFlag = 1;
-                    else
-                        current_vehicle.LaneChangeFlag = 0;
-                    end
-                end
-            end
-            
-            if List.Vehicle.Object{vehicle_id}.Exit - List.Vehicle.Object{vehicle_id}.Location * Parameter.Map.Scale <= Parameter.ExitThreshold 
-                if current_lane == Parameter.Map.Lane
-                    List.Vehicle.Object{vehicle_id}.ExitState = 1;
-                else
-                    List.Vehicle.Object{vehicle_id}.ExitState = 0;
-                end
-            end
-
-            MoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)},Time,Parameter,List)
+        if Simulation.Setting.Record == 1
+            close(videoWriter);
+            disp(['Simulation video saved to: ', videoFilename]);
         end
-    
-        % Remove Processed Vehicles
-        for i = 1:size(List.Vehicle.Active,1)
-            if List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location >= 300000 % exit으로 바꾸기
-                RemoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)})
-                List.Vehicle.Object{List.Vehicle.Active(i,1)} = [];
-            end
-
-            if List.Vehicle.Object{List.Vehicle.Active(i,1)}.ExitState >= 0 && List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location * Parameter.Map.Scale >= List.Vehicle.Object{List.Vehicle.Active(i,1)}.Exit - 5 
-                RemoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)})
-                List.Vehicle.Object{List.Vehicle.Active(i,1)} = [];
-            end
-            % if List.Vehicle.Object{List.Vehicle.Active(i,1)}.State == 0
-            %     RemoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)})
-            %     List.Vehicle.Object{List.Vehicle.Active(i,1)} = [];
-            % end
-        end
-        % Process Data
-        for i = 1:size(List.Vehicle.Object,1)
-            if ~isempty(List.Vehicle.Object{i})
-                Data{Iteration}{int32(Time/Parameter.Physics+1),i} = List.Vehicle.Object{i}.Data;
-            end
-        end
-    
-        % Finalize Time Step
-        if Simulation.Setting.Draw == 1
-            drawnow();
-            pause(0.01) %pause(0.01)
-            
-            if Simulation.Setting.Record == 1 && mod(int32(Time/Parameter.Physics), 2) == 0
-                frame = getframe(gcf); 
-                % frame.cdata = imresize(frame.cdata, 0.5);
-                writeVideo(videoWriter, frame); 
-            end
-        end
-        if isempty(Seed.Vehicle)
-            if isempty(List.Vehicle.Active)
-
-                break
-            end
-        end
-
     end
-
-    disp("Iteration: " + Iteration)
-    if Time > Parameter.Sim.Time - Parameter.Physics
-        ;
-    end
-
-    %  for i = 1:size(Data{Iteration},1)
-    %     for ii = 1:size(List.Vehicle.Object,1)
-    %         if isempty(Data{Iteration}{i,ii})
-    %             if ii < Simulation.Setting.Iterations(2,Iteration) + 1
-    %                 Data{Iteration}{i,ii} = zeros(1,7);        
-    %             else
-    %                 Data{Iteration}{i,ii} = zeros(1,5);
-    %             end
-    %         end
-    %     end
-    % end
-
-    if Simulation.Setting.Record == 1
-        close(videoWriter);
-        disp(['Simulation video saved to: ', videoFilename]);
-    end
-
 end
 
