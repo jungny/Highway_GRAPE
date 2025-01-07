@@ -38,7 +38,7 @@ function P = GetParameters(Setting)
     P.Map.Exit = RandomExitGenerator(P.Map.Road);
 
     % Vehicle
-    P.Veh.MaxVel = 33; % Original: 10
+    P.Veh.MaxVel = 30; % Original: 10
     P.Veh.DecVel = 1;
     P.Veh.MinVel = 8; % 8
     P.Veh.Accel = [3 3]; % [1.5 3]은 -3부터 1.5까지를 의미함.

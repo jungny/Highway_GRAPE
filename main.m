@@ -67,7 +67,8 @@ for Iteration = 1:Simulation.Setting.Datasets
     rng(random_seed)
 
     if mod(random_seed,2)==0
-        Simulation.Setting.NumberOfParticipants = 'Default';
+        %Simulation.Setting.NumberOfParticipants = 'Default';
+        Simulation.Setting.NumberOfParticipants = 'Ahead';
     else
         Simulation.Setting.NumberOfParticipants = 'Ahead';
     end
@@ -274,7 +275,7 @@ for Iteration = 1:Simulation.Setting.Datasets
         % Finalize Time Step
         if Simulation.Setting.Draw == 1
             drawnow();
-            pause(0.001)
+            pause(0.01) %pause(0.01)
             
             if Simulation.Setting.Record == 1 && mod(int32(Time/Parameter.Physics), 2) == 0
                 frame = getframe(gcf); 

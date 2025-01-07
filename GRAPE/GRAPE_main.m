@@ -16,7 +16,7 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
     t_demand = zeros(Parameter.Map.Lane, size(List.Vehicle.Active,1));  
     % t_demand(:) = 100*size(List.Vehicle.Active, 1);
     
-    transition_distance = 300;
+    transition_distance = 300 + 50*Parameter.Map.Lane;
     raw_weights = zeros(Parameter.Map.Lane,1);
 
     for i = 1:size(List.Vehicle.Active, 1)
@@ -30,7 +30,7 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
         else
             % Case 2: Distance less than or equal to transition distance
             for lane = 1:Parameter.Map.Lane
-                k = 5; % k 작을수록 lane별 더 극단적인 차이가 발생 
+                k = 2; % k 작을수록 lane별 더 극단적인 차이가 발생 
                 % Weight increases as lane number increases
                 raw_weights(lane) = exp(-(transition_distance - distance_to_exit) / (k * lane));
             end
