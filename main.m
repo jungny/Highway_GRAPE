@@ -16,7 +16,7 @@ Simulation.Setting.LogFile = 'C:\Users\user\Desktop\250103_0109\Simulations\0106
 Simulation.Setting.Vehicles = 10;
 cycle_GRAPE = 5;
 Simulation.Setting.Time = 500;
-Simulation.Setting.Datasets = 2;
+Simulation.Setting.Datasets = 1;
 Simulation.Setting.Agents = 3;
 Simulation.Setting.Turns = 1;
 
@@ -33,7 +33,7 @@ Simulation.Setting.NumberOfParticipants = 'Default'; % 'Default' or 'Ahead'
 %Simulation.Setting.NumberOfParticipants = 'Ahead'; % 'Default' or 'Ahead'
 % Simulation.Setting.LaneChangeMode = 'MOBIL'; % 'MOBIL' or 'SimpleLaneChange'
 Simulation.Setting.LaneChangeMode = 'SimpleLaneChange'; % 'MOBIL' or 'SimpleLaneChange'
-Simulation.Setting.Record = 1;
+Simulation.Setting.Record = 0;
     % 1: start recording
 
 %% Set Simulation Parameters
@@ -65,8 +65,10 @@ for Iteration = 1:Simulation.Setting.Datasets
         close all;
         Simulation.Setting.NumberOfParticipants = char(participantsMode);
         %rng(46)
-        random_seed = 0 + Iteration;
-        rng(random_seed)
+        random_seed = 105;
+        rng(random_seed);
+        %random_seed = 110 + Iteration;
+        %rng(random_seed)
     
         fileID = fopen(Simulation.Setting.LogFile, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
         fprintf(fileID, '\n=====   Random Seed  %d  ||  %s   ===== %s \n', ...

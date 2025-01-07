@@ -5,13 +5,11 @@ function [feasible] = SimpleLaneChange(vehicle, desired_lane, List, Parameter)
     if  ~feasible
         [~, ~, QuitFlag, objVelocity] = LaneChangeWhenNoFeasible(vehicle,desired_lane,Parameter,List);
         if QuitFlag
-            disp('this never happens but added for just in case');
+            feasible = 0;
         else
             vehicle.Velocity = objVelocity;
+            feasible = 1;
         end
-        
-    else
-        
     end
 end
 
@@ -116,9 +114,7 @@ function [AccelFlag, DecelFlag, QuitFlag, objVelocity]= LaneChangeWhenNoFeasible
 
     else
         objVelocity = obj.Velocity;
-        QuitFlag = 1;
-        disp("error case!");
-    
+        QuitFlag = 1;    
         % obj.CheckLaneChangeFeasibility(targetLane, List, Parameter);
     end
 end
