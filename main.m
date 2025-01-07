@@ -16,7 +16,7 @@ Simulation.Setting.LogFile = 'C:\Users\user\Desktop\250103_0109\Simulations\0106
 Simulation.Setting.Vehicles = 10;
 cycle_GRAPE = 5;
 Simulation.Setting.Time = 500;
-Simulation.Setting.Datasets = 1;
+Simulation.Setting.Datasets = 500;
 Simulation.Setting.Agents = 3;
 Simulation.Setting.Turns = 1;
 
@@ -29,8 +29,8 @@ Simulation.Setting.Iterations(4,:) = randperm(1000000,Simulation.Setting.Dataset
 
 
 
-% Simulation.Setting.NumberOfParticipants = 'Default'; % 'Default' or 'Ahead'
-Simulation.Setting.NumberOfParticipants = 'Ahead'; % 'Default' or 'Ahead'
+Simulation.Setting.NumberOfParticipants = 'Default'; % 'Default' or 'Ahead'
+%Simulation.Setting.NumberOfParticipants = 'Ahead'; % 'Default' or 'Ahead'
 % Simulation.Setting.LaneChangeMode = 'MOBIL'; % 'MOBIL' or 'SimpleLaneChange'
 Simulation.Setting.LaneChangeMode = 'SimpleLaneChange'; % 'MOBIL' or 'SimpleLaneChange'
 Simulation.Setting.Record = 0;
@@ -50,7 +50,7 @@ fprintf(fileID, 'a');
 fclose(fileID);
 fileID = fopen(Simulation.Setting.LogFile, 'w');
 
-fprintf(fileID, 'Simulation Log - s\n');
+fprintf(fileID, 'Simulation Log\n');
 fclose(fileID);
 
 
@@ -61,11 +61,20 @@ environment = struct();
 GRAPE_output = [];
 
 for Iteration = 1:Simulation.Setting.Datasets
-    rng(59724)
-    %rng(59700+Iteration)
+    close all;
+    %rng(46)
+    random_seed = Iteration;
+    rng(random_seed)
+
+    if mod(random_seed,2)==0
+        Simulation.Setting.NumberOfParticipants = 'Default';
+    else
+        Simulation.Setting.NumberOfParticipants = 'Ahead';
+    end
 
     fileID = fopen(Simulation.Setting.LogFile, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
-    fprintf(fileID, '\n===== Iteration %d 시작 =====\n', Iteration);
+    fprintf(fileID, '\n=====   Random Seed  %d  ||  %s   ===== %s \n', ...
+            random_seed, Simulation.Setting.NumberOfParticipants, datestr(now, 'HH시 MM분 SS초'));
     fclose(fileID);
 
     Parameter = GetParameters(Simulation.Setting);
@@ -265,7 +274,7 @@ for Iteration = 1:Simulation.Setting.Datasets
         % Finalize Time Step
         if Simulation.Setting.Draw == 1
             drawnow();
-            %pause(0.001)
+            pause(0.001)
             
             if Simulation.Setting.Record == 1 && mod(int32(Time/Parameter.Physics), 2) == 0
                 frame = getframe(gcf); 

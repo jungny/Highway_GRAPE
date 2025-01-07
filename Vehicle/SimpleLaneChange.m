@@ -111,7 +111,7 @@ function [AccelFlag, DecelFlag, QuitFlag, objVelocity]= LaneChangeWhenNoFeasible
         AccelFlag = 1;
     
     elseif isempty(rear_vehicle) || abs(rear_distance) > Parameter.Veh.SafeDistance
-        objVelocity = max(obj.Velocity - obj.Parameter.Accel(1), obj.Parameter.MinVel);  % 감속해서 합류하기
+        objVelocity = max(obj.Velocity - obj.Parameter.Accel(2), obj.Parameter.MinVel);  % 감속해서 합류하기
         DecelFlag = 1;
 
     else

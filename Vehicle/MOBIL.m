@@ -89,13 +89,13 @@ function vehicle_acceleration = ComputeAcceleration(vehicle, front_vehicle, fron
     end
 
     % 2. 현재 차량의 최소, 최대 가속도 제한
-    vehicle_acceleration = min(max(a_front, Parameter.Veh.Accel(1)), Parameter.Veh.Accel(2));
+    vehicle_acceleration = min(max(a_front, Parameter.Veh.Accel(1)), -Parameter.Veh.Accel(2));
 
    
 
     % 3. 감속 처리 (선행 차량과 너무 가까운 경우)
     if front_distance < Parameter.Veh.SafeDistance
-        vehicle_acceleration = max(vehicle_acceleration, Parameter.Veh.Accel(2)); % 감속
+        vehicle_acceleration = max(vehicle_acceleration, -Parameter.Veh.Accel(2)); % 감속
     end
 end
 

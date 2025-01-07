@@ -66,7 +66,7 @@ else
     flag_problem = 1;
 
     fileID = fopen(environment.LogFile, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
-    fprintf(fileID, 'INVALID BOUND at %d \n',environment.test_iteration);
+    fprintf(fileID, 'INVALID BOUND. %d tasks, %d agents.\n',m,n);
     fclose(fileID);
     
 end
