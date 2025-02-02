@@ -26,7 +26,7 @@ function Seed = GetSeed(Settings,Parameter,Iteration)
         
        
         % TotalVehicles = randi([2,50]);
-        TotalVehicles = 50;
+        TotalVehicles = 30;
         Seed = zeros(7,TotalVehicles);
 
         % Vehicle ID

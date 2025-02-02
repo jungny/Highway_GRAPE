@@ -22,23 +22,23 @@ function P = GetParameters(Setting)
 
     P.Map.Tile = 8; %4
     %P.Map.Road = 2000; %400
-    % P.Map.Road = randi([400,2500]);
-    P.Map.Road = 2000;
+    P.Map.Road = randi([400,2500]);
+    % P.Map.Road = 2000;
     
-    % minLanes = 2;
-    % maxLanes = 8;
+    minLanes = 2;
+    maxLanes = 8;
     % %P.Map.Lane = 3;
-    % P.Map.Lane = minLanes + floor((P.Map.Road - 400) / (2500 - 400) * (maxLanes - minLanes));
-    % P.Map.Lane = max(minLanes, min(P.Map.Lane, maxLanes));  % 범위 제한
-    P.Map.Lane = 3;
+    P.Map.Lane = minLanes + floor((P.Map.Road - 400) / (2500 - 400) * (maxLanes - minLanes));
+    P.Map.Lane = max(minLanes, min(P.Map.Lane, maxLanes));  % 범위 제한
+    %P.Map.Lane = 3;
 
     P.Map.Margin = 10;
     P.Map.Stop = 6;
     P.Map.Center = [0;0];
     %P.Map.Exit = [1040, 1970];
     %P.Map.Exit = [240,380];
-    %P.Map.Exit = RandomExitGenerator(P.Map.Road);
-    P.Map.Exit = [1200,1900];
+    P.Map.Exit = RandomExitGenerator(P.Map.Road);
+    %P.Map.Exit = [1200,1900];
 
     % Vehicle
     P.Veh.MaxVel = 30; % Original: 10

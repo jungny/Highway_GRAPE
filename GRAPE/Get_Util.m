@@ -17,7 +17,10 @@ t_demand = environment.t_demand(:,agent_id);
 %Util_type = 'Logarithm_reward';
 %Util_type = 'Constant_reward';
 %Util_type = 'Random';
-Util_type = 'Test';
+Util_type = environment.Util_type;
+if strcmp(environment.Util_type, 'Min_travel_time')
+    Util_type = 'Test';
+end
 
 %%
 switch Util_type
@@ -29,8 +32,13 @@ switch Util_type
         %util_value = t_demand(task_id)/n_participants;
         util_value = t_demand(task_id)/n_participants - cost;
 
-    % case 'Exit-Courtesy'
-
+    case 'Max_velocity'
+        denominator = 4.4 * (environment.number_of_tasks)^2.2 + 6;
+        % Cost 
+        cost = abs(t_location(task_id, 2)- a_location(agent_id, 2)) / denominator ; % y coordinate difference
+        cost=0;
+        %util_value = t_demand(task_id)/n_participants;
+        util_value = t_demand(task_id)/n_participants - cost;
 
     case 'Peaked_reward'
         % Cost

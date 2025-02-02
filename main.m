@@ -28,6 +28,7 @@ Simulation.Setting.Iterations(4,:) = randperm(1000000,Simulation.Setting.Dataset
 
 
 
+Simulation.Setting.Util_type = 'Max_velocity'; % 'Test' or 'Min_travel_time' or 'Max_velocity'
 
 Simulation.Setting.NumberOfParticipants = 'Default'; % 'Default' or 'Ahead'
 %Simulation.Setting.NumberOfParticipants = 'Ahead'; % 'Default' or 'Ahead'
@@ -69,7 +70,7 @@ for Iteration = 1:Simulation.Setting.Datasets
         %rng(46)
         %random_seed = 59724;
         %rng(random_seed);
-        random_seed = 0 + Iteration;
+        random_seed = 169 + Iteration;
         rng(random_seed)
     
         fileID = fopen(Simulation.Setting.LogFile, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
@@ -85,7 +86,7 @@ for Iteration = 1:Simulation.Setting.Datasets
             timestamp = datestr(now, 'HH-MM');
         
             videoFilename = fullfile('C:\Users\user\Desktop\250116_0203\Simulations\', ...
-            [ 'exp' num2str(random_seed) '_' Simulation.Setting.NumberOfParticipants '_'  timestamp '.mp4']);
+            [ num2str(random_seed) '_' Simulation.Setting.Util_type '_' num2str(random_seed) '_' Simulation.Setting.NumberOfParticipants '_'  timestamp '.mp4']);
         
             videoWriter = VideoWriter(videoFilename, 'MPEG-4');
             videoWriter.FrameRate = 30; 
@@ -278,7 +279,7 @@ for Iteration = 1:Simulation.Setting.Datasets
             % Finalize Time Step
             if Simulation.Setting.Draw == 1
                 drawnow();
-                pause(0.01) %pause(0.01)
+                % pause(0.01) %pause(0.01)
                 
                 %if Simulation.Setting.Record == 1 && mod(int32(Time/Parameter.Physics), 2) == 0
                 if Simulation.Setting.Record == 1 
