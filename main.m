@@ -16,7 +16,7 @@ Simulation.Setting.LogFile = 'C:\Users\user\Desktop\250116_0203\Simulations\log.
 Simulation.Setting.Vehicles = 10;
 cycle_GRAPE = 5;
 Simulation.Setting.Time = 500;
-Simulation.Setting.Datasets = 5;
+Simulation.Setting.Datasets = 3;
 Simulation.Setting.Agents = 3;
 Simulation.Setting.Turns = 1;
 
@@ -33,7 +33,7 @@ Simulation.Setting.NumberOfParticipants = 'Default'; % 'Default' or 'Ahead'
 %Simulation.Setting.NumberOfParticipants = 'Ahead'; % 'Default' or 'Ahead'
 % Simulation.Setting.LaneChangeMode = 'MOBIL'; % 'MOBIL' or 'SimpleLaneChange'
 Simulation.Setting.LaneChangeMode = 'SimpleLaneChange'; % 'MOBIL' or 'SimpleLaneChange'
-Simulation.Setting.Record = 0;
+Simulation.Setting.Record = 1;
     % 1: start recording
 
 %% Set Simulation Parameters
@@ -62,13 +62,14 @@ GRAPE_output = [];
 
 for Iteration = 1:Simulation.Setting.Datasets
 
-    for participantsMode = ["Default", "Ahead"]
+    %for participantsMode = ["Default", "Ahead"]
+    for participantsMode = ["Ahead"]
         close all;
         Simulation.Setting.NumberOfParticipants = char(participantsMode);
         %rng(46)
         %random_seed = 59724;
         %rng(random_seed);
-        random_seed = 166 + Iteration;
+        random_seed = 0 + Iteration;
         rng(random_seed)
     
         fileID = fopen(Simulation.Setting.LogFile, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
@@ -84,7 +85,7 @@ for Iteration = 1:Simulation.Setting.Datasets
             timestamp = datestr(now, 'HH-MM');
         
             videoFilename = fullfile('C:\Users\user\Desktop\250116_0203\Simulations\', ...
-            [ 'ppt' num2str(random_seed) '_' Simulation.Setting.NumberOfParticipants '_'  timestamp '.mp4']);
+            [ 'exp' num2str(random_seed) '_' Simulation.Setting.NumberOfParticipants '_'  timestamp '.mp4']);
         
             videoWriter = VideoWriter(videoFilename, 'MPEG-4');
             videoWriter.FrameRate = 30; 
