@@ -16,7 +16,7 @@ Simulation.Setting.LogFile = 'C:\Users\user\Desktop\250116_0203\Simulations\log.
 Simulation.Setting.Vehicles = 10;
 cycle_GRAPE = 5;
 Simulation.Setting.Time = 500;
-Simulation.Setting.Datasets = 3;
+Simulation.Setting.Datasets = 1;
 Simulation.Setting.Agents = 3;
 Simulation.Setting.Turns = 1;
 
@@ -33,7 +33,7 @@ Simulation.Setting.NumberOfParticipants = 'Default'; % 'Default' or 'Ahead'
 %Simulation.Setting.NumberOfParticipants = 'Ahead'; % 'Default' or 'Ahead'
 % Simulation.Setting.LaneChangeMode = 'MOBIL'; % 'MOBIL' or 'SimpleLaneChange'
 Simulation.Setting.LaneChangeMode = 'SimpleLaneChange'; % 'MOBIL' or 'SimpleLaneChange'
-Simulation.Setting.Record = 1;
+Simulation.Setting.Record = 0;
     % 1: start recording
 
 %% Set Simulation Parameters
@@ -147,6 +147,10 @@ for Iteration = 1:Simulation.Setting.Datasets
                 %GRAPE_output = GRAPE_instance(environment);
                 %lane_alloc = GRAPE_output.Alloc;
                 %GRAPE_done = 1;
+
+                if Time > 5
+                    fprintf('check')
+                end
                 
                 try
                     GRAPE_output = GRAPE_instance(environment);
@@ -274,7 +278,7 @@ for Iteration = 1:Simulation.Setting.Datasets
             % Finalize Time Step
             if Simulation.Setting.Draw == 1
                 drawnow();
-                %pause(0.01) %pause(0.01)
+                pause(0.01) %pause(0.01)
                 
                 %if Simulation.Setting.Record == 1 && mod(int32(Time/Parameter.Physics), 2) == 0
                 if Simulation.Setting.Record == 1 

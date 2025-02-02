@@ -67,7 +67,7 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
     environment.Type = Setting.NumberOfParticipants;
     environment.LogFile = Setting.LogFile;
     environment.test_iteration = testiteration;
-    environment.vehicles_ahead = GetVehiclesAhead(List,Parameter);
+    environment.x_relation = GetXRelation(List);
     environment.number_of_tasks = Parameter.Map.Lane;
 
 
