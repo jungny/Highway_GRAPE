@@ -77,7 +77,9 @@ while a_satisfied~=n
                 case 'Ahead'
                     % 현재 agent i가 선택한 task(차선)의 앞에 있는 차량 수, including
                     % oneself
-                    n_participants = environment.vehicles_ahead(i,t)+1;
+                    x_relation = environment.x_relation;
+                    task_agents = find(Alloc_==t);
+                    n_participants = sum(x_relation(i,task_agents))+1;
             end
             
             % Obtain possible individual utility value
