@@ -16,11 +16,15 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
     t_demand = zeros(Parameter.Map.Lane, size(List.Vehicle.Active,1));  
     % t_demand(:) = 100*size(List.Vehicle.Active, 1);
     
-    transition_distance = 300 + 15*Parameter.Map.Lane^2;
+    % transition_distance = 300 + 15*Parameter.Map.Lane^2;
     raw_weights = zeros(Parameter.Map.Lane,1);
 
     for i = 1:size(List.Vehicle.Active, 1)
+
+        
         vehicle_id = List.Vehicle.Active(i, 1);  % 차량 ID
+        vehicle_lane = List.Vehicle.Object{vehicle_id}.Lane;
+        transition_distance = 300 + 15*(Parameter.Map.Lane-vehicle_lane)^2;
         distance_to_exit = List.Vehicle.Object{vehicle_id}.Exit - ...
                             List.Vehicle.Object{vehicle_id}.Location * Parameter.Map.Scale;  % Exit까지 거리
 

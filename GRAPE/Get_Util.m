@@ -28,6 +28,10 @@ switch Util_type
         cost = abs(t_location(task_id, 2)- a_location(agent_id, 2)) / denominator ; % y coordinate difference
         %util_value = t_demand(task_id)/n_participants;
         util_value = t_demand(task_id)/n_participants - cost;
+
+    % case 'Exit-Courtesy'
+
+
     case 'Peaked_reward'
         % Cost
         cost = 1*norm(t_location(task_id,:)-a_location(agent_id,:));
