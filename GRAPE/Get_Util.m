@@ -23,10 +23,11 @@ Util_type = 'Test';
 switch Util_type
 
     case 'Test'
+        denominator = 4.4 * (environment.number_of_tasks)^2.2 + 6;
         % Cost 
-        cost = abs(t_location(task_id, 2)- a_location(agent_id, 2)); % y coordinate difference
+        cost = abs(t_location(task_id, 2)- a_location(agent_id, 2)) / denominator ; % y coordinate difference
         %util_value = t_demand(task_id)/n_participants;
-        util_value = t_demand(task_id)/n_participants - cost/20;
+        util_value = t_demand(task_id)/n_participants - cost;
     case 'Peaked_reward'
         % Cost
         cost = 1*norm(t_location(task_id,:)-a_location(agent_id,:));

@@ -16,7 +16,7 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
     t_demand = zeros(Parameter.Map.Lane, size(List.Vehicle.Active,1));  
     % t_demand(:) = 100*size(List.Vehicle.Active, 1);
     
-    transition_distance = 300 + 50*Parameter.Map.Lane;
+    transition_distance = 300 + 15*Parameter.Map.Lane^2;
     raw_weights = zeros(Parameter.Map.Lane,1);
 
     for i = 1:size(List.Vehicle.Active, 1)
@@ -64,6 +64,7 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
     environment.LogFile = Setting.LogFile;
     environment.test_iteration = testiteration;
     environment.vehicles_ahead = GetVehiclesAhead(List,Parameter);
+    environment.number_of_tasks = Parameter.Map.Lane;
 
 
 end

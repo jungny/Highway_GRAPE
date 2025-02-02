@@ -7,7 +7,7 @@ Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
 Simulation.Setting.Debug = 0;
 Simulation.Setting.Mode = 3;
-Simulation.Setting.LogFile = 'C:\Users\user\Desktop\250103_0109\Simulations\0106\log.txt';  % 파일 경로
+Simulation.Setting.LogFile = 'C:\Users\user\Desktop\250116_0203\Simulations\log.txt';  % 파일 경로
 
     % 1: Dataset Generation
     % 2: Evaluation
@@ -16,7 +16,7 @@ Simulation.Setting.LogFile = 'C:\Users\user\Desktop\250103_0109\Simulations\0106
 Simulation.Setting.Vehicles = 10;
 cycle_GRAPE = 5;
 Simulation.Setting.Time = 500;
-Simulation.Setting.Datasets = 1;
+Simulation.Setting.Datasets = 5;
 Simulation.Setting.Agents = 3;
 Simulation.Setting.Turns = 1;
 
@@ -61,14 +61,15 @@ environment = struct();
 GRAPE_output = [];
 
 for Iteration = 1:Simulation.Setting.Datasets
+
     for participantsMode = ["Default", "Ahead"]
         close all;
         Simulation.Setting.NumberOfParticipants = char(participantsMode);
         %rng(46)
-        random_seed = 373;
-        rng(random_seed);
-        %random_seed = 200 + Iteration;
-        %rng(random_seed)
+        %random_seed = 59724;
+        %rng(random_seed);
+        random_seed = 166 + Iteration;
+        rng(random_seed)
     
         fileID = fopen(Simulation.Setting.LogFile, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
         fprintf(fileID, '\n=====   Random Seed  %d  ||  %s   ===== %s \n', ...
@@ -82,8 +83,8 @@ for Iteration = 1:Simulation.Setting.Datasets
         if Simulation.Setting.Record == 1
             timestamp = datestr(now, 'HH-MM');
         
-            videoFilename = fullfile('C:\Users\user\Desktop\250103_0109\Simulations\0106\', ...
-            [ num2str(random_seed) '_' Simulation.Setting.NumberOfParticipants '_'  timestamp '.mp4']);
+            videoFilename = fullfile('C:\Users\user\Desktop\250116_0203\Simulations\', ...
+            [ 'ppt' num2str(random_seed) '_' Simulation.Setting.NumberOfParticipants '_'  timestamp '.mp4']);
         
             videoWriter = VideoWriter(videoFilename, 'MPEG-4');
             videoWriter.FrameRate = 30; 
@@ -312,5 +313,6 @@ for Iteration = 1:Simulation.Setting.Datasets
             disp(['Simulation video saved to: ', videoFilename]);
         end
     end
+    clear Parameter List Seed environment GRAPE_output;
 end
 
