@@ -27,19 +27,35 @@ function ObjectList = GetAcceleration(ObjectList, VehicleList, Parameter)
                     Acceleration = Parameter.Accel(1) * (1 - (VelocitySelf / Parameter.MaxVel)^Parameter.Exp -...
                                    (DesiredDistance / LocationDifference)^2);
                     
-                    
+                    if ~isreal(Acceleration) || isnan(Acceleration) || isinf(Acceleration)
+                        % warning('Invalid acceleration detected. Setting acceleration to 0.');
+                        Acceleration = 0;
+                    end
+                                
                     % ObjectList에 가속도 저장
                     ObjectList{LaneData(j, 1)}.Acceleration = Acceleration;
                 end
             end
 
             for j = 1
+                
                 Acceleration = Parameter.Accel(1) * (1 - (VelocitySelf / Parameter.MaxVel)^Parameter.Exp);
+
+                if ~isreal(Acceleration) || isnan(Acceleration) || isinf(Acceleration)
+                    % warning('Invalid acceleration detected. Setting acceleration to 0.');
+                    Acceleration = 0;
+                end
+
                 ObjectList{LaneData(j, 1)}.Acceleration = Acceleration;
             end
         elseif size(LaneData,1)==1
             VelocitySelf = LaneData(1, 5);
             Acceleration = Parameter.Accel(1) * (1 - (VelocitySelf / Parameter.MaxVel)^Parameter.Exp);
+            if ~isreal(Acceleration) || isnan(Acceleration) || isinf(Acceleration)
+                % warning('Invalid acceleration detected. Setting acceleration to 0.');
+                Acceleration = 0;
+            end
+            
             ObjectList{LaneData(1, 1)}.Acceleration = Acceleration;    
         end
     end

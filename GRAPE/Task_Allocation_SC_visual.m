@@ -61,11 +61,11 @@ while a_satisfied~=n
         %%%%% Line 5 of Algorithm 1
         Alloc_ = agent(i).Alloc;
         current_task = Alloc_(i); % Currently-selected task
-        
+        % disp(Alloc_);
         Candidate = ones(m,1)*(-inf);
         for t=1:m
 
-            Type = 'Default';
+            Type = environment.Type;
 
             switch Type
                 case 'Default'
@@ -77,7 +77,12 @@ while a_satisfied~=n
                 case 'Ahead'
                     % 현재 agent i가 선택한 task(차선)의 앞에 있는 차량 수, including
                     % oneself
-                    n_participants = environment.vehicles_ahead(i,t)+1;
+                    x_relation = environment.x_relation;
+                    task_agents = find(Alloc_ == t);
+                    n_participants = sum(x_relation(i, task_agents)) + 1; 
+                    
+                    % fprintf('i = %d, t = %d, n_participants = %d\n', i, t, n_participants);
+
             end
             
             % Obtain possible individual utility value
@@ -94,7 +99,7 @@ while a_satisfied~=n
             Alloc_(i,1) = 0; % Go th the void
         else
             Alloc_(i,1) = Best_task;
-        end
+        %end
         agent(i).util = Best_utility;
         %
         if current_task == Alloc_(i,1) % if this choice is the same as remaining

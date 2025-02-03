@@ -36,6 +36,10 @@ function [nextVelocity,nextLocation] = GetDynamics(obj,ghostAcceleration,ghostVe
         nextLocation = double(Location + uint32(obj.DistanceStep*0.5*Velocity*actualTimeTaken));
     else
         nextVelocity = Velocity + obj.TimeStep*Acceleration;
-        nextLocation = double(Location + uint32(obj.DistanceStep*(0.5*obj.TimeStep*(Velocity + Velocity + Acceleration))));
+        try
+            nextLocation = double(Location + uint32(obj.DistanceStep*(0.5*obj.TimeStep*(Velocity + Velocity + Acceleration))));
+        catch ME
+            disp('n ');
+        end
     end
 end

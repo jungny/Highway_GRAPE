@@ -1,4 +1,4 @@
-function [feasible, a_c_sim] = MOBIL(vehicle, target_lane, List, Parameter)
+function [feasible, a_c_sim] = MOBIL(vehicle, desired_lane, List, Parameter)
     % MOBIL 알고리즘을 통한 차선 변경 가능 여부 평가
 
     % 현재 차선의 선행/후행 차량 정보 가져오기
@@ -6,8 +6,8 @@ function [feasible, a_c_sim] = MOBIL(vehicle, target_lane, List, Parameter)
     [rear_vehicle_cur, ~] = GetRearVehicle(vehicle, vehicle.Lane, List, Parameter);
 
     % 목표 차선의 선행/후행 차량 정보 가져오기
-    [front_vehicle_target, front_distance_target] = GetFrontVehicle(vehicle, target_lane, List, Parameter);
-    [rear_vehicle_target, rear_distance_target] = GetRearVehicle(vehicle, target_lane, List, Parameter);
+    [front_vehicle_target, front_distance_target] = GetFrontVehicle(vehicle, desired_lane, List, Parameter);
+    [rear_vehicle_target, rear_distance_target] = GetRearVehicle(vehicle, desired_lane, List, Parameter);
 
     % 현재 차선과 목표 차선의 가속도 계산
     a_c_nochange = ComputeAcceleration(vehicle, front_vehicle_cur, front_distance_cur, List, Parameter);
@@ -48,7 +48,7 @@ function [feasible, a_c_sim] = MOBIL(vehicle, target_lane, List, Parameter)
 
     % 최종 판단
     feasible = safety_flag && incentive_flag;
-    % fprintf('Vehicle %d | to %d | feasible: %d   safety_flag: %d\n', vehicle.ID, target_lane, feasible, safety_flag);
+    % fprintf('Vehicle %d | to %d | feasible: %d   safety_flag: %d\n', vehicle.ID, desired_lane, feasible, safety_flag);
 end
 
 function vehicle_acceleration = ComputeAcceleration(vehicle, front_vehicle, front_distance, List, Parameter)
@@ -89,13 +89,13 @@ function vehicle_acceleration = ComputeAcceleration(vehicle, front_vehicle, fron
     end
 
     % 2. 현재 차량의 최소, 최대 가속도 제한
-    vehicle_acceleration = min(max(a_front, Parameter.Veh.Accel(1)), Parameter.Veh.Accel(2));
+    vehicle_acceleration = min(max(a_front, Parameter.Veh.Accel(1)), -Parameter.Veh.Accel(2));
 
    
 
     % 3. 감속 처리 (선행 차량과 너무 가까운 경우)
     if front_distance < Parameter.Veh.SafeDistance
-        vehicle_acceleration = max(vehicle_acceleration, Parameter.Veh.Accel(2)); % 감속
+        vehicle_acceleration = max(vehicle_acceleration, -Parameter.Veh.Accel(2)); % 감속
     end
 end
 
@@ -154,5 +154,4 @@ function safety_flag = CheckSafety(front_distance, rear_distance, Parameter)
     vehicle_length = Parameter.Veh.Size(1);
     safety_flag = (front_distance - vehicle_length > safe_distance) && (abs(rear_distance) - vehicle_length > safe_distance);
 end
-
 
