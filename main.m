@@ -16,7 +16,7 @@ Simulation.Setting.LogFile = 'C:\Users\user\Desktop\250116_0203\Simulations\log.
 Simulation.Setting.Vehicles = 10;
 cycle_GRAPE = 5;
 Simulation.Setting.Time = 500;
-Simulation.Setting.Datasets = 1;
+Simulation.Setting.Datasets = 3; % number of iterations
 Simulation.Setting.Agents = 3;
 Simulation.Setting.Turns = 1;
 
@@ -28,13 +28,14 @@ Simulation.Setting.Iterations(4,:) = randperm(1000000,Simulation.Setting.Dataset
 
 
 
-Simulation.Setting.Util_type = 'Max_velocity'; % 'Test' or 'Min_travel_time' or 'Max_velocity'
-
-Simulation.Setting.NumberOfParticipants = 'Default'; % 'Default' or 'Ahead'
+%Simulation.Setting.Util_type = 'Max_velocity'; % 'Test' or 'Min_travel_time' or 'Max_velocity'
+%Simulation.Setting.Util_type = 'Min_travel_time';
+Simulation.Setting.Util_type = 'Test';
+Simulation.Setting.NumberOfParticipants = ''; % 'Default' or 'Ahead'
 %Simulation.Setting.NumberOfParticipants = 'Ahead'; % 'Default' or 'Ahead'
 % Simulation.Setting.LaneChangeMode = 'MOBIL'; % 'MOBIL' or 'SimpleLaneChange'
 Simulation.Setting.LaneChangeMode = 'SimpleLaneChange'; % 'MOBIL' or 'SimpleLaneChange'
-Simulation.Setting.Record = 1;
+Simulation.Setting.Record = 0;
     % 1: start recording
 
 %% Set Simulation Parameters
@@ -60,17 +61,22 @@ fclose(fileID);
 
 environment = struct();
 GRAPE_output = [];
+travel_times = [];
+velocities = [];
+velocities_wonrae = [];
+velocity_records = containers.Map('KeyType', 'double', 'ValueType', 'any'); % vehicle_id별 속도 기록용
+
 
 for Iteration = 1:Simulation.Setting.Datasets
 
     %for participantsMode = ["Default", "Ahead"]
-    for participantsMode = ["Ahead"]
+    for participantsMode = "Ahead"
         close all;
         Simulation.Setting.NumberOfParticipants = char(participantsMode);
         %rng(46)
         %random_seed = 59724;
         %rng(random_seed);
-        random_seed = 169 + Iteration;
+        random_seed = 0 + Iteration;
         rng(random_seed)
     
         fileID = fopen(Simulation.Setting.LogFile, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
@@ -214,6 +220,12 @@ for Iteration = 1:Simulation.Setting.Datasets
                 vehicle_id = List.Vehicle.Active(i, 1); 
                 current_vehicle = List.Vehicle.Object{vehicle_id};
                 current_lane = List.Vehicle.Object{vehicle_id}.Lane; 
+                current_velocity = List.Vehicle.Object{vehicle_id}.Velocity; % 현재 속도
+                if isKey(velocity_records, vehicle_id)
+                    velocity_records(vehicle_id) = [velocity_records(vehicle_id), current_velocity];
+                else
+                    velocity_records(vehicle_id) = [current_velocity];
+                end
                 
                 if GRAPE_done == 1
                     desired_lane = lane_alloc(i);
@@ -258,9 +270,33 @@ for Iteration = 1:Simulation.Setting.Datasets
                 if List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location >= 300000 % exit으로 바꾸기
                     RemoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)})
                     List.Vehicle.Object{List.Vehicle.Active(i,1)} = [];
+
+                    % record travel time, avg speed
+
                 end
     
                 if List.Vehicle.Object{List.Vehicle.Active(i,1)}.ExitState >= 0 && List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location * Parameter.Map.Scale >= List.Vehicle.Object{List.Vehicle.Active(i,1)}.Exit - 5 
+                    % record travel time, avg speed
+                    spawn_time = List.Vehicle.Object{List.Vehicle.Active(i,1)}.EntryTime;
+                    exit_time = Time;
+                    travel_time = exit_time - spawn_time;
+                    exit_location = List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location * Parameter.Map.Scale;
+                    avg_velocity_wonrae = exit_location / travel_time;
+
+
+                    if isKey(velocity_records, vehicle_id)
+                        avg_velocity = mean(velocity_records(vehicle_id)); % 저장된 속도들의 평균
+                        remove(velocity_records, vehicle_id); % 기록 삭제
+                    else
+                        avg_velocity = NaN;
+                    end
+
+
+                    travel_times = [travel_times, travel_time];
+                    velocities_wonrae = [velocities_wonrae, avg_velocity_wonrae];
+                    velocities = [velocities, avg_velocity];
+                    
+                    % remove vehicle
                     RemoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)})
                     List.Vehicle.Object{List.Vehicle.Active(i,1)} = [];
                 end
@@ -296,6 +332,35 @@ for Iteration = 1:Simulation.Setting.Datasets
             end
     
         end
+
+        % Iteration 종료 후 데이터 정리
+        if ~isempty(travel_times)
+            mean_travel_time = mean(travel_times);
+            mean_velocity_wonrae = mean(velocities_wonrae);
+            mean_velocity = mean(velocities);
+        else
+            mean_travel_time = NaN;
+            mean_velocity = NaN;
+            mean_velocity_wonrae = NaN;
+        end
+        
+        % 엑셀 저장을 위한 데이터 구성
+        excel_filename = fullfile('C:\Users\user\Desktop\250116_0203\Simulations\', [Simulation.Setting.Util_type '_temp.xlsx']);
+        sheet_name = 'Data';
+        
+        % 기존 데이터 불러오기
+        if exist(excel_filename, 'file')
+            existing_data = readmatrix(excel_filename, 'Sheet', sheet_name);
+        else
+            existing_data = [];
+        end
+
+        % 데이터 추가
+        new_data = [random_seed, mean_travel_time, mean_velocity_wonrae, mean_velocity];
+        updated_data = [existing_data; new_data];
+
+        % 엑셀 파일로 저장
+        writematrix(updated_data, excel_filename, 'Sheet', sheet_name);
     
         disp("Iteration: " + Iteration)
         if Time > Parameter.Sim.Time - Parameter.Physics

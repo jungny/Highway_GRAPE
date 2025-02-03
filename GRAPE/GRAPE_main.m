@@ -115,7 +115,7 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
                 end
 
                 %%%%%%%%
-                safeDistanceParameter=4; %앞뒤로 20m
+                safeDistanceParameter=4; %앞뒤로 4m
                 penaltyFactor = 0.1;
                 for lane = 1:Parameter.Map.Lane
                     if lane > vehicle_lane
