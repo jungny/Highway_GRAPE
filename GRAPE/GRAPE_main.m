@@ -102,7 +102,9 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
 
                 % Case 1: Distance greater than transition distance (uniform weights)
                 if delta_d<0 % distance_to_exit > transition_distance
-                    weights = ones(Parameter.Map.Lane, 1) / Parameter.Map.Lane;  % 균일 분포
+                    for lane = 1:Parameter.Map.Lane
+                        raw_weights(lane) = 1 / Parameter.Map.Lane;  % 균일 분포
+                    end
                 else
                     % Case 2: Distance less than or equal to transition distance
                     for lane = 1:Parameter.Map.Lane
@@ -113,22 +115,22 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
                 end
 
                 %%%%%%%%
-                safeDistanceParameter=5; %앞뒤로 20m
-                penaltyFactor = 0.98;
+                safeDistanceParameter=4; %앞뒤로 20m
+                penaltyFactor = 0.1;
                 for lane = 1:Parameter.Map.Lane
                     if lane > vehicle_lane
                         adjacentLane = vehicle_lane+1;
                         feasible = PoliteLaneChangeFeasibility(safeDistanceParameter, List.Vehicle.Object{vehicle_id}, ...
                                                                 adjacentLane, List, Parameter);
                         if ~feasible
-                            t_demand(lane,i) = penaltyFactor * t_demand(lane,i);
+                            raw_weights(lane) = penaltyFactor * raw_weights(lane);
                         end
                     elseif lane < vehicle_lane
                         adjacentLane = vehicle_lane-1;
                         feasible = PoliteLaneChangeFeasibility(safeDistanceParameter, List.Vehicle.Object{vehicle_id}, ...
                                                                 adjacentLane, List, Parameter);
                         if ~feasible
-                            t_demand(lane,i) = penaltyFactor * t_demand(lane,i);
+                            raw_weights(lane) = penaltyFactor * raw_weights(lane);
                         end
                     else % lane == vehicle_lane
                     end 

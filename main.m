@@ -34,7 +34,7 @@ Simulation.Setting.NumberOfParticipants = 'Default'; % 'Default' or 'Ahead'
 %Simulation.Setting.NumberOfParticipants = 'Ahead'; % 'Default' or 'Ahead'
 % Simulation.Setting.LaneChangeMode = 'MOBIL'; % 'MOBIL' or 'SimpleLaneChange'
 Simulation.Setting.LaneChangeMode = 'SimpleLaneChange'; % 'MOBIL' or 'SimpleLaneChange'
-Simulation.Setting.Record = 0;
+Simulation.Setting.Record = 1;
     % 1: start recording
 
 %% Set Simulation Parameters
