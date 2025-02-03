@@ -16,7 +16,7 @@ Simulation.Setting.LogFile = 'C:\Users\user\Desktop\250116_0203\Simulations\log.
 Simulation.Setting.Vehicles = 10;
 cycle_GRAPE = 5;
 Simulation.Setting.Time = 500;
-Simulation.Setting.Datasets = 3; % number of iterations
+Simulation.Setting.Datasets = 100; % number of iterations
 Simulation.Setting.Agents = 3;
 Simulation.Setting.Turns = 1;
 
@@ -28,15 +28,17 @@ Simulation.Setting.Iterations(4,:) = randperm(1000000,Simulation.Setting.Dataset
 
 
 
-%Simulation.Setting.Util_type = 'Max_velocity'; % 'Test' or 'Min_travel_time' or 'Max_velocity'
+Simulation.Setting.Util_type = 'Max_velocity'; % 'Test' or 'Min_travel_time' or 'Max_velocity'
 %Simulation.Setting.Util_type = 'Min_travel_time';
-Simulation.Setting.Util_type = 'Test';
+%Simulation.Setting.Util_type = 'Test';
+%Simulation.Setting.Util_type = 'Hybrid';
 Simulation.Setting.NumberOfParticipants = ''; % 'Default' or 'Ahead'
 %Simulation.Setting.NumberOfParticipants = 'Ahead'; % 'Default' or 'Ahead'
 % Simulation.Setting.LaneChangeMode = 'MOBIL'; % 'MOBIL' or 'SimpleLaneChange'
 Simulation.Setting.LaneChangeMode = 'SimpleLaneChange'; % 'MOBIL' or 'SimpleLaneChange'
 Simulation.Setting.Record = 0;
     % 1: start recording
+Simulation.Setting.ExcelRecord = 0;
 
 %% Set Simulation Parameters
 
@@ -79,10 +81,6 @@ for Iteration = 1:Simulation.Setting.Datasets
         random_seed = 0 + Iteration;
         rng(random_seed)
     
-        fileID = fopen(Simulation.Setting.LogFile, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
-        fprintf(fileID, '\n=====   Random Seed  %d  ||  %s   ===== %s \n', ...
-                random_seed, Simulation.Setting.NumberOfParticipants, datestr(now, 'HH시 MM분 SS초'));
-        fclose(fileID);
     
         Parameter = GetParameters(Simulation.Setting);
         GetWindow(Parameter.Map,Simulation.Setting)
@@ -115,6 +113,14 @@ for Iteration = 1:Simulation.Setting.Datasets
         Data{1,2} = Seed.Vehicle;
         List.Vehicle.Object = cell(size(Seed.Vehicle,2),1);
         Data{Iteration} = cell(int32(Parameter.Sim.Time/Parameter.Physics +1),TotalVehicles);
+
+        fileID = fopen(Simulation.Setting.LogFile, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
+        fprintf(fileID, '\n=====   Random Seed  %d  ||  %s   ===== %s \n', ...
+                random_seed, Simulation.Setting.NumberOfParticipants, datestr(now, 'HH시 MM분 SS초'));
+        
+        fprintf(fileID, '\n| Lanes:  %d  | Vehicles: %d  | Exits: %d  |\n', ...
+            Parameter.Map.Lane, TotalVehicles, length(Parameter.Map.Exit));
+        fclose(fileID);
     
         % Intersection Signal 관련 코드는 불필요
         % List.Signal.Object = cell(4,1);
@@ -333,34 +339,43 @@ for Iteration = 1:Simulation.Setting.Datasets
     
         end
 
-        % Iteration 종료 후 데이터 정리
-        if ~isempty(travel_times)
-            mean_travel_time = mean(travel_times);
-            mean_velocity_wonrae = mean(velocities_wonrae);
-            mean_velocity = mean(velocities);
-        else
-            mean_travel_time = NaN;
-            mean_velocity = NaN;
-            mean_velocity_wonrae = NaN;
-        end
-        
-        % 엑셀 저장을 위한 데이터 구성
-        excel_filename = fullfile('C:\Users\user\Desktop\250116_0203\Simulations\', [Simulation.Setting.Util_type '_temp.xlsx']);
-        sheet_name = 'Data';
-        
-        % 기존 데이터 불러오기
-        if exist(excel_filename, 'file')
-            existing_data = readmatrix(excel_filename, 'Sheet', sheet_name);
-        else
-            existing_data = [];
-        end
+        if Simulation.Setting.ExcelRecord
 
-        % 데이터 추가
-        new_data = [random_seed, mean_travel_time, mean_velocity_wonrae, mean_velocity];
-        updated_data = [existing_data; new_data];
+            % Iteration 종료 후 데이터 정리
+            if ~isempty(travel_times)
+                mean_travel_time = mean(travel_times);
+                mean_velocity_wonrae = mean(velocities_wonrae);
+                mean_velocity = mean(velocities);
+            else
+                mean_travel_time = NaN;
+                mean_velocity = NaN;
+                mean_velocity_wonrae = NaN;
+            end
+            if ~isempty(travel_times)
+                mean_velocity = mean(velocities);
+            else
+                mean_velocity = -1;
+            end
+            
+            % 엑셀 저장을 위한 데이터 구성
+            excel_filename = fullfile('C:\Users\user\Desktop\250116_0203\Simulations\', [Simulation.Setting.Util_type '.xlsx']);
+            sheet_name = 'Data';
+            
+            % 기존 데이터 불러오기
+            if exist(excel_filename, 'file')
+                existing_data = readmatrix(excel_filename, 'Sheet', sheet_name);
+            else
+                existing_data = [];
+            end
 
-        % 엑셀 파일로 저장
-        writematrix(updated_data, excel_filename, 'Sheet', sheet_name);
+            % 데이터 추가
+            new_data = [random_seed, mean_travel_time];
+            updated_data = [existing_data; new_data];
+
+            % 엑셀 파일로 저장
+            writematrix(updated_data, excel_filename, 'Sheet', sheet_name);
+
+        end
     
         disp("Iteration: " + Iteration)
         if Time > Parameter.Sim.Time - Parameter.Physics

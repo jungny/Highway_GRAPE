@@ -72,7 +72,7 @@ function ExitList = RandomExitGenerator(Road)
     % 시작점에서 최소 거리와 마지막 출구 위치 설정
     minExitDistance = 100;             % 시작점에서 최소 100m
     maxExitDistance = RoadLength - 50; % 도로 끝에서 최대 50m 이내
-    minGap = 150;                      % 초기 최소 간격 설정
+    minGap = 180;                      % 초기 최소 간격 설정
 
     % 출구 개수 랜덤 설정 (1 ~ 5개)
     numExits = randi([2, max(3, floor(RoadLength / (minGap + 50)))]);
@@ -82,8 +82,12 @@ function ExitList = RandomExitGenerator(Road)
     
     ExitList = [];  % 출구 위치 리스트 초기화
 
+    % 마지막 출구는 도로 끝에서 10m 이내에 배치
+    lastExit = maxExitDistance + rand * 10;
+    ExitList = [ExitList, lastExit];
+
     % 마지막 출구 제외하고 랜덤하게 배치
-    while length(ExitList) < numExits - 1
+    while length(ExitList) <= numExits
         newExit = minExitDistance + rand * (maxExitDistance - minExitDistance);
         
         % 기존 출구들과 최소 간격을 만족하는 경우 추가
@@ -101,9 +105,7 @@ function ExitList = RandomExitGenerator(Road)
         end
     end
 
-    % 마지막 출구는 도로 끝에서 50m 이내에 배치
-    lastExit = maxExitDistance + rand * 50;
-    ExitList = [ExitList, lastExit];
+    
 
     % 출구 위치 정렬
     ExitList = sort(ExitList);

@@ -25,8 +25,8 @@ function Seed = GetSeed(Settings,Parameter,Iteration)
     elseif Settings.Mode == 3 %Simple Highway example       
         
        
-        % TotalVehicles = randi([2,50]);
-        TotalVehicles = 30;
+        TotalVehicles = randi([2,50]);
+        %TotalVehicles = 30;
         Seed = zeros(7,TotalVehicles);
 
         % Vehicle ID
