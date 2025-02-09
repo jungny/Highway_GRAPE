@@ -26,7 +26,7 @@ function P = GetParameters(Setting)
     % P.Map.Road = 2000;
     
     minLanes = 2;
-    maxLanes = 8;
+    maxLanes = 8+1;
     % %P.Map.Lane = 3;
     P.Map.Lane = minLanes + floor((P.Map.Road - 400) / (2500 - 400) * (maxLanes - minLanes));
     P.Map.Lane = max(minLanes, min(P.Map.Lane, maxLanes));  % 범위 제한
@@ -38,6 +38,7 @@ function P = GetParameters(Setting)
     %P.Map.Exit = [1040, 1970];
     %P.Map.Exit = [240,380];
     P.Map.Exit = RandomExitGenerator(P.Map.Road);
+    %P.Map.Exit = P.Map.Road -30;
     %P.Map.Exit = [1200,1900];
 
     % Vehicle

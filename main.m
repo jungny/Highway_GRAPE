@@ -7,7 +7,7 @@ Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
 Simulation.Setting.Debug = 0;
 Simulation.Setting.Mode = 3;
-Simulation.Setting.LogFile = 'C:\Users\user\Desktop\250116_0203\Simulations\log.txt';  % 파일 경로
+Simulation.Setting.LogFile = 'C:\Users\user\Desktop\250203_0211\Simulations\log.txt';  % 파일 경로
 
     % 1: Dataset Generation
     % 2: Evaluation
@@ -16,7 +16,7 @@ Simulation.Setting.LogFile = 'C:\Users\user\Desktop\250116_0203\Simulations\log.
 Simulation.Setting.Vehicles = 10;
 cycle_GRAPE = 5;
 Simulation.Setting.Time = 500;
-Simulation.Setting.Datasets = 100; % number of iterations
+Simulation.Setting.Datasets = 5; % number of iterations
 Simulation.Setting.Agents = 3;
 Simulation.Setting.Turns = 1;
 
@@ -28,15 +28,15 @@ Simulation.Setting.Iterations(4,:) = randperm(1000000,Simulation.Setting.Dataset
 
 
 
-Simulation.Setting.Util_type = 'Max_velocity'; % 'Test' or 'Min_travel_time' or 'Max_velocity'
-%Simulation.Setting.Util_type = 'Min_travel_time';
+%Simulation.Setting.Util_type = 'Max_velocity'; % 'Test' or 'Min_travel_time' or 'Max_velocity'
+Simulation.Setting.Util_type = 'Min_travel_time';
 %Simulation.Setting.Util_type = 'Test';
 %Simulation.Setting.Util_type = 'Hybrid';
 Simulation.Setting.NumberOfParticipants = ''; % 'Default' or 'Ahead'
 %Simulation.Setting.NumberOfParticipants = 'Ahead'; % 'Default' or 'Ahead'
 % Simulation.Setting.LaneChangeMode = 'MOBIL'; % 'MOBIL' or 'SimpleLaneChange'
 Simulation.Setting.LaneChangeMode = 'SimpleLaneChange'; % 'MOBIL' or 'SimpleLaneChange'
-Simulation.Setting.Record = 0;
+Simulation.Setting.Record = 1;
     % 1: start recording
 Simulation.Setting.ExcelRecord = 0;
 
@@ -89,8 +89,8 @@ for Iteration = 1:Simulation.Setting.Datasets
         if Simulation.Setting.Record == 1
             timestamp = datestr(now, 'HH-MM');
         
-            videoFilename = fullfile('C:\Users\user\Desktop\250116_0203\Simulations\', ...
-            [ num2str(random_seed) '_' Simulation.Setting.Util_type '_' num2str(random_seed) '_' Simulation.Setting.NumberOfParticipants '_'  timestamp '.mp4']);
+            videoFilename = fullfile('C:\Users\user\Desktop\250203_0211\Simulations\commdistance250m\', ...
+            [ num2str(random_seed) '_' Simulation.Setting.Util_type '_'  timestamp '.mp4']);
         
             videoWriter = VideoWriter(videoFilename, 'MPEG-4');
             videoWriter.FrameRate = 30; 
@@ -321,7 +321,7 @@ for Iteration = 1:Simulation.Setting.Datasets
             % Finalize Time Step
             if Simulation.Setting.Draw == 1
                 drawnow();
-                % pause(0.01) %pause(0.01)
+                %pause(0.01) %pause(0.01)
                 
                 %if Simulation.Setting.Record == 1 && mod(int32(Time/Parameter.Physics), 2) == 0
                 if Simulation.Setting.Record == 1 
