@@ -7,7 +7,7 @@ Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
 Simulation.Setting.Debug = 0;
 Simulation.Setting.Mode = 3;
-Simulation.Setting.LogFile = 'C:\Users\user\Desktop\250116_0203\Simulations\log.txt';  % 파일 경로
+Simulation.Setting.LogFile = 'C:\Users\user\Desktop\log.txt';  % 파일 경로
 
     % 1: Dataset Generation
     % 2: Evaluation
@@ -137,13 +137,9 @@ for Iteration = 1:Simulation.Setting.Datasets
             title(sprintf('Time: %0.2f s', Time));
             
             % Generate Vehicles
-            if ~isempty(Seed.Vehicle)
-                if int32(Time/Parameter.Physics) == int32(Seed.Vehicle(2,1)/Parameter.Physics)
-                    List.Vehicle.Object{Seed.Vehicle(1,1)} = Vehicle(Seed.Vehicle(:,1),Time,Parameter);
-                    if ~isempty(Seed.Vehicle)
-                        Seed.Vehicle = Seed.Vehicle(:,2:end);
-                    end
-                end
+            while ~isempty(Seed.Vehicle) && int32(Time/Parameter.Physics) == int32(Seed.Vehicle(2,1)/Parameter.Physics)
+                List.Vehicle.Object{Seed.Vehicle(1,1)} = Vehicle(Seed.Vehicle(:,1),Time,Parameter);
+                Seed.Vehicle = Seed.Vehicle(:,2:end);  
             end
         
             % Update Vehicle Data
