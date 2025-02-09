@@ -60,31 +60,25 @@ classdef Vehicle < handle
         function obj = Vehicle(Seed,Time,Parameter)
             % obj.Index = [1 2 3 4 1 2 3 4];
             obj.ID = Seed(1);
-            obj.Agent = Seed(5);
+            %obj.Agent = Seed(5);
             obj.EntryTime = Time;
-            obj.Lane = Seed(3);
-            obj.Exit = Seed(6);
+            obj.Lane = Seed(2);
+            obj.Exit = Seed(3);
             obj.ExitState = -1;
-            obj.PolitenessFactor = Seed(7);
+            obj.PolitenessFactor = Seed(4);
+            SpawnPosition = Seed(5);
 
             % 고속도로에서는 방향(Destination) 관련 로직 불필요
             % 경로(Trajectory) 설정: 출발점(Source) → 도착점(Sink)
             % obj.Trajectory = [Parameter.Trajectory.Source{obj.Lane}, ...
             % Parameter.Trajectory.Sink{obj.Lane}];
 
+            
             obj.Trajectory = [Parameter.Trajectory.Source{obj.Lane}];
+            % fullTrajectory = Parameter.Trajectory.Source{obj.Lane};
+            % [~, closestIdx] = min(abs(fullTrajectory(1,:) - SpawnPosition)); % SpawnPosition과 가장 가까운 인덱스 찾기
+            % obj.Trajectory = fullTrajectory(:, closestIdx:end); % SpawnPosition부터 경로 시작
 
-            % if Seed(4) == 1 % 직진 - 여기만 실행
-            %     obj.Destination = obj.Index(obj.Lane+2);
-            %     obj.Trajectory = [Parameter.Trajectory.Source{obj.Lane} Parameter.Trajectory.Through{obj.Lane} Parameter.Trajectory.Sink{obj.Lane}];
-            % elseif Seed(4) == 2 % 좌회전 - 안쓰임
-            %     obj.Destination = obj.Index(obj.Lane+3);
-            %     obj.Trajectory = [Parameter.Trajectory.Source{obj.Lane} Parameter.Trajectory.Left{obj.Lane} Parameter.Trajectory.Sink{obj.Index(obj.Lane+1)}];
-            % elseif Seed(4) == 3 % 우회전 - 안쓰임
-            %     obj.Destination = obj.Index(obj.Lane+1);
-            %     obj.Trajectory = [Parameter.Trajectory.Source{obj.Lane} Parameter.Trajectory.Right{obj.Lane} Parameter.Trajectory.Sink{obj.Index(obj.Lane+3)}];
-            % end
-            % obj.EnterControl = size(Parameter.Trajectory.Source{obj.Lane},2);
             % obj.ExitControl = size(obj.Trajectory,2) - size(Parameter.Trajectory.Sink{obj.Lane},2);
 
             obj.Object = hgtransform;
@@ -119,7 +113,8 @@ classdef Vehicle < handle
             obj.DistanceStep = 1/Parameter.Map.Scale;
 
             obj.State = Parameter.Veh.State.Rejected;
-            obj.Location = 1;
+            % obj.Location = 1;
+            obj.Location = uint32(SpawnPosition * obj.DistanceStep);
             obj.Velocity = obj.Parameter.MaxVel;
             obj.Object.Matrix(1:2,4) = obj.Trajectory(:,obj.Location);
             obj.Object.Matrix(1:2,1:2) = GetRotation(obj);

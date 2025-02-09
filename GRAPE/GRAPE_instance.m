@@ -156,7 +156,7 @@ function G = GRAPE_instance(environment)
         end
     end
 
-    Comm_distance = 250*100; % 250m 
+    Comm_distance = 5000000; % 250m 
     % Neighbour agents within communication radius
     MST_ = (dist_agents <= Comm_distance);
     MST = MST_ - eye(n,n);

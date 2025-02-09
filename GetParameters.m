@@ -4,6 +4,8 @@ function P = GetParameters(Setting)
     P.Physics = 0.1; % 한 시뮬레이션 타임스텝이 0.1초초
     P.Control = 0.1;
     P.Label = 1; % 1: label 보임, 0: 안보임
+
+    P.Flow = 1800; % veh/hour/lane
     
     % Sim
     P.Sim.Time = Setting.Time;
@@ -20,10 +22,10 @@ function P = GetParameters(Setting)
 
     P.Map.Scale = 0.01;
 
-    P.Map.Tile = 8; %4
+    P.Map.Tile = 3.05; %m
     %P.Map.Road = 2000; %400
-    P.Map.Road = randi([400,2500]);
-    % P.Map.Road = 2000;
+    %P.Map.Road = randi([400,2500]);
+    P.Map.Road = 800; %m
     
     minLanes = 2;
     maxLanes = 8+1;
@@ -35,16 +37,17 @@ function P = GetParameters(Setting)
     P.Map.Margin = 10;
     P.Map.Stop = 6;
     P.Map.Center = [0;0];
+    P.Map.SpawnZone = 200; % new vehicle to be spawned at anywhere between [0,200m]
     %P.Map.Exit = [1040, 1970];
     %P.Map.Exit = [240,380];
     P.Map.Exit = RandomExitGenerator(P.Map.Road);
-    %P.Map.Exit = P.Map.Road -30;
+    P.Map.Exit = P.Map.Road -30;
     %P.Map.Exit = [1200,1900];
 
     % Vehicle
-    P.Veh.MaxVel = 30; % Original: 10
+    P.Veh.MaxVel = 33; % Original: 10
     P.Veh.DecVel = 1;
-    P.Veh.MinVel = 8; % 8
+    P.Veh.MinVel = 0; % 8
     P.Veh.Accel = [3 3]; % [1.5 3]은 -3부터 1.5까지를 의미함.
     P.Veh.Size = [4.5 1.9 1.2];
     P.Veh.Buffer = [2.5 0.5];
