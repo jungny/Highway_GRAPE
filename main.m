@@ -68,7 +68,7 @@ for Iteration = 1:Simulation.Setting.Datasets
         %rng(46)
         %random_seed = 59724;
         %rng(random_seed);
-        random_seed = 0 + Iteration;
+        random_seed = 2 + Iteration;
         rng(random_seed)
     
     
@@ -108,8 +108,11 @@ for Iteration = 1:Simulation.Setting.Datasets
 
 
         NextArrivalTime = zeros(Parameter.Map.Lane, 1); % 5차선 기준 [0;0;0;0;0]
+        %NextArrivalTime = (3600 / Parameter.Flow) * rand(Parameter.Map.Lane, 1);
+        disp(NextArrivalTime);
         TotalVehicles = 0;
         firstCount = 0;
+        SpawnVehicle = [];
     
         for Time = 0:Parameter.Physics:Parameter.Sim.Time
             GRAPE_done = 0;
@@ -130,7 +133,7 @@ for Iteration = 1:Simulation.Setting.Datasets
             end
 
             % Generate Vehicles
-            while ~isempty(SpawnVehicle) 
+            while ~isempty(SpawnVehicle)
                 List.Vehicle.Object{SpawnVehicle(1,1)} = Vehicle(SpawnVehicle(:,1),Time,Parameter);
                 SpawnVehicle = SpawnVehicle(:,2:end);  % 생성된 차량 삭제
             end
@@ -141,7 +144,7 @@ for Iteration = 1:Simulation.Setting.Datasets
             List.Vehicle.Object = GetAcceleration(List.Vehicle.Object, List.Vehicle.Data, Parameter.Veh);
     
             % Call GRAPE_instance every cycle_GRAPE seconds.
-            if mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0 && Time > 200
+            if mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0 % && Time > 200
                 disp("calling Grape Instance. . . | "+ Time);
     
                 environment = GRAPE_main(List,Parameter,Simulation.Setting,Iteration);

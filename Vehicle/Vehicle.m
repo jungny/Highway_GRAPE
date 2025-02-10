@@ -29,6 +29,7 @@ classdef Vehicle < handle
         DistanceStep
         MaxVel
         Margin
+        ColorCount
     end
 
     properties(Hidden = false) % Dynamics
@@ -67,6 +68,7 @@ classdef Vehicle < handle
             obj.ExitState = -1;
             obj.PolitenessFactor = Seed(4);
             SpawnPosition = Seed(5);
+            obj.ColorCount = 0;
 
             % 고속도로에서는 방향(Destination) 관련 로직 불필요
             % 경로(Trajectory) 설정: 출발점(Source) → 도착점(Sink)
@@ -89,7 +91,7 @@ classdef Vehicle < handle
             if obj.Agent == 1
                 obj.Patch = patch('XData',obj.Size(1,:),'YData',obj.Size(2,:),'FaceColor','white','Parent',obj.Object);
             else
-                obj.Patch = patch('XData',obj.Size(1,:),'YData',obj.Size(2,:),'FaceColor','#FFF38C','Parent',obj.Object);
+                obj.Patch = patch('XData',obj.Size(1,:),'YData',obj.Size(2,:),'FaceColor','#cfcdc0','Parent',obj.Object);
             end
 
             x_center = mean(obj.Size(1,:));
@@ -126,7 +128,19 @@ classdef Vehicle < handle
         
 
         function MoveVehicle(obj,Time,Parameter,List)
+            if obj.Location * Parameter.Map.Scale >= Parameter.Map.GrapeThreshold
+                set(obj.Patch, 'FaceColor', '#FFF38C');
+            end
+
+            if obj.ColorCount > 0
+                set(obj.Patch, 'FaceColor', '#f589e6');
+                obj.ColorCount = obj.ColorCount-1;
+            end
+
+
             if obj.LaneChangeFlag == 1
+                obj.ColorCount = 25;
+                set(obj.Patch, 'FaceColor', '#f589e6');
 
                 targetLane = obj.TargetLane;
                 % change lane to obj.TargetLane
@@ -147,8 +161,8 @@ classdef Vehicle < handle
                 obj.LaneChangeFlag = [];
                 obj.Lane = targetLane;
                 obj.TargetLane = [];
-                
             end
+                
 
             if ~isempty(obj.ExitState)
                 if obj.ExitState == 1
