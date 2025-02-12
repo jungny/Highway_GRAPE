@@ -131,9 +131,11 @@ function Seed = GetSeed(Settings,Parameter,Iteration)
         max_interval = 2;
         SpawnTimes = cumsum(min_interval + (max_interval - min_interval) * rand(1, TotalVehicles));
         Seed(2, :) = SpawnTimes;
+        Seed(2, :) = ones(1, TotalVehicles);
 
         % Spawn Lane: 1 ~ 총 차선 수 사이에서 랜덤하게 설정
         Seed(3, :) = randi([1, Parameter.Map.Lane], [1, TotalVehicles]);
+        
 
         % Direction: 모두 직진(1)으로 설정
         Seed(4, :) = ones(1, TotalVehicles);

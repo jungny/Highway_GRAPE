@@ -7,6 +7,7 @@ Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
 Simulation.Setting.Debug = 0;
 Simulation.Setting.Mode = 3;
+
 Simulation.Setting.LogFile = 'C:\Users\user\Desktop\250203_0211\Simulations\log.txt';  % 파일 경로
 
     % 1: Dataset Generation
@@ -119,6 +120,7 @@ for Iteration = 1:Simulation.Setting.Datasets
             title(sprintf('Time: %0.2f s', Time));
 
             
+
             SpawnLanes = find(NextArrivalTime < Time+Parameter.Physics); % 차량 스폰 필요한 차선
             SpawnCount = length(SpawnLanes); % 차량 스폰 필요한 차선의 개수
 
