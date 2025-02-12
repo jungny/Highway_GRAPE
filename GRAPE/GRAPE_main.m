@@ -38,7 +38,7 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
                     for lane = 1:Parameter.Map.Lane
                         k = 2; % k 작을수록 lane별 더 극단적인 차이가 발생 
                         % Weight increases as lane number increases
-                        raw_weights(lane) = exp(-(transition_distance - distance_to_exit) / (k * lane));
+                        raw_weights(lane) = exp(double(-(transition_distance - distance_to_exit) / (k * lane)));
                     end
                     
                     % Normalize weights to ensure they sum to 1
@@ -73,7 +73,7 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
                     for lane = 1:Parameter.Map.Lane
                         k = 2; % k 작을수록 lane별 더 극단적인 차이가 발생 
                         % Weight increases as lane number increases
-                        raw_weights(lane) = exp(-(transition_distance - distance_to_exit) / (k * lane));
+                        raw_weights(lane) = exp(double(-(transition_distance - distance_to_exit) / (k * lane)));
                     end
                     % Normalize weights to ensure they sum to 1
                     weights = raw_weights / sum(raw_weights);
@@ -110,7 +110,7 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
                     for lane = 1:Parameter.Map.Lane
                         k = 2; % k 작을수록 lane별 더 극단적인 차이가 발생 
                         % Weight increases as lane number increases
-                        raw_weights(lane) = exp(-(transition_distance - distance_to_exit) / (k * lane));
+                        raw_weights(lane) = exp(double(-transition_distance - distance_to_exit) / (k * lane));
                     end
                 end
 
@@ -239,7 +239,7 @@ end
 function feasible = PoliteLaneChangeFeasibility(safeDistanceParameter, obj, targetLane, List, Parameter)
     % 현재 차량 위치와 목표 차선의 선행/후행 차량 간 거리 계산
     feasible = false;  % 기본값: 변경 불가
-    current_x = obj.Location * Parameter.Map.Scale;  % 현재 차량의 x 좌표
+    current_x = double(obj.Location * Parameter.Map.Scale);  % 현재 차량의 x 좌표
     lane_vehicles = List.Vehicle.Active(List.Vehicle.Active(:,3) == targetLane, :);  % 목표 차선의 차량
 
     % 목표 차선의 선행/후행 차량 찾기

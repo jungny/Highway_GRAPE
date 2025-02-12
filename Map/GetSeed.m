@@ -1,3 +1,34 @@
+
+function [SpawnSeed, NewList] = GetSeed(Settings, Parameter, TotalVehicles, SpawnLanes, OldList)
+    
+    % 1: Vehicle ID
+    % 2: Spawn Lane
+    % 3: Exit
+    % 4: Politeness Factor
+    % 5: Spawn Position
+    SpawnCount = length(SpawnLanes);
+
+    SpawnSeed = zeros(5,SpawnCount);
+    SpawnSeed(1,:) = TotalVehicles + 1 : TotalVehicles + SpawnCount;
+    SpawnSeed(2,:) = SpawnLanes;
+
+    NumExits = length(Parameter.Map.Exit);
+    SpawnSeed(3, :) = Parameter.Map.Exit(randi(NumExits, 1, SpawnCount));
+    SpawnSeed(4,:) = ones(1,SpawnCount);
+
+    % Poisson Process 기반 다음 차량 도착 시간 업데이트
+    lambda = Parameter.Flow / 3600; % [veh/hour/lane] -> [veh/sec/lane]
+    for i = 1:length(SpawnLanes)
+        OldList(SpawnLanes(i)) = OldList(SpawnLanes(i)) - log(rand) / lambda;
+    end
+    NewList = OldList;
+
+    SpawnSeed(5,:) = 1+0*Parameter.Map.SpawnZone * rand(1, SpawnCount);
+    %SpawnSeed(5,:) = Parameter.Map.SpawnZone * rand(1, SpawnCount);
+end
+
+%{
+
 function Seed = GetSeed(Settings,Parameter,Iteration)
     
     TotalVehicles = Settings.Vehicles;
@@ -8,9 +39,65 @@ function Seed = GetSeed(Settings,Parameter,Iteration)
     % Direction: 1:Through 2:Left 3:Right
     % Agent: 1:Agent 0:Environment
     % Exit
-    % ExitState
     % Politeness Factor
-    if Settings.Mode == 1
+
+    if Settings.Mode == 4
+
+        % Flow (veh/hour/lane) 기반으로 차량 생성 간격 설정
+        FlowRate = Parameter.Flow / 3600; % [veh/hour/lane] -> [veh/sec/lane]
+        SimTime = Settings.Time; % [sec]
+        percentContinuing = 1; % percentage of new cars on a road continuing. 추후 0.2로 변경 예정.
+        
+        dt = Parameter.Physics; % Time Step
+        TotalSteps = round(SimTime / dt); % 총 타임스텝 개수
+        numNewCars = round(dt * FlowRate * Parameter.Map.Lane); % 각 타임스텝에서 생성되는 차량 수
+        TotalVehicles = numNewCars * TotalSteps; % 전체 시뮬레이션 동안 생성될 총 차량 수
+
+
+        Seed = zeros(9,TotalVehicles);
+        % 1: Vehicle ID
+        % 2: Spawn Time
+        % 3: Spawn Lane
+        % 4: Direction: 1:Through 2:Left 3:Right
+        % 5: Agent: 1:Agent 0:Environment
+        % 6: Exit
+        % 7: Politeness Factor
+        % 8: Initial Position (도로 전체에 랜덤 분포포)
+        % 9: Initial Velocity
+
+
+        Seed(1,:) = 1:TotalVehicles;
+
+        SpawnTimes = [];
+        for t = 1:TotalSteps
+            % `dt * t`를 사용하여 전체 시뮬레이션 동안 차량을 생성
+            SpawnTimes = [SpawnTimes, repmat(dt * (t-1), 1, numNewCars)];
+        end
+        Seed(2, :) = SpawnTimes;
+
+        Seed(3, :) = randi([1, Parameter.Map.Lane], [1, TotalVehicles]);
+
+        Seed(4, :) = ones(1, TotalVehicles);
+
+        Seed(5, :) = ones(1, TotalVehicles);
+
+        Seed(6, :) = Parameter.Map.Exit(randi(length(Parameter.Map.Exit), 1, TotalVehicles));
+
+        Seed(7, :) = ones(1, TotalVehicles);
+
+
+        % Parameter.Map.Road = 9000; %[m]
+        Seed(8, :) = Parameter.Map.Road * rand(1, length(SpawnTimes)); % 도로 전체에 랜덤 분포
+
+        v_min = Parameter.Veh.MinVel; % 최소 속도
+        v_max = Parameter.Veh.MaxVel; % 최대 속도
+        Seed(9, :) = v_min + (v_max - v_min) * rand(1, TotalVehicles);
+
+        Seed = sortrows(Seed', 2)';
+        
+
+
+    elseif Settings.Mode == 1
         Seed(1,:) = 1:TotalVehicles;        
         Seed(2,:) = ((randperm(21,TotalVehicles)-1)*Parameter.Physics);            
         Seed(3,:) = [1,2,3]; %randi([1,4],[1,TotalVehicles]);    
@@ -22,7 +109,14 @@ function Seed = GetSeed(Settings,Parameter,Iteration)
         Seed(5,:) = [ones(1,Settings.Iterations(2,Iteration)) zeros(1,TotalVehicles-Settings.Iterations(2,Iteration))]; 
         Seed = sortrows(Seed',2)';
 
-    elseif Settings.Mode == 3 %Simple Highway example       
+    elseif Settings.Mode == 3 %Simple Highway example    
+        % 1: Vehicle ID
+        % 2: Spawn Time
+        % 3:  Spawn Lane
+        % 4: Direction: 1:Through 2:Left 3:Right
+        % 5: Agent: 1:Agent 0:Environment
+        % 6: Exit
+        % 7: Politeness Factor   
         
        
         TotalVehicles = randi([2,50]);
@@ -60,9 +154,7 @@ function Seed = GetSeed(Settings,Parameter,Iteration)
         Seed = sortrows(Seed', 2)';
 
 
-
-
-    else
+    else 
         Seed = zeros(4,TotalVehicles);
         Seed(1,:) = 1:TotalVehicles;        
         Seed(2,:) = (randperm(Settings.Time/Parameter.Physics,TotalVehicles)*Parameter.Physics);              
@@ -103,3 +195,4 @@ function Seed = GetSeed(Settings,Parameter,Iteration)
     end
 end
 
+%}
