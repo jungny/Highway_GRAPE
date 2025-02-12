@@ -15,7 +15,7 @@ Simulation.Setting.LogFile = 'C:\Users\user\Desktop\250203_0211\Simulations\log.
 
 Simulation.Setting.Vehicles = 10;
 cycle_GRAPE = 5;
-Simulation.Setting.Time = 500;
+Simulation.Setting.Time = 200;
 Simulation.Setting.Datasets = 1; % number of iterations
 Simulation.Setting.Agents = 3;
 Simulation.Setting.Turns = 1;
@@ -29,14 +29,14 @@ Simulation.Setting.Iterations(4,:) = randperm(1000000,Simulation.Setting.Dataset
 
 
 %Simulation.Setting.Util_type = 'Max_velocity'; % 'Test' or 'Min_travel_time' or 'Max_velocity'
-Simulation.Setting.Util_type = 'Min_travel_time';
-%Simulation.Setting.Util_type = 'Test';
+%Simulation.Setting.Util_type = 'Min_travel_time';
+Simulation.Setting.Util_type = 'Test';
 %Simulation.Setting.Util_type = 'Hybrid';
 Simulation.Setting.NumberOfParticipants = ''; % 'Default' or 'Ahead'
 %Simulation.Setting.NumberOfParticipants = 'Ahead'; % 'Default' or 'Ahead'
 % Simulation.Setting.LaneChangeMode = 'MOBIL'; % 'MOBIL' or 'SimpleLaneChange'
 Simulation.Setting.LaneChangeMode = 'SimpleLaneChange'; % 'MOBIL' or 'SimpleLaneChange'
-Simulation.Setting.Record = 0;
+Simulation.Setting.Record = 1;
     % 1: start recording
 Simulation.Setting.ExcelRecord = 0;
 
@@ -57,7 +57,7 @@ fclose(fileID);
 environment = struct();
 GRAPE_output = [];
 travel_times = [];
-
+RemovedVehicle = 0;
 
 for Iteration = 1:Simulation.Setting.Datasets
 
@@ -79,8 +79,8 @@ for Iteration = 1:Simulation.Setting.Datasets
         if Simulation.Setting.Record == 1
             timestamp = datestr(now, 'HH-MM');
         
-            videoFilename = fullfile('C:\Users\user\Desktop\250203_0211\Simulations\commdistance250m\', ...
-            [ num2str(random_seed) '_' Simulation.Setting.Util_type '_'  timestamp '.mp4']);
+            videoFilename = fullfile('C:\Users\user\Desktop\250203_0211\Simulations\', ...
+            [ 'Label1_' num2str(random_seed) '_' Simulation.Setting.Util_type '_'  timestamp '.mp4']);
         
             videoWriter = VideoWriter(videoFilename, 'MPEG-4');
             videoWriter.FrameRate = 30; 
@@ -144,7 +144,7 @@ for Iteration = 1:Simulation.Setting.Datasets
             List.Vehicle.Object = GetAcceleration(List.Vehicle.Object, List.Vehicle.Data, Parameter.Veh);
     
             % Call GRAPE_instance every cycle_GRAPE seconds.
-            if mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0 % && Time > 200
+            if mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0  %&& Time > 2000
                 disp("calling Grape Instance. . . | "+ Time);
     
                 environment = GRAPE_main(List,Parameter,Simulation.Setting,Iteration);
@@ -247,7 +247,7 @@ for Iteration = 1:Simulation.Setting.Datasets
             % Finalize Time Step
             if Simulation.Setting.Draw == 1
                 drawnow();
-                pause(0.01) %pause(0.01)
+                %pause(0.01) %pause(0.01)
                 
                 %if Simulation.Setting.Record == 1 && mod(int32(Time/Parameter.Physics), 2) == 0
                 if Simulation.Setting.Record == 1 

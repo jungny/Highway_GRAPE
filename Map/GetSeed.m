@@ -24,6 +24,7 @@ function [SpawnSeed, NewList] = GetSeed(Settings, Parameter, TotalVehicles, Spaw
     NewList = OldList;
 
     SpawnSeed(5,:) = 1+0*Parameter.Map.SpawnZone * rand(1, SpawnCount);
+    %SpawnSeed(5,:) = Parameter.Map.SpawnZone * rand(1, SpawnCount);
 end
 
 %{

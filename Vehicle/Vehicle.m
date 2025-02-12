@@ -139,7 +139,7 @@ classdef Vehicle < handle
 
 
             if obj.LaneChangeFlag == 1
-                obj.ColorCount = 25;
+                obj.ColorCount = 10;
                 set(obj.Patch, 'FaceColor', '#f589e6');
 
                 targetLane = obj.TargetLane;
