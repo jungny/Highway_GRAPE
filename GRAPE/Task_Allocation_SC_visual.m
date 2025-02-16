@@ -29,8 +29,6 @@ MST = input.MST;
 environment = input.environment;
 
 
-
-
 %% For visualisation
 Alloc_history = zeros(n,10);
 Satisfied_history = zeros(n,10);
@@ -47,6 +45,8 @@ for i=1:n
     agent(i).satisfied_flag = 0;
     agent(i).util = 0;
 end
+
+GreedyAlloc = input.Alloc_existing;
 
 %% Neighbour agents identification (Assumming a static situation)
 for i=1:n
@@ -107,8 +107,14 @@ while a_satisfied~=n
         %%%%% Line 6-11 of Algorithm 1
         if Best_utility == 0
             Alloc_(i,1) = 0; % Go th the void
+            if environment.Setting.GreedyAlloc
+                GreedyAlloc(i,1) = 0;
+            end
         else
             Alloc_(i,1) = Best_task;
+            if environment.Setting.GreedyAlloc
+                GreedyAlloc(i,1) = Best_task;
+            end
         end
         agent(i).util = Best_utility;
         %
@@ -125,6 +131,10 @@ while a_satisfied~=n
         % For speed up when executing Algorithm 2
         Iteration_agent_current(i) = agent(i).iteration;
         Timestamp_agent_current(i) = agent(i).time_stamp;        
+    end
+
+    if environment.Setting.GreedyAlloc
+        break
     end
     
     %% Distributed Mutex (Algorithm 2)  
@@ -222,47 +232,52 @@ while a_satisfied~=n
     iteration_history(Case) = iteration;
 end
 
-%% Last Check: If Alloc is consensused?
-a_utility = zeros(n,1);
-output.flag_problem = 0;
-
-if n==1
-    Alloc = agent(1).Alloc;
-    iteration = agent(1).iteration;
-    time_stamp = agent(1).time_stamp;
-    a_utility(1) = agent(1).util;
+if environment.Setting.GreedyAlloc
+    output.Alloc = GreedyAlloc;
 else
-    for i=1:n
-        if i==1
-        Alloc_1 = agent(i).Alloc;
-        iteration_1 = agent(i).iteration;
-        time_stamp_1 = agent(i).time_stamp;
-        else
-            Alloc = agent(i).Alloc;        
-            iteration = agent(i).iteration;
-            time_stamp = agent(i).time_stamp;
-            
-            if (sum(Alloc_1 == Alloc) == n)&&(iteration_1 == iteration)&&(time_stamp_1 == time_stamp)
-                % Consensus OK
+
+    %% Last Check: If Alloc is consensused?
+    a_utility = zeros(n,1);
+    output.flag_problem = 0;
+
+    if n==1
+        Alloc = agent(1).Alloc;
+        iteration = agent(1).iteration;
+        time_stamp = agent(1).time_stamp;
+        a_utility(1) = agent(1).util;
+    else
+        for i=1:n
+            if i==1
+            Alloc_1 = agent(i).Alloc;
+            iteration_1 = agent(i).iteration;
+            time_stamp_1 = agent(i).time_stamp;
             else
-                disp(['Problem: Non Consensus with Agent#1 and Agent#',num2str(i)]);
-                output.flag_problem = 1;
-            end        
+                Alloc = agent(i).Alloc;        
+                iteration = agent(i).iteration;
+                time_stamp = agent(i).time_stamp;
+                
+                if (sum(Alloc_1 == Alloc) == n)&&(iteration_1 == iteration)&&(time_stamp_1 == time_stamp)
+                    % Consensus OK
+                else
+                    disp(['Problem: Non Consensus with Agent#1 and Agent#',num2str(i)]);
+                    output.flag_problem = 1;
+                end        
+            end
+            a_utility(i) = agent(i).util;
         end
-        a_utility(i) = agent(i).util;
     end
+
+
+    %% Interface (Output)
+    % disp(Alloc);
+    output.Alloc = Alloc;
+    output.a_utility = a_utility;
+    output.iteration = iteration;
+
+    output.visual.Alloc_history = Alloc_history;
+    output.visual.Satisfied_history = Satisfied_history;
+    output.visual.iteration_history = iteration_history;
+
+
 end
-
-
-%% Interface (Output)
-% disp(Alloc);
-output.Alloc = Alloc;
-output.a_utility = a_utility;
-output.iteration = iteration;
-
-output.visual.Alloc_history = Alloc_history;
-output.visual.Satisfied_history = Satisfied_history;
-output.visual.iteration_history = iteration_history;
-
-
 end

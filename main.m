@@ -6,16 +6,16 @@ addpath('Map\','Vehicle\','Signal\','Manager\','v2v\','GRAPE\')
 Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
 Simulation.Setting.StopOnGrapeError = 1;
-Simulation.Setting.PauseTime = 0.03; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
+Simulation.Setting.PauseTime = 0.01; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250211_0220';
 
 Simulation.Setting.RecordLog = 1;    % 1: Record log file, 0: Do not record
-Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
+Simulation.Setting.RecordVideo = 1;  % 1: Record video file, 0: Do not record
 % Simulation.Setting.RecordExcel = 1;  % 1: Record Excel file, 0: Do not record
 
 Simulation.Setting.VideoPath = @(randomSeed, timestamp) ...
     fullfile(Simulation.Setting.SaveFolder, 'Simulations', ...
-    ['Label1_' num2str(randomSeed) '_' Simulation.Setting.Util_type '_' timestamp '.mp4']);
+    ['GreedyAlloc_' num2str(randomSeed) '_' timestamp '.mp4']);
 
 Simulation.Setting.LogPath = @(finalRandomSeed) ...
     fullfile(Simulation.Setting.SaveFolder, 'Simulations', ...
@@ -23,16 +23,16 @@ Simulation.Setting.LogPath = @(finalRandomSeed) ...
 
 cycle_GRAPE = 5; % GRAPE instance per 5 seconds
 
-Simulation.Setting.InitialRandomSeed = 0;
+Simulation.Setting.InitialRandomSeed = 4;
 Simulation.Setting.Iterations = 1; % number of iterations
-Simulation.Setting.Time = 200;
+Simulation.Setting.Time = 100;
 
-Simulation.Setting.SpawnType = 1; %0: spawn by flow rate. 1: spawn manually
-
+Simulation.Setting.SpawnType = 0; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times
+Simulation.Setting.GreedyAlloc = 1; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
 %Simulation.Setting.Util_type = 'Max_velocity'; % 'Test' or 'Min_travel_time' or 'Max_velocity'
-%Simulation.Setting.Util_type = 'Min_travel_time';
-Simulation.Setting.Util_type = 'Test';
+Simulation.Setting.Util_type = 'Min_travel_time';
+%Simulation.Setting.Util_type = 'Test';
 %Simulation.Setting.Util_type = 'Hybrid';
 Simulation.Setting.NumberOfParticipants = 'Ahead'; % 'Default' or 'Ahead'
 %Simulation.Setting.NumberOfParticipants = 'Ahead'; % 'Default' or 'Ahead'
@@ -60,11 +60,8 @@ RemovedVehicle = 0;
 
 for Iteration = 1:Simulation.Setting.Iterations
     close all;
-    %rng(46)
-    randomSeed = 4;
-    rng(randomSeed);
-    %randomSeed = Simulation.Setting.InitialRandomSeed + Iteration;
-    %rng(randomSeed)
+    randomSeed = Simulation.Setting.InitialRandomSeed + Iteration - 1;
+    rng(randomSeed)
 
     Parameter = GetParameters(Simulation.Setting);
     GetWindow(Parameter.Map,Simulation.Setting)
@@ -260,6 +257,9 @@ for Iteration = 1:Simulation.Setting.Iterations
                 % frame.cdata = imresize(frame.cdata, 0.5);
                 writeVideo(videoWriter, frame); 
             end
+        end
+        if Simulation.Setting.SpawnType && isempty(List.Vehicle.Active) && isempty(SpawnVehicle)
+            break
         end
 
     end

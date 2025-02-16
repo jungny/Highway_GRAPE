@@ -229,6 +229,7 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
     environment.x_relation = GetXRelation(List);
     environment.number_of_tasks = Parameter.Map.Lane;
     environment.Util_type = Setting.Util_type;
+    environment.Setting = Setting;
 
 
 end
