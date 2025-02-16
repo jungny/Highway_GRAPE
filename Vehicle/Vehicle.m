@@ -39,6 +39,7 @@ classdef Vehicle < handle
         Velocity
         Acceleration
         ExitState
+        TempGreedyWait
     end
 
     properties(Hidden = true) % Control
@@ -136,6 +137,10 @@ classdef Vehicle < handle
             if obj.ColorCount > 0
                 set(obj.Patch, 'FaceColor', '#f589e6');
                 obj.ColorCount = obj.ColorCount-1;
+            end
+
+            if obj.TempGreedyWait > 0
+                obj.TempGreedyWait = obj.TempGreedyWait - Parameter.Physics;
             end
 
 

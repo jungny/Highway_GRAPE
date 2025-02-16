@@ -15,7 +15,7 @@ Simulation.Setting.RecordVideo = 1;  % 1: Record video file, 0: Do not record
 
 Simulation.Setting.VideoPath = @(randomSeed, timestamp) ...
     fullfile(Simulation.Setting.SaveFolder, 'Simulations', ...
-    ['GreedyAlloc_' num2str(randomSeed) '_' timestamp '.mp4']);
+    ['Wait_GRAPE_Bubble' num2str(randomSeed) '_' timestamp '.mp4']);
 
 Simulation.Setting.LogPath = @(finalRandomSeed) ...
     fullfile(Simulation.Setting.SaveFolder, 'Simulations', ...
@@ -27,14 +27,14 @@ Simulation.Setting.InitialRandomSeed = 4;
 Simulation.Setting.Iterations = 1; % number of iterations
 Simulation.Setting.Time = 100;
 
-Simulation.Setting.SpawnType = 0; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times
-Simulation.Setting.GreedyAlloc = 1; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
+Simulation.Setting.SpawnType = 1; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times
+Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
 %Simulation.Setting.Util_type = 'Max_velocity'; % 'Test' or 'Min_travel_time' or 'Max_velocity'
 Simulation.Setting.Util_type = 'Min_travel_time';
 %Simulation.Setting.Util_type = 'Test';
 %Simulation.Setting.Util_type = 'Hybrid';
-Simulation.Setting.NumberOfParticipants = 'Ahead'; % 'Default' or 'Ahead'
+Simulation.Setting.NumberOfParticipants = 'Bubble'; % 'Default' or 'Ahead' or 'Bubble'
 %Simulation.Setting.NumberOfParticipants = 'Ahead'; % 'Default' or 'Ahead'
 % Simulation.Setting.LaneChangeMode = 'MOBIL'; % 'MOBIL' or 'SimpleLaneChange'
 Simulation.Setting.LaneChangeMode = 'SimpleLaneChange'; % 'MOBIL' or 'SimpleLaneChange'
@@ -52,6 +52,9 @@ if Simulation.Setting.RecordLog
     fclose(fileID);
 end
 
+if Simulation.Setting.SpawnType % If vehicles are spawned manually based on predefined times
+    Simulation.Setting.Time = 10000; % Set a very high simulation time to allow all vehicles to spawn
+end
 
 environment = struct();
 GRAPE_output = [];
@@ -144,12 +147,13 @@ for Iteration = 1:Simulation.Setting.Iterations
         List.Vehicle.Active = List.Vehicle.Data(List.Vehicle.Data(:,2)>0,:);
         List.Vehicle.Object = GetAcceleration(List.Vehicle.Object, List.Vehicle.Data, Parameter.Veh);
 
-        % Call GRAPE_instance every cycle_GRAPE seconds.
-        if mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0  %&& Time > 2000
-            disp("calling Grape Instance. . . | "+ Time);
-
+        if Simulation.Setting.GreedyAlloc
             environment = GRAPE_main(List,Parameter,Simulation.Setting,Iteration);
+            lane_alloc = GRAPE_instance(environment).Alloc;
 
+        elseif mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0  %&& Time > 2000
+            disp("calling Grape Instance. . . | "+ Time);
+            environment = GRAPE_main(List,Parameter,Simulation.Setting,Iteration);
             try
                 GRAPE_output = GRAPE_instance(environment);
                 % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
@@ -160,7 +164,6 @@ for Iteration = 1:Simulation.Setting.Iterations
                     fclose(fileID);
                 end
                 GRAPE_done = 1;
-
             catch ME
                 if Simulation.Setting.StopOnGrapeError
                     rethrow(ME);
@@ -168,7 +171,6 @@ for Iteration = 1:Simulation.Setting.Iterations
                     warning(ME.identifier, 'GRAPE error occurred, ignoring and continuing: %s', ME.message);
                 end
             end
-
         end
     
         % Move Vehicle
@@ -177,7 +179,7 @@ for Iteration = 1:Simulation.Setting.Iterations
             current_vehicle = List.Vehicle.Object{vehicle_id};
             current_lane = List.Vehicle.Object{vehicle_id}.Lane; 
             
-            if GRAPE_done == 1
+            if GRAPE_done == 1 || Simulation.Setting.GreedyAlloc
                 desired_lane = lane_alloc(i);
             
                 if current_lane ~= desired_lane 
@@ -195,7 +197,15 @@ for Iteration = 1:Simulation.Setting.Iterations
                         [feasible] = SimpleLaneChange(current_vehicle, desired_lane, List, Parameter);
                     end
 
-                    if feasible
+                    if feasible && Simulation.Setting.GreedyAlloc
+                        if current_vehicle.TempGreedyWait > 0
+                            current_vehicle.LaneChangeFlag = 0;
+                        else
+                            current_vehicle.TargetLane = desired_lane;
+                            current_vehicle.LaneChangeFlag = 1;
+                            current_vehicle.TempGreedyWait = cycle_GRAPE;
+                        end
+                    elseif feasible
                         current_vehicle.TargetLane = desired_lane;
                         current_vehicle.LaneChangeFlag = 1;
                     else
