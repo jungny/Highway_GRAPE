@@ -68,6 +68,7 @@ classdef Vehicle < handle
             obj.ExitState = -1;
             obj.PolitenessFactor = Seed(4);
             SpawnPosition = Seed(5);
+            %obj.SpawnTime = Seed(6);
             obj.ColorCount = 0;
 
             % 고속도로에서는 방향(Destination) 관련 로직 불필요

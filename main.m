@@ -6,8 +6,8 @@ addpath('Map\','Vehicle\','Signal\','Manager\','v2v\','GRAPE\')
 Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
 Simulation.Setting.StopOnGrapeError = 0;
-Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
-Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250203_0211';
+Simulation.Setting.PauseTime = 0.03; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
+Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250211_0220';
 
 Simulation.Setting.RecordLog = 1;    % 1: Record log file, 0: Do not record
 Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
@@ -26,6 +26,8 @@ cycle_GRAPE = 5; % GRAPE instance per 5 seconds
 Simulation.Setting.InitialRandomSeed = 0;
 Simulation.Setting.Iterations = 1; % number of iterations
 Simulation.Setting.Time = 200;
+
+Simulation.Setting.SpawnType = 1; %0: spawn by flow rate. 1: spawn manually
 
 
 %Simulation.Setting.Util_type = 'Max_velocity'; % 'Test' or 'Min_travel_time' or 'Max_velocity'
@@ -59,10 +61,10 @@ RemovedVehicle = 0;
 for Iteration = 1:Simulation.Setting.Iterations
     close all;
     %rng(46)
-    %randomSeed = 59724;
-    %rng(randomSeed);
-    randomSeed = Simulation.Setting.InitialRandomSeed + Iteration;
-    rng(randomSeed)
+    randomSeed = 4;
+    rng(randomSeed);
+    %randomSeed = Simulation.Setting.InitialRandomSeed + Iteration;
+    %rng(randomSeed)
 
     Parameter = GetParameters(Simulation.Setting);
     GetWindow(Parameter.Map,Simulation.Setting)
@@ -98,28 +100,46 @@ for Iteration = 1:Simulation.Setting.Iterations
     TotalVehicles = 0;
     firstCount = 0;
     SpawnVehicle = [];
+    SpawnLanes = [];
 
     for Time = 0:Parameter.Physics:Parameter.Sim.Time
         GRAPE_done = 0;
         title(sprintf('Time: %0.2f s', Time));
 
-        SpawnLanes = find(NextArrivalTime < Time+Parameter.Physics); % 차량 스폰 필요한 차선
-        SpawnCount = length(SpawnLanes); % 차량 스폰 필요한 차선의 개수
+        if Simulation.Setting.SpawnType == 0 
+            SpawnLanes = find(NextArrivalTime < Time+Parameter.Physics); % 차량 스폰 필요한 차선
+            SpawnCount = length(SpawnLanes); % 차량 스폰 필요한 차선의 개수
 
-        if SpawnCount > 0
-            [SpawnVehicle, NextArrivalTime] = GetSeed(Simulation.Setting, Parameter, TotalVehicles, SpawnLanes, NextArrivalTime);
-            TotalVehicles = TotalVehicles + SpawnCount;
+            if SpawnCount > 0
+                [SpawnVehicle, NextArrivalTime] = GetSeed(Simulation.Setting, Parameter, TotalVehicles, SpawnLanes, NextArrivalTime);
+                TotalVehicles = TotalVehicles + SpawnCount;
+                if firstCount == 0
+                    List.Vehicle.Object = cell(size(SpawnVehicle,2),1);
+                    firstCount = 1;
+                end
+                List.Vehicle.Object = cat(1, List.Vehicle.Object, cell(size(SpawnVehicle,2),1));
+            end
+
+            % Generate Vehicles
+            while ~isempty(SpawnVehicle)
+                List.Vehicle.Object{SpawnVehicle(1,1)} = Vehicle(SpawnVehicle(:,1),Time,Parameter);
+                SpawnVehicle = SpawnVehicle(:,2:end);  % 생성된 차량 삭제
+            end
+
+        elseif Simulation.Setting.SpawnType == 1
             if firstCount == 0
+                [SpawnVehicle, ~] = GetSeed(Simulation.Setting, Parameter, TotalVehicles, SpawnLanes, NextArrivalTime);
                 List.Vehicle.Object = cell(size(SpawnVehicle,2),1);
                 firstCount = 1;
             end
-            List.Vehicle.Object = cat(1, List.Vehicle.Object, cell(size(SpawnVehicle,2),1));
-        end
-
-        % Generate Vehicles
-        while ~isempty(SpawnVehicle)
-            List.Vehicle.Object{SpawnVehicle(1,1)} = Vehicle(SpawnVehicle(:,1),Time,Parameter);
-            SpawnVehicle = SpawnVehicle(:,2:end);  % 생성된 차량 삭제
+            if ~isempty(SpawnVehicle) 
+                if int32(Time/Parameter.Physics) == int32(SpawnVehicle(6,1)/Parameter.Physics)
+                    List.Vehicle.Object{SpawnVehicle(1,1)} = Vehicle(SpawnVehicle(:,1),Time,Parameter);
+                    if ~isempty(SpawnVehicle)
+                        SpawnVehicle = SpawnVehicle(:,2:end);
+                    end
+                end
+            end
         end
 
         % Update Vehicle Data
