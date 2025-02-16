@@ -5,7 +5,7 @@ addpath('Map\','Vehicle\','Signal\','Manager\','v2v\','GRAPE\')
 
 Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
-Simulation.Setting.StopOnGrapeError = 0;
+Simulation.Setting.StopOnGrapeError = 1;
 Simulation.Setting.PauseTime = 0.03; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250211_0220';
 

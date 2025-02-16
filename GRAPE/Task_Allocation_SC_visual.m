@@ -29,6 +29,8 @@ MST = input.MST;
 environment = input.environment;
 
 
+
+
 %% For visualisation
 Alloc_history = zeros(n,10);
 Satisfied_history = zeros(n,10);
@@ -74,6 +76,14 @@ while a_satisfied~=n
                     current_members(i) = 1; % including oneself
                     % Cardinality of the coalition
                     n_participants = sum(current_members);
+                case 'Bubble'
+                    % Check member agent ID in the selected task
+                    current_members = (Alloc_ == ones(n,1)*t);
+                    % Only consider agents who are neighbours of agent i
+                    current_members = current_members & MST(:,i);
+                    current_members(i) = 1; % including oneself
+                    % Cardinality of the coalition
+                    n_participants = sum(current_members);
                 case 'Ahead'
                     % 현재 agent i가 선택한 task(차선)의 앞에 있는 차량 수, including
                     % oneself
@@ -99,7 +109,7 @@ while a_satisfied~=n
             Alloc_(i,1) = 0; % Go th the void
         else
             Alloc_(i,1) = Best_task;
-        %end
+        end
         agent(i).util = Best_utility;
         %
         if current_task == Alloc_(i,1) % if this choice is the same as remaining
