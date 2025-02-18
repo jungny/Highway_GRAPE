@@ -27,13 +27,14 @@ function P = GetParameters(Setting)
     %P.Map.Road = randi([400,2500]);
     P.Map.Road = 800; %m
     
-    minLanes = 2;
-    maxLanes = 8+1;
-    % %P.Map.Lane = 3;
-    P.Map.Lane = minLanes + floor((P.Map.Road - 400) / (2500 - 400) * (maxLanes - minLanes));
-    P.Map.Lane = max(minLanes, min(P.Map.Lane, maxLanes));  % 범위 제한
-    P.Map.Lane = 3;
+    % minLanes = 2;
+    % maxLanes = 8+1;
+    % P.Map.Lane = minLanes + floor((P.Map.Road - 400) / (2500 - 400) * (maxLanes - minLanes));
+    % P.Map.Lane = max(minLanes, min(P.Map.Lane, maxLanes));  % 범위 제한
+    P.Map.Lane = 3; % 기본값 3개로 설정하고 나중에 확장
     
+    P.RiskFactor = 0.4; 
+    P.LaneChangeTime = 1; % 1 sec
 
     P.Map.Margin = 10;
     P.Map.Stop = 6;

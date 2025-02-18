@@ -21,6 +21,22 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
 
     Util_type = Setting.Util_type;
     switch Util_type
+        case '[3]'
+            for i = 1:size(List.Vehicle.Active, 1)
+                vehicle_id = List.Vehicle.Active(i,1);
+                
+                % Get feasibility of each lane (DLC or MLC)
+                FeasibleLanes = EvaluateLaneFeasibility(List.Vehicle.Object{vehicle_id}, List, Parameter);
+
+                % Normalize feasibility weights
+                weights = FeasibleLanes / sum(FeasibleLanes);
+
+                % Apply weights to task demand
+                for lane = 1:Parameter.Map.Lane
+                    t_demand(lane,i) = size(List.Vehicle.Active, 1) * weights(lane);
+                end
+            end
+
         case 'Test'
             for i = 1:size(List.Vehicle.Active, 1)
                 vehicle_id = List.Vehicle.Active(i, 1);  % 차량 ID

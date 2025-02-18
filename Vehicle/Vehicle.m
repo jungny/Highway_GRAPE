@@ -18,6 +18,7 @@ classdef Vehicle < handle
         TargetLane
         LaneChangeFlag
         PolitenessFactor
+        TargetLaneList
     end
 
     properties(Hidden = false) % Properties
@@ -69,6 +70,7 @@ classdef Vehicle < handle
             obj.ExitState = -1;
             obj.PolitenessFactor = Seed(4);
             SpawnPosition = Seed(5);
+            %obj.MandatoryLaneList = [Parameter.Map.Lane-1, Parameter.Map.Lane, -1];
             %obj.SpawnTime = Seed(6);
             obj.ColorCount = 0;
 
@@ -152,7 +154,7 @@ classdef Vehicle < handle
                 % change lane to obj.TargetLane
                 new_y = (Parameter.Map.Lane-targetLane+0.5)*Parameter.Map.Tile;
                 
-                change_steps = 3000; 
+                change_steps = round(obj.Velocity * Parameter.LaneChangeTime / Parameter.Map.Scale); 
                 start_idx = obj.Location; 
                 end_idx = min(obj.Location + change_steps - 1, size(obj.Trajectory, 2)); 
                 
@@ -202,49 +204,6 @@ classdef Vehicle < handle
                 set(obj.Text, 'Position', [x_center+3, y_center+0.1]);
             end
 
-        end
-
-
-        function PlanReservation(obj,Time)
-            obj.Horizon = 100;
-            obj.Slots = zeros(187,167,obj.Horizon/obj.TimeStep);
-            obj.Ghost = hgtransform;
-            patch('XData',obj.Size(1,:),'YData',obj.Size(2,:),'FaceColor','black','FaceAlpha',0.5,'Parent',obj.Ghost)
-            obj.GhostLocation = obj.Location;
-            obj.GhostVelocity = obj.Velocity;
-            obj.GhostAcceleration = obj.Parameter.Accel(1);
-            obj.Ghost.Matrix(1:2,4) = obj.Trajectory(:,obj.GhostLocation);
-            obj.Ghost.Matrix(1:2,1:2) = GetRotation(obj.Ghost,obj.GhostLocation,obj.Trajectory);
-            
-            GhostTime = Time;
-            while obj.GhostLocation + obj.Size(1,1)*obj.DistanceStep < obj.EnterControl
-                GhostTime = GhostTime + obj.TimeStep;
-                [nextVelocity,nextLocation] = GetDynamics(obj,obj.GhostAcceleration,obj.GhostVelocity,obj.GhostLocation);
-                obj.GhostLocation = nextLocation;
-                obj.GhostVelocity = nextVelocity;
-                obj.Ghost.Matrix(1:2,4) = obj.Trajectory(:,obj.GhostLocation);
-                obj.Ghost.Matrix(1:2,1:2) = GetRotation(obj.Ghost,obj.GhostLocation,obj.Trajectory);
-            end
-            obj.TimeSlot(1) = GhostTime;
-            LayerNumber = 1;
-            obj.Slots(:,:,LayerNumber) = GetReservation(obj.Ghost,obj.Size);
-            while true
-                GhostTime = GhostTime + obj.TimeStep;
-                [nextVelocity,nextLocation] = GetDynamics(obj,obj.GhostAcceleration,obj.GhostVelocity,obj.GhostLocation);
-                obj.GhostLocation = nextLocation;
-                obj.GhostVelocity = nextVelocity;
-                obj.Ghost.Matrix(1:2,4) = obj.Trajectory(:,obj.GhostLocation);
-                obj.Ghost.Matrix(1:2,1:2) = GetRotation(obj.Ghost,obj.GhostLocation,obj.Trajectory);
-
-                LayerNumber = LayerNumber + 1;
-                obj.Slots(:,:,LayerNumber) = GetReservation(obj.Ghost,obj.Size);
-
-                if obj.GhostLocation > obj.ExitControl
-                    obj.TimeSlot(2) = GhostTime;
-                    break
-                end
-            end
-            delete(obj.Ghost)
         end
 
         function RemoveVehicle(obj)
