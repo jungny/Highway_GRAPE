@@ -18,14 +18,20 @@ t_demand = environment.t_demand(:,agent_id);
 %Util_type = 'Constant_reward';
 %Util_type = 'Random';
 Util_type = environment.Util_type;
+if strcmp(environment.Util_type, 'Min_travel_time') || strcmp(environment.Util_type, 'Hybrid')
+    Util_type = 'Test';
+end
 
+if strcmp(environment.Util_type, 'Hybrid')
+    Util_type = 'Max_velocity';
+end
 
 %%
 switch Util_type
-    case {'[3]', 'Debug'}
+    case 'Debug'
         util_value = t_demand(task_id)/n_participants;
 
-    case {'Test', 'Min_travel_time'}
+    case 'Test'
         denominator = 4.4 * (environment.number_of_tasks)^2.2 + 6;
         % Cost 
         cost = abs(t_location(task_id, 2)- a_location(agent_id, 2)) / denominator ; % y coordinate difference
