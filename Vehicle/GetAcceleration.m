@@ -26,6 +26,11 @@ function ObjectList = GetAcceleration(ObjectList, VehicleList, Parameter)
                     % 가속도 계산
                     Acceleration = Parameter.Accel(1) * (1 - (VelocitySelf / Parameter.MaxVel)^Parameter.Exp -...
                                    (DesiredDistance / LocationDifference)^2);
+
+                    % 🚦 MLC 차량 감속 적용
+                    % if ObjectList{LaneData(j, 1)}.MLC_flag
+                    %     Acceleration = max(Acceleration - Parameter.Accel(2), - Parameter.Accel(2)); % 감속 적용
+                    % end
                     
                     if ~isreal(Acceleration) || isnan(Acceleration) || isinf(Acceleration)
                         % warning('Invalid acceleration detected. Setting acceleration to 0.');
