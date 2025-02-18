@@ -18,7 +18,7 @@ classdef Vehicle < handle
         TargetLane
         LaneChangeFlag
         PolitenessFactor
-        MLC_flag
+        TargetLaneList
     end
 
     properties(Hidden = false) % Properties
@@ -154,7 +154,7 @@ classdef Vehicle < handle
                 % change lane to obj.TargetLane
                 new_y = (Parameter.Map.Lane-targetLane+0.5)*Parameter.Map.Tile;
                 
-                change_steps = 3000;
+                change_steps = round(obj.Velocity * Parameter.LaneChangeTime / Parameter.Map.Scale); 
                 start_idx = obj.Location; 
                 end_idx = min(obj.Location + change_steps - 1, size(obj.Trajectory, 2)); 
                 
@@ -167,7 +167,6 @@ classdef Vehicle < handle
                 end
 
                 obj.LaneChangeFlag = [];
-                
                 obj.Lane = targetLane;
                 obj.TargetLane = [];
             end
@@ -182,17 +181,6 @@ classdef Vehicle < handle
             end
 
             [nextVelocity,nextLocation] = GetDynamics(obj);
-            
-            % if  strcmp(obj.MLC_flag, 'to2') && obj.Lane ~= 2
-            %     %vehicle.Location * Parameter.Map.Scale - (vehicle.Exit - (L1+L2))
-            %     nextVelocity = nextVelocity - 1;
-            % elseif strcmp(obj.MLC_flag, 'to3') && obj.Lane ~= 3
-            %     nextVelocity = nextVelocity - 1;
-            % elseif strcmp(obj.MLC_flag, 'toexit') && obj.Lane ~= 3
-            %     nextVelocity = nextVelocity - 1;
-            % end
-
-
             obj.Data = GetObservation(obj);
             if nextLocation > size(obj.Trajectory,2)
                 obj.State = 0;

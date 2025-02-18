@@ -1,4 +1,4 @@
-function environment = GRAPE_main(List, Parameter, Setting, testiteration)
+function environment = GRAPE_main(List, Parameter,Setting,testiteration)
     % a_location 생성
     a_location = zeros(size(List.Vehicle.Active, 1), 2);
     for i = 1:size(List.Vehicle.Active, 1)
@@ -24,28 +24,17 @@ function environment = GRAPE_main(List, Parameter, Setting, testiteration)
         case '[3]'
             for i = 1:size(List.Vehicle.Active, 1)
                 vehicle_id = List.Vehicle.Active(i,1);
-                vehicle_lane = List.Vehicle.Object{vehicle_id}.Lane;
-                MLC_flag = List.Vehicle.Object{vehicle_id}.MLC_flag;
-
+                
                 % Get feasibility of each lane (DLC or MLC)
-                FeasibleLanes = EvaluateLaneFeasibility(List.Vehicle.Object{vehicle_id}, List, Parameter, Setting);
-
-                if strcmp(MLC_flag, 'to2')
-                    FeasibleLanes(2) = 2;
-                elseif strcmp(MLC_flag, 'to3')
-                    FeasibleLanes(3) = 2;
-                elseif strcmp(MLC_flag, 'toexit')
-                    FeasibleLanes(3) = 2;
-                end
+                FeasibleLanes = EvaluateLaneFeasibility(List.Vehicle.Object{vehicle_id}, List, Parameter);
 
                 % Normalize feasibility weights
                 weights = FeasibleLanes / sum(FeasibleLanes);
 
                 % Apply weights to task demand
                 for lane = 1:Parameter.Map.Lane
-                    t_demand(lane,i) = weights(lane);
+                    t_demand(lane,i) = size(List.Vehicle.Active, 1) * weights(lane);
                 end
-
             end
 
         case 'Test'

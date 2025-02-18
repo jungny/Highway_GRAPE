@@ -6,7 +6,7 @@ addpath('Map\','Vehicle\','Signal\','Manager\','v2v\','GRAPE\')
 Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
 Simulation.Setting.StopOnGrapeError = 1;
-Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
+Simulation.Setting.PauseTime = 0.01; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250211_0220';
 
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
@@ -21,19 +21,19 @@ Simulation.Setting.LogPath = @(finalRandomSeed) ...
     fullfile(Simulation.Setting.SaveFolder, 'Simulations', ...
     ['log_' num2str(finalRandomSeed) '.txt']);
 
-cycle_GRAPE = 1; % GRAPE instance per 5 seconds
+cycle_GRAPE = 5; % GRAPE instance per 5 seconds
 
 Simulation.Setting.InitialRandomSeed = 4;
 Simulation.Setting.Iterations = 1; % number of iterations
 Simulation.Setting.Time = 100;
 
 Simulation.Setting.SpawnType = 1; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times
-Simulation.Setting.GreedyAlloc = 1; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
+Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 Simulation.Setting.RouteControlStrategy = 'GS'; % 'GS', 'HOS', 'FOS'
 
 Simulation.Setting.Util_type = '[3]';
-% Simulation.Setting.Util_type = 'Max_velocity'; % 'Test' or 'Min_travel_time' or 'Max_velocity'
-%Simulation.Setting.Util_type = 'Min_travel_time';
+%Simulation.Setting.Util_type = 'Max_velocity'; % 'Test' or 'Min_travel_time' or 'Max_velocity'
+% Simulation.Setting.Util_type = 'Min_travel_time';
 %Simulation.Setting.Util_type = 'Test';
 %Simulation.Setting.Util_type = 'Hybrid';
 Simulation.Setting.NumberOfParticipants = 'Bubble'; % 'Default' or 'Ahead' or 'Bubble'
@@ -197,7 +197,7 @@ for Iteration = 1:Simulation.Setting.Iterations
                         [feasible, a_c_sim] = MOBIL(current_vehicle, desired_lane, List, Parameter);
                     elseif strcmp(Simulation.Setting.LaneChangeMode, 'SimpleLaneChange')
                         [feasible] = SimpleLaneChange(current_vehicle, desired_lane, List, Parameter);
-                        if current_vehicle.Location < 100 / Parameter.Map.Scale
+                        if current_vehicle.Location < 50 / Parameter.Map.Scale
                             feasible = 0;
                         end
                     end
