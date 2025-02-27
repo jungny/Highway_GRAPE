@@ -39,6 +39,7 @@ classdef Vehicle < handle
         Velocity
         Acceleration
         ExitState
+        TempGreedyWait
     end
 
     properties(Hidden = true) % Control
@@ -68,6 +69,7 @@ classdef Vehicle < handle
             obj.ExitState = -1;
             obj.PolitenessFactor = Seed(4);
             SpawnPosition = Seed(5);
+            %obj.SpawnTime = Seed(6);
             obj.ColorCount = 0;
 
             % 고속도로에서는 방향(Destination) 관련 로직 불필요
@@ -91,7 +93,7 @@ classdef Vehicle < handle
             if obj.Agent == 1
                 obj.Patch = patch('XData',obj.Size(1,:),'YData',obj.Size(2,:),'FaceColor','white','Parent',obj.Object);
             else
-                obj.Patch = patch('XData',obj.Size(1,:),'YData',obj.Size(2,:),'FaceColor','#cfcdc0','Parent',obj.Object);
+                obj.Patch = patch('XData',obj.Size(1,:),'YData',obj.Size(2,:),'FaceColor','white','Parent',obj.Object); % #cfcdc0
             end
 
             x_center = mean(obj.Size(1,:));
@@ -107,7 +109,14 @@ classdef Vehicle < handle
                     'VerticalAlignment', 'middle', ...
                     'Parent', obj.Object, ...
                     'FontSize', 9, 'Color', 'black');
+            else
+                 obj.Text = text(x_center, y_center+0.1, sprintf('        %d', exit_index), ...
+                    'HorizontalAlignment', 'center', ...
+                    'VerticalAlignment', 'middle', ...
+                    'Parent', obj.Object, ...
+                    'FontSize', 9, 'Color', 'black');
             end
+
 
 
             obj.Parameter = Parameter.Veh;
@@ -129,12 +138,16 @@ classdef Vehicle < handle
 
         function MoveVehicle(obj,Time,Parameter,List)
             if obj.Location * Parameter.Map.Scale >= Parameter.Map.GrapeThreshold
-                set(obj.Patch, 'FaceColor', '#FFF38C');
+                set(obj.Patch, 'FaceColor', 'white');
             end
 
             if obj.ColorCount > 0
                 set(obj.Patch, 'FaceColor', '#f589e6');
                 obj.ColorCount = obj.ColorCount-1;
+            end
+
+            if obj.TempGreedyWait > 0
+                obj.TempGreedyWait = obj.TempGreedyWait - Parameter.Physics;
             end
 
 
@@ -168,7 +181,7 @@ classdef Vehicle < handle
                 if obj.ExitState == 1
                     set(obj.Patch, 'FaceColor', 'green');
                 elseif obj.ExitState == 0
-                    set(obj.Patch, 'FaceColor', '#6b6b6b');
+                    set(obj.Patch, 'FaceColor', 'black');
                 end
             end
 

@@ -224,11 +224,12 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
     environment.t_demand = t_demand;
     environment.Alloc_current = Alloc_current;
     environment.Type = Setting.NumberOfParticipants;
-    environment.LogFile = Setting.LogFile;
+    environment.LogFile = Setting.LogPath;
     environment.test_iteration = testiteration;
     environment.x_relation = GetXRelation(List);
     environment.number_of_tasks = Parameter.Map.Lane;
     environment.Util_type = Setting.Util_type;
+    environment.Setting = Setting;
 
 
 end

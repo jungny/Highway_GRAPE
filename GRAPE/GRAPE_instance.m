@@ -156,7 +156,7 @@ function G = GRAPE_instance(environment)
         end
     end
 
-    Comm_distance =5000000; % 250m 
+    Comm_distance =20000; % 200m 
     % Neighbour agents within communication radius
     MST_ = (dist_agents <= Comm_distance);
     MST = MST_ - eye(n,n);
@@ -177,18 +177,21 @@ function G = GRAPE_instance(environment)
     % Output : Alloc / a_utility / iteration
 
     G.Alloc = output.Alloc;
-    G.a_utility = output.a_utility;
-    G.iteration = output.iteration;
-    G.flag_problem = output.flag_problem; % If the result has a problem, then 1. 
 
-    Alloc = output.Alloc;
-    a_utility = output.a_utility;
-    iteration = output.iteration;
-    flag_problem = output.flag_problem;
+    if ~environment.Setting.GreedyAlloc
+        G.a_utility = output.a_utility;
+        G.iteration = output.iteration;
+        G.flag_problem = output.flag_problem; % If the result has a problem, then 1. 
 
-    %% Minimum-guaranteed Global Utility (Theorem 3)
-    if n>1
-        Minimum_Guaranteed_Optimality;
+        Alloc = output.Alloc;
+        a_utility = output.a_utility;
+        iteration = output.iteration;
+        flag_problem = output.flag_problem;
+
+        %% Minimum-guaranteed Global Utility (Theorem 3)
+        if n>1
+            Minimum_Guaranteed_Optimality;
+        end
     end
 
 end

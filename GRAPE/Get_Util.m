@@ -28,6 +28,8 @@ end
 
 %%
 switch Util_type
+    case {'[3]', 'Debug'}
+        util_value = t_demand(task_id)/n_participants;
 
     case 'Test'
         denominator = 4.4 * (environment.number_of_tasks)^2.2 + 6;
