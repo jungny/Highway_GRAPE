@@ -28,7 +28,7 @@ end
 
 %%
 switch Util_type
-    case 'Debug'
+    case {'[3]', 'Debug'}
         util_value = t_demand(task_id)/n_participants;
 
     case 'Test'

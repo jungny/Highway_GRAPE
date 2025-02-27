@@ -5,17 +5,17 @@ addpath('Map\','Vehicle\','Signal\','Manager\','v2v\','GRAPE\')
 
 Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
-Simulation.Setting.StopOnGrapeError = 1;
+Simulation.Setting.StopOnGrapeError = 0;
 Simulation.Setting.PauseTime = 0.01; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250211_0220';
 
 Simulation.Setting.RecordLog = 1;    % 1: Record log file, 0: Do not record
-Simulation.Setting.RecordVideo = 1;  % 1: Record video file, 0: Do not record
+Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
 % Simulation.Setting.RecordExcel = 1;  % 1: Record Excel file, 0: Do not record
 
 Simulation.Setting.VideoPath = @(randomSeed, timestamp) ...
     fullfile(Simulation.Setting.SaveFolder, 'Simulations', ...
-    ['Wait_GRAPE_Bubble' num2str(randomSeed) '_' timestamp '.mp4']);
+    ['ppt_bubbleandahead' num2str(randomSeed) '_' timestamp '.mp4']);
 
 Simulation.Setting.LogPath = @(finalRandomSeed) ...
     fullfile(Simulation.Setting.SaveFolder, 'Simulations', ...
@@ -34,6 +34,8 @@ Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1
 Simulation.Setting.Util_type = 'Min_travel_time';
 %Simulation.Setting.Util_type = 'Test';
 %Simulation.Setting.Util_type = 'Hybrid';
+%Simulation.Setting.NumberOfParticipants = 'Default'; % 'Default' or 'Ahead' or 'Bubble'
+%Simulation.Setting.NumberOfParticipants = 'BubbleAndAhead'; % 'Default' or 'Ahead' or 'Bubble'
 Simulation.Setting.NumberOfParticipants = 'Bubble'; % 'Default' or 'Ahead' or 'Bubble'
 %Simulation.Setting.NumberOfParticipants = 'Ahead'; % 'Default' or 'Ahead'
 % Simulation.Setting.LaneChangeMode = 'MOBIL'; % 'MOBIL' or 'SimpleLaneChange'
