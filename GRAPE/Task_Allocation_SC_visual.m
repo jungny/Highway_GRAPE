@@ -282,7 +282,7 @@ else
 
     %% Interface (Output)
     % disp(Alloc);
-    output.Alloc = Alloc;
+    output.Alloc = Alloc_known_; % Alloc_known_
     output.a_utility = a_utility;
     output.iteration = iteration;
 

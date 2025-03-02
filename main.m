@@ -6,16 +6,16 @@ addpath('Map\','Vehicle\','Signal\','Manager\','v2v\','GRAPE\')
 Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
 Simulation.Setting.StopOnGrapeError = 0;
-Simulation.Setting.PauseTime = 0.01; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
-Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250211_0220';
+Simulation.Setting.PauseTime = 0.03; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
+Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250220_0306';
 
-Simulation.Setting.RecordLog = 1;    % 1: Record log file, 0: Do not record
-Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
+Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
+Simulation.Setting.RecordVideo = 1;  % 1: Record video file, 0: Do not record
 % Simulation.Setting.RecordExcel = 1;  % 1: Record Excel file, 0: Do not record
 
 Simulation.Setting.VideoPath = @(randomSeed, timestamp) ...
     fullfile(Simulation.Setting.SaveFolder, 'Simulations', ...
-    ['ppt_bubbleandahead' num2str(randomSeed) '_' timestamp '.mp4']);
+    ['ppt_afterAllocfix' num2str(randomSeed) '_' timestamp '.mp4']);
 
 Simulation.Setting.LogPath = @(finalRandomSeed) ...
     fullfile(Simulation.Setting.SaveFolder, 'Simulations', ...
@@ -27,7 +27,7 @@ Simulation.Setting.InitialRandomSeed = 4;
 Simulation.Setting.Iterations = 1; % number of iterations
 Simulation.Setting.Time = 100;
 
-Simulation.Setting.SpawnType = 1; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times
+Simulation.Setting.SpawnType = 2; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times, 2: Debug mode
 Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
 %Simulation.Setting.Util_type = 'Max_velocity'; % 'Test' or 'Min_travel_time' or 'Max_velocity'
@@ -128,7 +128,7 @@ for Iteration = 1:Simulation.Setting.Iterations
                 SpawnVehicle = SpawnVehicle(:,2:end);  % 생성된 차량 삭제
             end
 
-        elseif Simulation.Setting.SpawnType == 1
+        elseif Simulation.Setting.SpawnType == 1 || Simulation.Setting.SpawnType == 2
             if firstCount == 0
                 [SpawnVehicle, ~] = GetSeed(Simulation.Setting, Parameter, TotalVehicles, SpawnLanes, NextArrivalTime);
                 List.Vehicle.Object = cell(size(SpawnVehicle,2),1);
@@ -153,7 +153,7 @@ for Iteration = 1:Simulation.Setting.Iterations
             environment = GRAPE_main(List,Parameter,Simulation.Setting,Iteration);
             lane_alloc = GRAPE_instance(environment).Alloc;
 
-        elseif mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0  %&& Time > 2000
+        elseif mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0  && Time > 8
             disp("calling Grape Instance. . . | "+ Time);
             environment = GRAPE_main(List,Parameter,Simulation.Setting,Iteration);
             try
