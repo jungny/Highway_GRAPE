@@ -31,7 +31,7 @@ function [SpawnSeed, NewList] = GetSeed(Setting, Parameter, TotalVehicles, Spawn
 
             SpawnSeed(6,:) = zeros(1,SpawnCount); % redundant property
         case 1
-            TotalVehicles = randi([2,50]);
+            %TotalVehicles = randi([2,50]);
             TotalVehicles = 100;
             SpawnSeed = zeros(6,TotalVehicles);
 
@@ -67,6 +67,7 @@ function [SpawnSeed, NewList] = GetSeed(Setting, Parameter, TotalVehicles, Spawn
 
             % 3: Exit (랜덤 할당)
             NumExits = length(Parameter.Map.Exit);
+            %SpawnSeed(3, :) = [Parameter.Map.Exit(1),Parameter.Map.Exit(1),Parameter.Map.Exit(1)];
             SpawnSeed(3, :) = Parameter.Map.Exit(randi(NumExits, 1, TotalVehicles));
 
             % 4: Politeness Factor (기본값 1)

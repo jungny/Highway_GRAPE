@@ -42,7 +42,7 @@ function P = GetParameters(Setting)
     %P.Map.Exit = [1040, 1970];
     %P.Map.Exit = [240,380];
     P.Map.Exit = RandomExitGenerator(P.Map.Road);
-    P.Map.Exit = [P.Map.Road-330, P.Map.Road-30];
+    %P.Map.Exit = [P.Map.Road-330, P.Map.Road-30];
     %P.Map.Exit = [1200,1900];
     P.Map.GrapeThreshold = 200;
 
