@@ -1,5 +1,5 @@
 
-function [SpawnSeed, NewList] = GetSeed(Setting, Parameter, TotalVehicles, SpawnLanes, OldList)
+function [SpawnSeed, NewListOrTotalVehicles] = GetSeed(Setting, Parameter, TotalVehicles, SpawnLanes, OldList)
     switch Setting.SpawnType
         case 0
             % 1: Vehicle ID
@@ -24,7 +24,7 @@ function [SpawnSeed, NewList] = GetSeed(Setting, Parameter, TotalVehicles, Spawn
             for i = 1:length(SpawnLanes)
                 OldList(SpawnLanes(i)) = OldList(SpawnLanes(i)) - log(rand) / lambda;
             end
-            NewList = OldList;
+            NewListOrTotalVehicles = OldList;
 
             SpawnSeed(5,:) = 1+0*Parameter.Map.SpawnZone * rand(1, SpawnCount);
             %SpawnSeed(5,:) = Parameter.Map.SpawnZone * rand(1, SpawnCount);
@@ -32,7 +32,8 @@ function [SpawnSeed, NewList] = GetSeed(Setting, Parameter, TotalVehicles, Spawn
             SpawnSeed(6,:) = zeros(1,SpawnCount); % redundant property
         case 1
             %TotalVehicles = randi([2,50]);
-            TotalVehicles = 100;
+            TotalVehicles = randi([70,120]);
+            %TotalVehicles = 20;
             SpawnSeed = zeros(6,TotalVehicles);
 
             % 1: Vehicle ID
@@ -51,7 +52,7 @@ function [SpawnSeed, NewList] = GetSeed(Setting, Parameter, TotalVehicles, Spawn
             max_interval = 2;
             SpawnTimes = cumsum(min_interval + (max_interval - min_interval) * rand(1, TotalVehicles));
             SpawnSeed(6, :) = SpawnTimes;
-            NewList = [];
+            NewListOrTotalVehicles = TotalVehicles;
             
         case 2  % Debug for task allocation issue
             % 차량 3대

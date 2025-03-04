@@ -21,6 +21,57 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
 
     Util_type = Setting.Util_type;
     switch Util_type
+        case 'GS_HOS_FOS'
+            strategy = 'GS';
+            if strcmp(strategy, 'GS')
+                L1 = 300;
+                L2 = 300;
+                L3 = 300;
+            elseif strcmp(strategy, 'HOS')
+                L1 = 500;
+                L2 = 100;
+                L3 = 500;
+            elseif strcmp(strategy, 'FOS')
+                L1 = 600;
+                L2 = 0;
+                L3 = 600;
+            end
+
+            for i = 1:size(List.Vehicle.Active, 1)
+                vehicle_id = List.Vehicle.Active(i, 1);  % 차량 ID
+                vehicle_lane = List.Vehicle.Object{vehicle_id}.Lane;
+
+                distance_to_exit = List.Vehicle.Object{vehicle_id}.Exit - ...
+                                    List.Vehicle.Object{vehicle_id}.Location * Parameter.Map.Scale;  % Exit까지 거리
+
+                weights = ones(Parameter.Map.Lane, 1) / Parameter.Map.Lane; 
+
+                if (distance_to_exit <= L1+L2) && (distance_to_exit > L2) && vehicle_lane == 1
+                    weights = [0; 1; 0];
+                    % if strcmp(strategy, 'FOS')
+                    %     weights = [0; 1; 1];
+                    % end
+
+                elseif (distance_to_exit <= L3) && (distance_to_exit > 0)
+                    if vehicle_lane == 1 && (distance_to_exit < L2)
+                        weights = [0; 0; 1];
+                    elseif vehicle_lane == 2
+                        weights = [0; 0; 1];
+                    elseif vehicle_lane == 3
+                        weights = [0; 0; 1];
+                    end
+                        
+                end
+
+                for lane = 1:Parameter.Map.Lane
+                    normalized_weights(lane) = floor(weights(lane)*100)/100;
+                    t_demand(lane, i) = normalized_weights(lane); 
+                end
+
+            end
+
+
+
         case 'Test'
             for i = 1:size(List.Vehicle.Active, 1)
                 vehicle_id = List.Vehicle.Active(i, 1);  % 차량 ID

@@ -15,7 +15,7 @@ Simulation.Setting.RecordExcel = 1;  % 1: Record Excel file, 0: Do not record
 
 Simulation.Setting.VideoPath = @(mode, randomSeed, timestamp) ...
     fullfile(Simulation.Setting.SaveFolder, 'Simulations', ...
-    ['test_' mode '_' num2str(randomSeed) '_' timestamp '.mp4']);
+    ['_' mode '_' num2str(randomSeed) '_' timestamp '.mp4']);
 
 Simulation.Setting.LogPath = @(finalRandomSeed) ...
     fullfile(Simulation.Setting.SaveFolder, 'Simulations', ...
@@ -24,12 +24,13 @@ Simulation.Setting.LogPath = @(finalRandomSeed) ...
 cycle_GRAPE = 5; % GRAPE instance per 5 seconds
 
 Simulation.Setting.InitialRandomSeed = 1;
-Simulation.Setting.Iterations = 5; % number of iterations
-Simulation.Setting.Time = 100;
+Simulation.Setting.Iterations = 100; % number of iterations
+Simulation.Setting.Time = 1000;
 
 Simulation.Setting.SpawnType = 1; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times, 2: Debug mode
-Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
+Simulation.Setting.GreedyAlloc = 1; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
+%Simulation.Setting.Util_type = 'GS_HOS_FOS';
 %Simulation.Setting.Util_type = 'Max_velocity'; % 'Test' or 'Min_travel_time' or 'Max_velocity'
 Simulation.Setting.Util_type = 'Min_travel_time';
 %Simulation.Setting.Util_type = 'Test';
@@ -60,11 +61,12 @@ end
 
 % 🔹 엑셀 파일 경로 설정
 timestamp = datestr(now, 'HH-MM-SS');  % 현재 시간 가져오기 (시-분-초 형식)
-filename = fullfile(Simulation.Setting.SaveFolder, ['simulation_results_' timestamp '.xlsx']);
+filename = fullfile(Simulation.Setting.SaveFolder, ['GRAPE_OriginalUtility' timestamp '.xlsx']);
 sheet = 'Results';
 
 % 🔹 실험할 참가자 모드 설정
-participantModes = {'Default', 'Ahead', 'BubbleAndAhead', 'Bubble'};
+participantModes = {'Default', 'Ahead', 'Bubble', 'BubbleAhead'};
+%participantModes = {'Default'};
 num_modes = length(participantModes);
 
 % 🔹 엑셀 파일이 존재하지 않으면 헤더만 추가하여 생성
@@ -77,7 +79,7 @@ end
 % 🔹 결과 저장을 위한 배열 초기화
 if Simulation.Setting.RecordExcel
     num_simulations = Simulation.Setting.Iterations;
-    results = cell(num_simulations, num_modes + 1);
+    results = cell(num_simulations, (num_modes * 2) + 2); % random seed, total vehicles, <avg travel time, fail rate> each mode
 end
 
 
@@ -89,7 +91,7 @@ for Iteration = 1:Simulation.Setting.Iterations
     %Simulation.Setting.RandomSeed = randomSeed;
 
     % 현재 random seed에 대한 결과 저장할 행 초기화
-    result_row = cell(1, num_modes + 1);
+    result_row = cell(1, (num_modes * 2) + 2);
     result_row{1} = randomSeed;  % 첫 번째 칸에 random seed 저장
 
 
@@ -101,7 +103,10 @@ for Iteration = 1:Simulation.Setting.Iterations
         environment = struct();
         GRAPE_output = [];
         travel_times = [];
+        exit_fail = 0;
         RemovedVehicle = 0;
+        exit_fail_count = 0;
+        exit_success_count = 0;
 
         Parameter = GetParameters(Simulation.Setting);
         GetWindow(Parameter.Map,Simulation.Setting)
@@ -165,7 +170,7 @@ for Iteration = 1:Simulation.Setting.Iterations
 
             elseif Simulation.Setting.SpawnType == 1 || Simulation.Setting.SpawnType == 2
                 if firstCount == 0
-                    [SpawnVehicle, ~] = GetSeed(Simulation.Setting, Parameter, TotalVehicles, SpawnLanes, NextArrivalTime);
+                    [SpawnVehicle, TotalVehicles] = GetSeed(Simulation.Setting, Parameter, TotalVehicles, SpawnLanes, NextArrivalTime);
                     List.Vehicle.Object = cell(size(SpawnVehicle,2),1);
                     firstCount = 1;
                 end
@@ -281,7 +286,13 @@ for Iteration = 1:Simulation.Setting.Iterations
 
                     travel_times = [travel_times, travel_time];
 
-                    
+                    % 🔹 Exit 성공 차량인지 확인
+                    if List.Vehicle.Object{List.Vehicle.Active(i,1)}.Lane == Parameter.Map.Lane
+                        exit_success_count = exit_success_count + 1;
+                    else
+                        exit_fail_count = exit_fail_count + 1;  % 🔹 최우측 차선이 아니면 exit fail로 기록
+                    end
+
                     % remove vehicle
                     RemoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)})
                     List.Vehicle.Object{List.Vehicle.Active(i,1)} = [];
@@ -311,12 +322,24 @@ for Iteration = 1:Simulation.Setting.Iterations
 
         end
 
+        total_exited_vehicles = exit_success_count + exit_fail_count;
+        if TotalVehicles ~= total_exited_vehicles
+            disp("something wrong here");
+        end
+        if total_exited_vehicles > 0
+            exit_fail_rate = round(exit_fail_count / total_exited_vehicles, 3); % 🔹 소수점 3자리까지
+        else
+            exit_fail_rate = NaN; % 🔹 차량이 하나도 없으면 NaN
+        end
+
         avg_travel_time = round(mean(travel_times), 3);
         if isempty(travel_times)
             avg_travel_time = NaN;
         end
 
-        result_row{mode_idx + 1} = avg_travel_time;
+        % 🔹 각 mode_idx마다 결과 저장 (Avg Travel Time + Exit Fail Rate)
+        result_row{(mode_idx * 2) + 1} = avg_travel_time;
+        result_row{(mode_idx * 2) + 2} = exit_fail_rate;
 
         disp("Iteration: " + Iteration)
         if Time > Parameter.Sim.Time - Parameter.Physics
@@ -332,11 +355,16 @@ for Iteration = 1:Simulation.Setting.Iterations
         clear Parameter List Seed environment GRAPE_output;
 
     end
+    result_row{2} = TotalVehicles;
     results(Iteration, :) = result_row;
 end
 % 🔹 모든 Iteration이 끝난 후, 엑셀 파일에 한 번에 결과 저장
 if Simulation.Setting.RecordExcel
-    full_data = [{'Random Seed'}, participantModes; results];  % 헤더 + 데이터 합치기
+    header = [{'Random Seed'}, {'Total Vehicles'}];  
+    for i = 1:num_modes
+        header = [header, strcat(participantModes{i}, '_AvgTravelTime'), strcat(participantModes{i}, '_ExitFailRate')];
+    end
+    full_data = [header; results];  
     writecell(full_data, filename, 'Sheet', sheet, 'WriteMode', 'overwrite');  
     disp(['✅ Simulation results saved to: ', filename]);
 end

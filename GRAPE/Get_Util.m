@@ -18,7 +18,7 @@ t_demand = environment.t_demand(:,agent_id);
 %Util_type = 'Constant_reward';
 %Util_type = 'Random';
 Util_type = environment.Util_type;
-if strcmp(environment.Util_type, 'Min_travel_time') || strcmp(environment.Util_type, 'Hybrid')
+if strcmp(environment.Util_type, 'Hybrid')
     Util_type = 'Test';
 end
 
@@ -28,7 +28,7 @@ end
 
 %%
 switch Util_type
-    case {'[3]', 'Debug'}
+    case {'GS_HOS_FOS', 'Min_travel_time'}
         util_value = t_demand(task_id)/n_participants;
 
     case 'Test'

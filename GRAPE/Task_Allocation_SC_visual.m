@@ -84,7 +84,7 @@ while a_satisfied~=n
                     current_members(i) = 1; % including oneself
                     % Cardinality of the coalition
                     n_participants = sum(current_members);
-                case 'BubbleAndAhead'
+                case 'BubbleAhead'
                     % Check member agent ID in the selected task
                     current_members = (Alloc_ == ones(n,1)*t);
 
@@ -271,7 +271,7 @@ else
                 if (sum(Alloc_1 == Alloc) == n)&&(iteration_1 == iteration)&&(time_stamp_1 == time_stamp)
                     % Consensus OK
                 else
-                    disp(['Problem: Non Consensus with Agent#1 and Agent#',num2str(i)]);
+                    %disp(['Problem: Non Consensus with Agent#1 and Agent#',num2str(i)]);
                     output.flag_problem = 1;
                 end        
             end

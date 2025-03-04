@@ -5,7 +5,7 @@ function P = GetParameters(Setting)
     P.Control = 0.1;
     P.Label = 0; % 1: label 보임, 0: 안보임
 
-    P.Flow = 1500; % veh/hour/lane
+    P.Flow = 1500; % veh/hour/lane, only used in spawntype = 1.
     
     % Sim
     P.Sim.Time = Setting.Time;
@@ -25,13 +25,12 @@ function P = GetParameters(Setting)
     P.Map.Tile = 3.05; %m
     %P.Map.Road = 2000; %400
     %P.Map.Road = randi([400,2500]);
-    P.Map.Road = 800; %m
+    P.Map.Road = 1805; %m
     
-    minLanes = 2;
-    maxLanes = 8+1;
-    % %P.Map.Lane = 3;
-    P.Map.Lane = minLanes + floor((P.Map.Road - 400) / (2500 - 400) * (maxLanes - minLanes));
-    P.Map.Lane = max(minLanes, min(P.Map.Lane, maxLanes));  % 범위 제한
+    %minLanes = 2;
+    %maxLanes = 8+1;
+    %P.Map.Lane = minLanes + floor((P.Map.Road - 400) / (2500 - 400) * (maxLanes - minLanes));
+    %P.Map.Lane = max(minLanes, min(P.Map.Lane, maxLanes));  % 범위 제한
     P.Map.Lane = 3;
     
 
@@ -41,9 +40,9 @@ function P = GetParameters(Setting)
     P.Map.SpawnZone = 500; % new vehicle to be spawned at anywhere between [0,200m]
     %P.Map.Exit = [1040, 1970];
     %P.Map.Exit = [240,380];
-    P.Map.Exit = RandomExitGenerator(P.Map.Road);
+    %P.Map.Exit = RandomExitGenerator(P.Map.Road);
     %P.Map.Exit = [P.Map.Road-330, P.Map.Road-30];
-    %P.Map.Exit = [1200,1900];
+    P.Map.Exit = [1000,1800];
     P.Map.GrapeThreshold = 200;
 
     % Vehicle

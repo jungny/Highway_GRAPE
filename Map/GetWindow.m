@@ -54,9 +54,9 @@ function CreateFullHighwayView(Map)
     ScreenWidth = ScreenSize(3);
     ScreenHeight = ScreenSize(4);
 
-    WindowWidth = ScreenWidth; % 창 너비를 스크린 너비로 설정
+    WindowWidth = ScreenWidth+2000; % 창 너비를 스크린 너비로 설정
     AspectRatio = Map.Road / (Map.Tile * Map.Lane);
-    WindowHeight = 150;
+    WindowHeight = 120;
 
     WindowX = 0; % X 위치 통일
     WindowY = ScreenHeight - WindowHeight - 90; % 통일된 Y 위치
