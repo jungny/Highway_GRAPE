@@ -52,25 +52,12 @@ GreedyAlloc = input.Alloc_existing;
 %% Neighbour agents identification (Assumming a static situation)
 for i = 1:n
     switch Type
-        case 'Default'
-            % 기본적으로 MST를 기반으로 이웃 설정
+        case {'Default', 'Ahead'}
             agent_info(i).set_neighbour_agent_id = find(MST(i, :) > 0);
 
-        case 'Ahead'
-            % MST를 기반으로 하되, x_relation을 반영하여 앞에 있는 차량만 선택
-            all_neighbours = find(MST(i, :) > 0);
-            ahead_neighbours = all_neighbours(environment.x_relation(i, all_neighbours) == 1);
-            agent_info(i).set_neighbour_agent_id = ahead_neighbours;
-
-        case 'Bubble'
-            % Bubble 모드에서는 Bubble에 기반한 MST 사용
+        case {'Bubble', 'BubbleAhead'}
             agent_info(i).set_neighbour_agent_id = find(MST_bubble(i, :) > 0);
 
-        case 'BubbleAhead'
-            % Bubble MST를 사용하되, x_relation을 반영하여 앞에 있는 차량만 선택
-            all_neighbours = find(MST_bubble(i, :) > 0);
-            ahead_neighbours = all_neighbours(environment.x_relation(i, all_neighbours) == 1);
-            agent_info(i).set_neighbour_agent_id = ahead_neighbours;
     end
 end
 
