@@ -22,7 +22,7 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
     Util_type = Setting.Util_type;
     switch Util_type
         case 'GS_HOS_FOS'
-            strategy = 'GS';
+            strategy = 'FOS';
             if strcmp(strategy, 'GS')
                 L1 = 400;
                 L2 = 400;

@@ -96,7 +96,6 @@ while a_satisfied~=n
                     current_members(i) = 1; % including oneself
                     % Cardinality of the coalition
                     n_participants = sum(current_members);
-                    % do not need to change MST
                 case 'Bubble'
                     % Check member agent ID in the selected task
                     current_members = (Alloc_ == ones(n,1)*t);
@@ -117,8 +116,6 @@ while a_satisfied~=n
                     current_members(i) = 1; % including oneself
 
                     n_participants = sum(x_relation(i, current_members)) + 1; 
-
-
 
                 case 'Ahead'
                     % 현재 agent i가 선택한 task(차선)의 앞에 있는 차량 수, including
@@ -295,7 +292,7 @@ else
                 if (sum(Alloc_1 == Alloc) == n)&&(iteration_1 == iteration)&&(time_stamp_1 == time_stamp)
                     % Consensus OK
                 else
-                    %disp(['Problem: Non Consensus with Agent#1 and Agent#',num2str(i)]);
+                    disp(['Problem: Non Consensus with Agent#1 and Agent#',num2str(i)]);
                     output.flag_problem = 1;
                 end        
             end

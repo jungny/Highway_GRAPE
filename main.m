@@ -5,7 +5,7 @@ addpath('Map\','Vehicle\','Signal\','Manager\','v2v\','GRAPE\')
 
 Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
-Simulation.Setting.StopOnGrapeError = 0;
+Simulation.Setting.StopOnGrapeError = 1;
 Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250220_0306';
 
@@ -28,11 +28,11 @@ Simulation.Setting.Iterations = 20; % number of iterations
 Simulation.Setting.Time = 1000;
 
 Simulation.Setting.SpawnType = 1; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times, 2: Debug mode
-Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
+Simulation.Setting.GreedyAlloc = 1; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
-%Simulation.Setting.Util_type = 'GS_HOS_FOS';
+Simulation.Setting.Util_type = 'GS_HOS_FOS';
 %Simulation.Setting.Util_type = 'Max_velocity'; % 'Test' or 'Min_travel_time' or 'Max_velocity'
-Simulation.Setting.Util_type = 'Min_travel_time';
+%Simulation.Setting.Util_type = 'Min_travel_time';
 %Simulation.Setting.Util_type = 'Test';
 %Simulation.Setting.Util_type = 'Hybrid';
 %Simulation.Setting.NumberOfParticipants = 'Default'; % 'Default' or 'Ahead' or 'Bubble'
@@ -61,7 +61,7 @@ end
 
 % 🔹 엑셀 파일 경로 설정
 timestamp = datestr(now, 'HH-MM');  % 현재 시간 가져오기 (시-분-초 형식)
-filename = fullfile(Simulation.Setting.SaveFolder, ['GRAPE_OriginalUtility_' timestamp '.xlsx']);
+filename = fullfile(Simulation.Setting.SaveFolder, ['Greedy_FOS_' timestamp '.xlsx']);
 sheet = 'Results';
 
 % 🔹 실험할 참가자 모드 설정
