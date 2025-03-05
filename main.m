@@ -1,3 +1,4 @@
+%===
 close all
 clear
 clc
@@ -30,7 +31,7 @@ Simulation.Setting.Time = 1000;
 Simulation.Setting.SpawnType = 1; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times, 2: Debug mode
 Simulation.Setting.GreedyAlloc = 1; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
-Simulation.Setting.Util_type = 'GS_HOS_FOS';
+Simulation.Setting.Util_type = 'GS';
 %Simulation.Setting.Util_type = 'Max_velocity'; % 'Test' or 'Min_travel_time' or 'Max_velocity'
 %Simulation.Setting.Util_type = 'Min_travel_time';
 %Simulation.Setting.Util_type = 'Test';
@@ -61,7 +62,7 @@ end
 
 % 🔹 엑셀 파일 경로 설정
 timestamp = datestr(now, 'HH-MM');  % 현재 시간 가져오기 (시-분-초 형식)
-filename = fullfile(Simulation.Setting.SaveFolder, ['Greedy_FOS_' timestamp '.xlsx']);
+filename = fullfile(Simulation.Setting.SaveFolder, ['md_Greedy_GS_' timestamp '.xlsx']);
 sheet = 'Results';
 
 % 🔹 실험할 참가자 모드 설정

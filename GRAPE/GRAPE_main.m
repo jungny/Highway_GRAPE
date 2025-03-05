@@ -21,17 +21,16 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
 
     Util_type = Setting.Util_type;
     switch Util_type
-        case 'GS_HOS_FOS'
-            strategy = 'FOS';
-            if strcmp(strategy, 'GS')
+        case {'GS', 'HOS', 'FOS'}
+            if strcmp(Util_type, 'GS')
                 L1 = 400;
                 L2 = 400;
                 L3 = 400;
-            elseif strcmp(strategy, 'HOS')
+            elseif strcmp(Util_type, 'HOS')
                 L1 = 600;
                 L2 = 200;
                 L3 = 600;
-            elseif strcmp(strategy, 'FOS')
+            elseif strcmp(Util_type, 'FOS')
                 L1 = 800;
                 L2 = 0;
                 L3 = 800;

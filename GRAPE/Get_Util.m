@@ -31,7 +31,7 @@ switch Util_type
     % case {'Min_travel_time'}
     %     util_value = t_demand(task_id)/n_participants;
 
-    case {'GS_HOS_FOS', 'Min_travel_time'}
+    case {'GS', 'HOS','FOS', 'Min_travel_time'}
         cost = abs(t_location(task_id, 2)- a_location(agent_id, 2));
         if cost > 0
             util_value = (t_demand(task_id)/n_participants)-0.01;
