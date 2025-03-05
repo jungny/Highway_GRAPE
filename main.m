@@ -24,11 +24,11 @@ Simulation.Setting.LogPath = @(finalRandomSeed) ...
 cycle_GRAPE = 5; % GRAPE instance per 5 seconds
 
 Simulation.Setting.InitialRandomSeed = 1;
-Simulation.Setting.Iterations = 100; % number of iterations
+Simulation.Setting.Iterations = 20; % number of iterations
 Simulation.Setting.Time = 1000;
 
 Simulation.Setting.SpawnType = 1; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times, 2: Debug mode
-Simulation.Setting.GreedyAlloc = 1; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
+Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
 %Simulation.Setting.Util_type = 'GS_HOS_FOS';
 %Simulation.Setting.Util_type = 'Max_velocity'; % 'Test' or 'Min_travel_time' or 'Max_velocity'
@@ -37,7 +37,7 @@ Simulation.Setting.Util_type = 'Min_travel_time';
 %Simulation.Setting.Util_type = 'Hybrid';
 %Simulation.Setting.NumberOfParticipants = 'Default'; % 'Default' or 'Ahead' or 'Bubble'
 %Simulation.Setting.NumberOfParticipants = 'BubbleAndAhead'; % 'Default' or 'Ahead' or 'Bubble'
-Simulation.Setting.NumberOfParticipants = 'Bubble'; % 'Default' or 'Ahead' or 'Bubble'
+%Simulation.Setting.NumberOfParticipants = 'Bubble'; % 'Default' or 'Ahead' or 'Bubble'
 %Simulation.Setting.NumberOfParticipants = 'Ahead'; % 'Default' or 'Ahead'
 % Simulation.Setting.LaneChangeMode = 'MOBIL'; % 'MOBIL' or 'SimpleLaneChange'
 Simulation.Setting.LaneChangeMode = 'SimpleLaneChange'; % 'MOBIL' or 'SimpleLaneChange'
@@ -60,13 +60,13 @@ if Simulation.Setting.SpawnType % If vehicles are spawned manually based on pred
 end
 
 % 🔹 엑셀 파일 경로 설정
-timestamp = datestr(now, 'HH-MM-SS');  % 현재 시간 가져오기 (시-분-초 형식)
-filename = fullfile(Simulation.Setting.SaveFolder, ['GRAPE_OriginalUtility' timestamp '.xlsx']);
+timestamp = datestr(now, 'HH-MM');  % 현재 시간 가져오기 (시-분-초 형식)
+filename = fullfile(Simulation.Setting.SaveFolder, ['GRAPE_OriginalUtility_' timestamp '.xlsx']);
 sheet = 'Results';
 
 % 🔹 실험할 참가자 모드 설정
 participantModes = {'Default', 'Ahead', 'Bubble', 'BubbleAhead'};
-%participantModes = {'Default'};
+%participantModes = {'Ahead'};
 num_modes = length(participantModes);
 
 % 🔹 엑셀 파일이 존재하지 않으면 헤더만 추가하여 생성
@@ -146,7 +146,17 @@ for Iteration = 1:Simulation.Setting.Iterations
 
         for Time = 0:Parameter.Physics:Parameter.Sim.Time
             GRAPE_done = 0;
-            title(sprintf('Time: %0.2f s', Time));
+            % GreedyAlloc 여부를 아이콘으로 변환
+            if Simulation.Setting.GreedyAlloc == 1
+                greedy_status = 'GRAPE ❌';
+            else
+                greedy_status = 'GRAPE ⭕';
+            end
+            
+            % 제목 출력
+            title(sprintf('Random Seed: %d   |   %s   |   Participants Mode: %s   |   Time: %.2f s', ...
+                randomSeed, greedy_status, participantModes{mode_idx}, Time));
+
 
             if Simulation.Setting.SpawnType == 0 
                 SpawnLanes = find(NextArrivalTime < Time+Parameter.Physics); % 차량 스폰 필요한 차선

@@ -82,7 +82,7 @@ function [SpawnSeed, NewListOrTotalVehicles] = GetSeed(Setting, Parameter, Total
             SpawnSeed(6,2) = 0.7;   % 두 번째 차량 (거의 동시에)
             SpawnSeed(6,3) = 7;    % 세 번째 차량 (충분히 나중에)
 
-            NewList = [];
+            NewListOrTotalVehicles = 3;
 
     end
     

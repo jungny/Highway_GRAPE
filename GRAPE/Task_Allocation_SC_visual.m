@@ -26,8 +26,9 @@ Flag_display = input.Flag_display;
 n = input.n;
 m = input.m;
 MST = input.MST;
+MST_bubble = input.MST_bubble;
 environment = input.environment;
-
+Type = environment.Type;
 
 %% For visualisation
 Alloc_history = zeros(n,10);
@@ -49,9 +50,30 @@ end
 GreedyAlloc = input.Alloc_existing;
 
 %% Neighbour agents identification (Assumming a static situation)
-for i=1:n
-    agent_info(i).set_neighbour_agent_id = find(MST(i,:)>0);
+for i = 1:n
+    switch Type
+        case 'Default'
+            % 기본적으로 MST를 기반으로 이웃 설정
+            agent_info(i).set_neighbour_agent_id = find(MST(i, :) > 0);
+
+        case 'Ahead'
+            % MST를 기반으로 하되, x_relation을 반영하여 앞에 있는 차량만 선택
+            all_neighbours = find(MST(i, :) > 0);
+            ahead_neighbours = all_neighbours(environment.x_relation(i, all_neighbours) == 1);
+            agent_info(i).set_neighbour_agent_id = ahead_neighbours;
+
+        case 'Bubble'
+            % Bubble 모드에서는 Bubble에 기반한 MST 사용
+            agent_info(i).set_neighbour_agent_id = find(MST_bubble(i, :) > 0);
+
+        case 'BubbleAhead'
+            % Bubble MST를 사용하되, x_relation을 반영하여 앞에 있는 차량만 선택
+            all_neighbours = find(MST_bubble(i, :) > 0);
+            ahead_neighbours = all_neighbours(environment.x_relation(i, all_neighbours) == 1);
+            agent_info(i).set_neighbour_agent_id = ahead_neighbours;
+    end
 end
+
 Iteration_agent_current = zeros(n,1);
 Timestamp_agent_current = zeros(n,1);
 
@@ -67,8 +89,6 @@ while a_satisfied~=n
         Candidate = ones(m,1)*(-inf);
         for t=1:m
 
-            Type = environment.Type;
-
             switch Type
                 case 'Default'
                     % Check member agent ID in the selected task
@@ -76,14 +96,16 @@ while a_satisfied~=n
                     current_members(i) = 1; % including oneself
                     % Cardinality of the coalition
                     n_participants = sum(current_members);
+                    % do not need to change MST
                 case 'Bubble'
                     % Check member agent ID in the selected task
                     current_members = (Alloc_ == ones(n,1)*t);
                     % Only consider agents who are neighbours of agent i
-                    current_members = current_members & MST(:,i);
+                    current_members = current_members & MST_bubble(:,i);
                     current_members(i) = 1; % including oneself
                     % Cardinality of the coalition
                     n_participants = sum(current_members);
+
                 case 'BubbleAhead'
                     % Check member agent ID in the selected task
                     current_members = (Alloc_ == ones(n,1)*t);
@@ -91,10 +113,12 @@ while a_satisfied~=n
                     x_relation = environment.x_relation;
 
                     % Only consider agents who are neighbours of agent i
-                    current_members = current_members & MST(:,i);
+                    current_members = current_members & MST_bubble(:,i);
                     current_members(i) = 1; % including oneself
 
                     n_participants = sum(x_relation(i, current_members)) + 1; 
+
+
 
                 case 'Ahead'
                     % 현재 agent i가 선택한 task(차선)의 앞에 있는 차량 수, including
@@ -153,7 +177,7 @@ while a_satisfied~=n
 
     
     for i=1:n
-        set_neighbour_agent_id = find(MST(i,:)>0);
+        set_neighbour_agent_id = agent_info(i).set_neighbour_agent_id;
         % Initially
         agent_(i).satisfied_flag = 1;
         agent_(i).Alloc = agent(i).Alloc;

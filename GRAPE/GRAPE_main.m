@@ -24,17 +24,17 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
         case 'GS_HOS_FOS'
             strategy = 'GS';
             if strcmp(strategy, 'GS')
-                L1 = 300;
-                L2 = 300;
-                L3 = 300;
+                L1 = 400;
+                L2 = 400;
+                L3 = 400;
             elseif strcmp(strategy, 'HOS')
-                L1 = 500;
-                L2 = 100;
-                L3 = 500;
-            elseif strcmp(strategy, 'FOS')
                 L1 = 600;
-                L2 = 0;
+                L2 = 200;
                 L3 = 600;
+            elseif strcmp(strategy, 'FOS')
+                L1 = 800;
+                L2 = 0;
+                L3 = 800;
             end
 
             for i = 1:size(List.Vehicle.Active, 1)
