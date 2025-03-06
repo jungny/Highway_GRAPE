@@ -30,9 +30,9 @@ Simulation.Setting.Time = 1000;
 Simulation.Setting.SpawnType = 1; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times, 2: Debug mode
 Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
-%Simulation.Setting.Util_type = 'GS_HOS_FOS';
+Simulation.Setting.Util_type = 'GS_HOS_FOS';
 %Simulation.Setting.Util_type = 'Max_velocity'; % 'Test' or 'Min_travel_time' or 'Max_velocity'
-Simulation.Setting.Util_type = 'Min_travel_time';
+%Simulation.Setting.Util_type = 'Min_travel_time';
 %Simulation.Setting.Util_type = 'Test';
 %Simulation.Setting.Util_type = 'Hybrid';
 %Simulation.Setting.NumberOfParticipants = 'Default'; % 'Default' or 'Ahead' or 'Bubble'
@@ -61,12 +61,12 @@ end
 
 % 🔹 엑셀 파일 경로 설정
 timestamp = datestr(now, 'HH-MM');  % 현재 시간 가져오기 (시-분-초 형식)
-filename = fullfile(Simulation.Setting.SaveFolder, ['bubbleradius_OriginalUtility_' timestamp '.xlsx']);
+filename = fullfile(Simulation.Setting.SaveFolder, ['new_bubbleradius_GS_' timestamp '.xlsx']);
 sheet = 'Results';
 
 % 🔹 실험할 참가자 모드 설정
 %radiusList = {2000};
-radiusList = {50, 100, 150, 200, 250, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800}; % in meter
+radiusList = {20, 30, 40, 60, 70, 80, 90}; % in meter
 %participantModes = {'Ahead'};
 num_modes = length(radiusList);
 
