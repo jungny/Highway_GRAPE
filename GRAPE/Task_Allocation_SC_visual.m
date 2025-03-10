@@ -26,8 +26,9 @@ Flag_display = input.Flag_display;
 n = input.n;
 m = input.m;
 MST = input.MST;
+MST_bubble = input.MST_bubble;
 environment = input.environment;
-
+Type = environment.Type;
 
 %% For visualisation
 Alloc_history = zeros(n,10);
@@ -49,9 +50,17 @@ end
 GreedyAlloc = input.Alloc_existing;
 
 %% Neighbour agents identification (Assumming a static situation)
-for i=1:n
-    agent_info(i).set_neighbour_agent_id = find(MST(i,:)>0);
+for i = 1:n
+    switch Type
+        case {'Default', 'Ahead'}
+            agent_info(i).set_neighbour_agent_id = find(MST(i, :) > 0);
+
+        case {'Bubble', 'BubbleAhead'}
+            agent_info(i).set_neighbour_agent_id = find(MST_bubble(i, :) > 0);
+
+    end
 end
+
 Iteration_agent_current = zeros(n,1);
 Timestamp_agent_current = zeros(n,1);
 
@@ -67,8 +76,6 @@ while a_satisfied~=n
         Candidate = ones(m,1)*(-inf);
         for t=1:m
 
-            Type = environment.Type;
-
             switch Type
                 case 'Default'
                     % Check member agent ID in the selected task
@@ -80,18 +87,19 @@ while a_satisfied~=n
                     % Check member agent ID in the selected task
                     current_members = (Alloc_ == ones(n,1)*t);
                     % Only consider agents who are neighbours of agent i
-                    current_members = current_members & MST(:,i);
+                    current_members = current_members & MST_bubble(:,i);
                     current_members(i) = 1; % including oneself
                     % Cardinality of the coalition
                     n_participants = sum(current_members);
-                case 'BubbleAndAhead'
+
+                case 'BubbleAhead'
                     % Check member agent ID in the selected task
                     current_members = (Alloc_ == ones(n,1)*t);
 
                     x_relation = environment.x_relation;
 
                     % Only consider agents who are neighbours of agent i
-                    current_members = current_members & MST(:,i);
+                    current_members = current_members & MST_bubble(:,i);
                     current_members(i) = 1; % including oneself
 
                     n_participants = sum(x_relation(i, current_members)) + 1; 
@@ -153,7 +161,7 @@ while a_satisfied~=n
 
     
     for i=1:n
-        set_neighbour_agent_id = find(MST(i,:)>0);
+        set_neighbour_agent_id = agent_info(i).set_neighbour_agent_id;
         % Initially
         agent_(i).satisfied_flag = 1;
         agent_(i).Alloc = agent(i).Alloc;
@@ -282,7 +290,7 @@ else
 
     %% Interface (Output)
     % disp(Alloc);
-    output.Alloc = Alloc;
+    output.Alloc = Alloc_known_; % Alloc_known_
     output.a_utility = a_utility;
     output.iteration = iteration;
 

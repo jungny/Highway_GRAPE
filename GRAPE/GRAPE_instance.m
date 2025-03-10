@@ -157,10 +157,16 @@ function G = GRAPE_instance(environment)
     end
 
     Comm_distance =20000; % 200m 
+    Bubble_radius = 5000; % 100m
+
+    %Comm_distance = min(environment.Setting.Bubble_radius*100, 20000);
+    %Bubble_radius = environment.Setting.Bubble_radius*100;
     % Neighbour agents within communication radius
     MST_ = (dist_agents <= Comm_distance);
     MST = MST_ - eye(n,n);
     % Note: MST will be used in Task_Allocation.m (Task_Allocation_SC_visual.m) to simulate communications between agents
+
+    MST_bubble = (dist_agents <= Bubble_radius) - eye(n,n);
 
     % Alloc_existing = zeros(n,1);    % Initial task assignment: every robot is assigned to void task
     Alloc_existing = environment.Alloc_current;
@@ -168,6 +174,7 @@ function G = GRAPE_instance(environment)
     input.Alloc_existing = Alloc_existing;
     input.Flag_display = 1;
     input.MST = MST;
+    input.MST_bubble = MST_bubble;
     input.n = n;
     input.m = m;
     input.environment = environment;
