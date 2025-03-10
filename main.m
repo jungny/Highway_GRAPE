@@ -31,11 +31,11 @@ Simulation.Setting.Time = 1000;
 Simulation.Setting.SpawnType = 2; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times, 2: Debug mode
 Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
-Simulation.Setting.BubbleRadiusList = [50];
-Simulation.Setting.Util_type = 'GS'; 
+Simulation.Setting.BubbleRadiusList = [3000];
+%Simulation.Setting.Util_type = 'GS'; 
 %Simulation.Setting.Util_type = 'HOS'; 
 %Simulation.Setting.Util_type = 'FOS'; 
-%Simulation.Setting.Util_type = 'ES'; 
+Simulation.Setting.Util_type = 'ES'; 
 Simulation.Setting.LaneChangeMode = 'SimpleLaneChange'; % 'MOBIL' or 'SimpleLaneChange'
 
 
@@ -55,9 +55,18 @@ if Simulation.Setting.SpawnType % If vehicles are spawned manually based on pred
     Simulation.Setting.Time = 10000; % Set a very high simulation time to allow all vehicles to spawn
 end
 
+% GreedyAlloc 여부를 아이콘으로 변환
+if Simulation.Setting.GreedyAlloc == 1
+    greedy_status = 'GRAPE ❌';
+    greedy_status2 = 'Greedy';
+else
+    greedy_status = 'GRAPE ⭕';
+    greedy_status2 = 'GRAPE';
+end
+
 % 🔹 엑셀 파일 경로 설정
 timestamp = datestr(now, 'HH-MM');  % 현재 시간 가져오기 (시-분-초 형식)
-filename = fullfile(Simulation.Setting.SaveFolder, ['Debug_GRAPE_GS_' timestamp '.xlsx']);
+filename = fullfile(Simulation.Setting.SaveFolder, ['debug_' greedy_status2 '_' Simulation.Setting.Util_type '_' timestamp '.xlsx']);
 sheet = 'Results';
 
 % 🔹 실험할 참가자 모드 설정
@@ -129,7 +138,9 @@ for Iteration = 1:Simulation.Setting.Iterations
 
         if Simulation.Setting.RecordVideo
             timestamp = datestr(now, 'HH-MM');
-            videoFilename = Simulation.Setting.VideoPath(participantModes{mode_idx}, randomSeed, timestamp);
+            % videoFilename = Simulation.Setting.VideoPath(participantModes{mode_idx}, randomSeed, timestamp);
+            % videoFilename = filename;
+            videoFilename = fullfile(Simulation.Setting.SaveFolder, ['\simulations\' greedy_status2 '_' Simulation.Setting.Util_type '_' timestamp '_' Simulation.Setting.NumberOfParticipants]);
             videoWriter = VideoWriter(videoFilename, 'MPEG-4');
             videoWriter.FrameRate = 30; 
             open(videoWriter);
@@ -160,14 +171,7 @@ for Iteration = 1:Simulation.Setting.Iterations
         SpawnLanes = [];
 
         for Time = 0:Parameter.Physics:Parameter.Sim.Time
-            GRAPE_done = 0;
-            % GreedyAlloc 여부를 아이콘으로 변환
-            if Simulation.Setting.GreedyAlloc == 1
-                greedy_status = 'GRAPE ❌';
-            else
-                greedy_status = 'GRAPE ⭕';
-            end
-            
+            GRAPE_done = 0;            
             % 제목 출력
             title(sprintf('Random Seed: %d   |   %s   |   Participants Mode: %s   |   Time: %.2f s', ...
                 randomSeed, greedy_status, strrep(participantModes{mode_idx}, '_', ' '), Time));

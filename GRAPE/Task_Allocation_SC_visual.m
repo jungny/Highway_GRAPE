@@ -62,7 +62,11 @@ for i = 1:n
             agent_info(i).set_neighbour_agent_id = find(MST(i, :) > 0);
 
         case {'Bubble', 'BubbleAhead'}
-            agent_info(i).set_neighbour_agent_id = find(MST_bubble(i, :) > 0);
+            if environment.Setting.BubbleRadius > 200
+                agent_info(i).set_neighbour_agent_id = find(MST(i, :) > 0);
+            else
+                agent_info(i).set_neighbour_agent_id = find(MST_bubble(i, :) > 0);
+            end
 
     end
 end
