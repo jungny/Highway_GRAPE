@@ -50,6 +50,12 @@ end
 GreedyAlloc = input.Alloc_existing;
 
 %% Neighbour agents identification (Assumming a static situation)
+if startsWith(Type, 'BubbleAhead')
+    Type = 'BubbleAhead';
+elseif startsWith(Type, 'Bubble')
+    Type = 'Bubble';
+end
+
 for i = 1:n
     switch Type
         case {'Default', 'Ahead'}

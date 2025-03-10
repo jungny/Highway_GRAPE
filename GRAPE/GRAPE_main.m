@@ -102,7 +102,7 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
                 end
             end
         
-        case 'Min_travel_time'
+        case 'ES' % exponential strategy
             for i = 1:size(List.Vehicle.Active, 1)
                 vehicle_id = List.Vehicle.Active(i, 1);  % 차량 ID
                 vehicle_lane = List.Vehicle.Object{vehicle_id}.Lane;
@@ -280,6 +280,7 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
     environment.number_of_tasks = Parameter.Map.Lane;
     environment.Util_type = Setting.Util_type;
     environment.Setting = Setting;
+    environment.Parameter = Parameter;
 
 
 end

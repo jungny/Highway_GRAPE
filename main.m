@@ -8,7 +8,7 @@ Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
 Simulation.Setting.StopOnGrapeError = 1;
 Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
-Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250220_0306';
+Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250306_0313';
 
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
 Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
@@ -24,23 +24,18 @@ Simulation.Setting.LogPath = @(finalRandomSeed) ...
 
 cycle_GRAPE = 5; % GRAPE instance per 5 seconds
 
-Simulation.Setting.InitialRandomSeed = 6;
-Simulation.Setting.Iterations = 30; % number of iterations
+Simulation.Setting.InitialRandomSeed = 1;
+Simulation.Setting.Iterations = 1; % number of iterations
 Simulation.Setting.Time = 1000;
 
-Simulation.Setting.SpawnType = 1; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times, 2: Debug mode
+Simulation.Setting.SpawnType = 2; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times, 2: Debug mode
 Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
-%Simulation.Setting.Util_type = 'GS';
-%Simulation.Setting.Util_type = 'Max_velocity'; % 'Test' or 'Min_travel_time' or 'Max_velocity'
-Simulation.Setting.Util_type = 'Min_travel_time';
-%Simulation.Setting.Util_type = 'Test';
-%Simulation.Setting.Util_type = 'Hybrid';
-%Simulation.Setting.NumberOfParticipants = 'Default'; % 'Default' or 'Ahead' or 'Bubble'
-%Simulation.Setting.NumberOfParticipants = 'BubbleAndAhead'; % 'Default' or 'Ahead' or 'Bubble'
-%Simulation.Setting.NumberOfParticipants = 'Bubble'; % 'Default' or 'Ahead' or 'Bubble'
-%Simulation.Setting.NumberOfParticipants = 'Ahead'; % 'Default' or 'Ahead'
-% Simulation.Setting.LaneChangeMode = 'MOBIL'; % 'MOBIL' or 'SimpleLaneChange'
+Simulation.Setting.BubbleRadiusList = [50];
+Simulation.Setting.Util_type = 'GS'; 
+%Simulation.Setting.Util_type = 'HOS'; 
+%Simulation.Setting.Util_type = 'FOS'; 
+%Simulation.Setting.Util_type = 'ES'; 
 Simulation.Setting.LaneChangeMode = 'SimpleLaneChange'; % 'MOBIL' or 'SimpleLaneChange'
 
 
@@ -62,18 +57,25 @@ end
 
 % 🔹 엑셀 파일 경로 설정
 timestamp = datestr(now, 'HH-MM');  % 현재 시간 가져오기 (시-분-초 형식)
-filename = fullfile(Simulation.Setting.SaveFolder, ['from6__GRAPE_OriginalUtility_' timestamp '.xlsx']);
+filename = fullfile(Simulation.Setting.SaveFolder, ['Debug_GRAPE_GS_' timestamp '.xlsx']);
 sheet = 'Results';
 
 % 🔹 실험할 참가자 모드 설정
-participantModes = {'Default', 'Ahead', 'Bubble', 'BubbleAhead'};
-%participantModes = {'Ahead'};
+participantModes = {'Default', 'Ahead'};  % 기본 모드
+% 🔹 Bubble Radius 값에 따라 Bubble 관련 모드 추가
+for r = Simulation.Setting.BubbleRadiusList
+    participantModes{end+1} = sprintf('Bubble_%dm', r);
+    participantModes{end+1} = sprintf('BubbleAhead_%dm', r);
+end
 num_modes = length(participantModes);
 
 % 🔹 엑셀 파일이 존재하지 않으면 헤더만 추가하여 생성
 if Simulation.Setting.RecordExcel && ~isfile(filename)
-    header = [{'Random Seed'}, participantModes];  
-    writecell(header, filename, 'Sheet', sheet, 'WriteMode', 'overwrite');  
+    if isstring(participantModes)
+        participantModes = cellstr(participantModes);
+    end
+    header = [{'Random Seed'}, {'Total Vehicles'}, participantModes, strcat("ExitFail_", participantModes)];
+    writematrix(header, filename, 'Sheet', sheet, 'WriteMode', 'overwrite')
     disp(['New Excel file created: ', filename]);
 end
 
@@ -86,7 +88,6 @@ end
 
 
 for Iteration = 1:Simulation.Setting.Iterations
-    close all;
     randomSeed = Simulation.Setting.InitialRandomSeed + Iteration - 1;
     rng(randomSeed)
     %Simulation.Setting.RandomSeed = randomSeed;
@@ -97,8 +98,21 @@ for Iteration = 1:Simulation.Setting.Iterations
 
 
     for mode_idx = 1:num_modes
+        close all
         rng(randomSeed)
         Simulation.Setting.NumberOfParticipants = participantModes{mode_idx};
+
+        if startsWith(Simulation.Setting.NumberOfParticipants, 'Bubble')
+            radius_str = regexp(Simulation.Setting.NumberOfParticipants, '\d+', 'match');  
+            if ~isempty(radius_str)
+                Simulation.Setting.BubbleRadius = str2double(radius_str{1});  
+            else
+                error('Bubble mode detected, but no valid radius found in: %s', Simulation.Setting.NumberOfParticipants);
+            end
+        else
+            Simulation.Setting.BubbleRadius = NaN;
+        end
+
         disp(['Running ', participantModes{mode_idx}, ' mode, Random Seed ', num2str(randomSeed)]);
 
         environment = struct();
@@ -156,7 +170,7 @@ for Iteration = 1:Simulation.Setting.Iterations
             
             % 제목 출력
             title(sprintf('Random Seed: %d   |   %s   |   Participants Mode: %s   |   Time: %.2f s', ...
-                randomSeed, greedy_status, participantModes{mode_idx}, Time));
+                randomSeed, greedy_status, strrep(participantModes{mode_idx}, '_', ' '), Time));
 
 
             if Simulation.Setting.SpawnType == 0 
@@ -349,8 +363,8 @@ for Iteration = 1:Simulation.Setting.Iterations
         end
 
         % 🔹 각 mode_idx마다 결과 저장 (Avg Travel Time + Exit Fail Rate)
-        result_row{(mode_idx * 2) + 1} = avg_travel_time;
-        result_row{(mode_idx * 2) + 2} = exit_fail_rate;
+        result_row{2+mode_idx} = avg_travel_time;
+        result_row{2+num_modes+mode_idx} = exit_fail_rate;
 
         disp("Iteration: " + Iteration)
         if Time > Parameter.Sim.Time - Parameter.Physics
@@ -371,11 +385,6 @@ for Iteration = 1:Simulation.Setting.Iterations
 end
 % 🔹 모든 Iteration이 끝난 후, 엑셀 파일에 한 번에 결과 저장
 if Simulation.Setting.RecordExcel
-    header = [{'Random Seed'}, {'Total Vehicles'}];  
-    for i = 1:num_modes
-        header = [header, strcat(participantModes{i}, '_AvgTravelTime'), strcat(participantModes{i}, '_ExitFailRate')];
-    end
-    full_data = [header; results];  
-    writecell(full_data, filename, 'Sheet', sheet, 'WriteMode', 'overwrite');  
+    writecell(results, filename, 'Sheet', sheet, 'WriteMode', 'append');
     disp(['✅ Simulation results saved to: ', filename]);
 end

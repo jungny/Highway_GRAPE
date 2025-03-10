@@ -156,8 +156,11 @@ function G = GRAPE_instance(environment)
         end
     end
 
-    Comm_distance =20000; % 200m 
-    Bubble_radius = 5000; % 100m
+    % Comm_distance =20000; % 200m 
+    % Bubble_radius = 5000; % 100m
+
+    Comm_distance = min(environment.Setting.BubbleRadius/environment.Parameter.Map.Scale, 200/environment.Parameter.Map.Scale);
+    Bubble_radius = environment.Setting.BubbleRadius/environment.Parameter.Map.Scale;
 
     %Comm_distance = min(environment.Setting.Bubble_radius*100, 20000);
     %Bubble_radius = environment.Setting.Bubble_radius*100;
