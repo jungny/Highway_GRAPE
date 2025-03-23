@@ -5,7 +5,7 @@ function P = GetParameters(Setting)
     P.Control = 0.1;
     P.Label = 0; % 1: label 보임, 0: 안보임
 
-    P.Flow = 1500; % veh/hour/lane, only used in spawntype = 1.
+    P.Flow = 2100; % veh/hour/lane, only used in spawntype = 1.
     
     % Sim
     P.Sim.Time = Setting.Time;
@@ -25,7 +25,7 @@ function P = GetParameters(Setting)
     P.Map.Tile = 3.05; %m
     %P.Map.Road = 2000; %400
     %P.Map.Road = randi([400,2500]);
-    P.Map.Road = 1805; %m
+    P.Map.Road = 2005; %m
     
     %minLanes = 2;
     %maxLanes = 8+1;
@@ -42,7 +42,7 @@ function P = GetParameters(Setting)
     %P.Map.Exit = [240,380];
     %P.Map.Exit = RandomExitGenerator(P.Map.Road);
     %P.Map.Exit = [P.Map.Road-330, P.Map.Road-30];
-    P.Map.Exit = [1000,1800];
+    P.Map.Exit = [1200,2000, 2805];
     P.Map.GrapeThreshold = 200;
 
     % Vehicle

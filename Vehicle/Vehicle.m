@@ -18,6 +18,7 @@ classdef Vehicle < handle
         TargetLane
         LaneChangeFlag
         PolitenessFactor
+        IsChangingLane
     end
 
     properties(Hidden = false) % Properties
@@ -71,6 +72,7 @@ classdef Vehicle < handle
             SpawnPosition = Seed(5);
             %obj.SpawnTime = Seed(6);
             obj.ColorCount = 0;
+            obj.IsChangingLane = false;
 
             % 고속도로에서는 방향(Destination) 관련 로직 불필요
             % 경로(Trajectory) 설정: 출발점(Source) → 도착점(Sink)
@@ -137,25 +139,32 @@ classdef Vehicle < handle
         
 
         function MoveVehicle(obj,Time,Parameter,List)
-            if obj.Location * Parameter.Map.Scale >= Parameter.Map.GrapeThreshold
+            if obj.Location * Parameter.Map.Scale >= 200
                 set(obj.Patch, 'FaceColor', 'white');
+            else
+                set(obj.Patch, 'FaceColor', '#a9a9a9');
             end
 
-            if obj.ColorCount > 0
+            % if obj.ColorCount > 0
+            %     set(obj.Patch, 'FaceColor', '#f589e6');
+            %     obj.ColorCount = obj.ColorCount-1;
+            % end
+            if obj.IsChangingLane
                 set(obj.Patch, 'FaceColor', '#f589e6');
-                obj.ColorCount = obj.ColorCount-1;
             end
 
-            if obj.TempGreedyWait > 0
-                obj.TempGreedyWait = obj.TempGreedyWait - Parameter.Physics;
-            end
+
+            % if obj.TempGreedyWait > 0
+            %     obj.TempGreedyWait = obj.TempGreedyWait - Parameter.Physics;
+            % end
 
 
             if obj.LaneChangeFlag == 1
-                obj.ColorCount = 10;
+                % obj.ColorCount = 10;
                 set(obj.Patch, 'FaceColor', '#f589e6');
 
                 targetLane = obj.TargetLane;
+                obj.IsChangingLane = true;
                 % change lane to obj.TargetLane
                 new_y = (Parameter.Map.Lane-targetLane+0.5)*Parameter.Map.Tile;
                 
@@ -171,19 +180,10 @@ classdef Vehicle < handle
                     obj.Trajectory(2, end_idx+1:end) = new_y;
                 end
 
-                obj.LaneChangeFlag = [];
-                obj.Lane = targetLane;
-                obj.TargetLane = [];
             end
                 
 
-            if ~isempty(obj.ExitState)
-                if obj.ExitState == 1
-                    set(obj.Patch, 'FaceColor', 'green');
-                elseif obj.ExitState == 0
-                    set(obj.Patch, 'FaceColor', 'black');
-                end
-            end
+            
 
             [nextVelocity,nextLocation] = GetDynamics(obj);
             obj.Data = GetObservation(obj);
@@ -208,6 +208,28 @@ classdef Vehicle < handle
             if Parameter.Label
                 set(obj.Text, 'Position', [x_center+3, y_center+0.1]);
             end
+
+            % 차선 변경 완료 체크
+            if obj.IsChangingLane
+                target_y = (Parameter.Map.Lane - obj.TargetLane + 0.5) * Parameter.Map.Tile;
+                current_y = obj.Object.Matrix(2, 4);
+                if abs(current_y - target_y) < 1e-2
+                    obj.Lane = obj.TargetLane;
+                    obj.TargetLane = [];
+                    obj.LaneChangeFlag = [];
+                    obj.IsChangingLane = false;
+                    set(obj.Patch, 'FaceColor', 'white');
+                end
+            end
+
+            if ~isempty(obj.ExitState)
+                if obj.ExitState == 1
+                    set(obj.Patch, 'FaceColor', 'green');
+                elseif obj.ExitState == 0
+                    set(obj.Patch, 'FaceColor', 'black');
+                end
+            end
+
 
         end
 

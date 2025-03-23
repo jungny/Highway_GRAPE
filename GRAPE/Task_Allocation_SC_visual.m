@@ -124,7 +124,7 @@ while a_satisfied~=n
                     % fprintf('i = %d, t = %d, n_participants = %d\n', i, t, n_participants);
 
             end
-            
+
             % Obtain possible individual utility value
             Candidate(t) = Get_Util(i, t, n_participants,environment);
         end
