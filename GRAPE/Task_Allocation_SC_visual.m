@@ -126,7 +126,12 @@ while a_satisfied~=n
             end
 
             % Obtain possible individual utility value
-            Candidate(t) = Get_Util(i, t, n_participants,environment);
+            if environment.Setting.BubbleRadius == 0
+                n_participants = 1;
+                Candidate(t) = Get_Util(i, t, n_participants,environment);
+            else
+                Candidate(t) = Get_Util(i, t, n_participants,environment);
+            end
         end
         
         % Select Best alternative
@@ -289,7 +294,7 @@ else
                 if (sum(Alloc_1 == Alloc) == n)&&(iteration_1 == iteration)&&(time_stamp_1 == time_stamp)
                     % Consensus OK
                 else
-                    disp(['Problem: Non Consensus with Agent#1 and Agent#',num2str(i)]);
+                    %disp(['Problem: Non Consensus with Agent#1 and Agent#',num2str(i)]);
                     output.flag_problem = 1;
                 end        
             end

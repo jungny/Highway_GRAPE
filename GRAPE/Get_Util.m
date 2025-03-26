@@ -32,14 +32,13 @@ switch Util_type
     %     util_value = t_demand(task_id)/n_participants;
 
     case {'GS', 'HOS', 'FOS', 'ES'}
-        n_participants = 1;
+        
         cost = abs(t_location(task_id, 2)- a_location(agent_id, 2));
         if cost > 0
             util_value = (t_demand(task_id)/n_participants)-0.01;
         else % cost = 0
             util_value = t_demand(task_id)/n_participants;
         end
-
     
 
     case 'Test'

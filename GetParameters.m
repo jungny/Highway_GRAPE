@@ -3,7 +3,7 @@ function P = GetParameters(Setting)
     P.ExitThreshold = 50;
     P.Physics = 0.1; % 한 시뮬레이션 타임스텝이 0.1초초
     P.Control = 0.1;
-    P.Label = 0; % 1: label 보임, 0: 안보임
+    P.Label = 1; % 1: label 보임, 0: 안보임
 
     P.Flow = 2100; % veh/hour/lane, only used in spawntype = 1.
     

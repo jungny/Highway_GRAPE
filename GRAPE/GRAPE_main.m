@@ -107,15 +107,33 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
                     end
                 
                     % (4)+(5): 감속 중이고, 양옆 차선 선행차가 더 멀면 → 해당 차선 weight 크게
-                    weights = zeros(Parameter.Map.Lane, 1); % 일단 다 0으로 초기화
-                
+                    weights = ones(Parameter.Map.Lane, 1);
                     if decelflag && leftflag
-                        weights(currentLane - 1) = 1;
+                        weights(currentLane - 1) = 2;
                     elseif decelflag && rightflag
-                        weights(currentLane + 1) = 1;
+                        weights(currentLane + 1) = 2;
                     else
-                        weights(currentLane) = 1;  % 조건 안 맞으면 원래 차선 유지
+                        weights(currentLane) = 2;  % 조건 안 맞으면 원래 차선 유지
                     end
+                    % if Setting.GreedyAlloc && Setting.BubbleRadius == 0
+                    %     weights = zeros(Parameter.Map.Lane, 1); % 일단 다 0으로 초기화
+                    %     if decelflag && leftflag
+                    %         weights(currentLane - 1) = 1;
+                    %     elseif decelflag && rightflag
+                    %         weights(currentLane + 1) = 1;
+                    %     else
+                    %         weights(currentLane) = 1;  % 조건 안 맞으면 원래 차선 유지
+                    %     end
+                    % else
+                    %     weights = ones(Parameter.Map.Lane, 1);
+                    %     if decelflag && leftflag
+                    %         weights(currentLane - 1) = 2;
+                    %     elseif decelflag && rightflag
+                    %         weights(currentLane + 1) = 2;
+                    %     else
+                    %         weights(currentLane) = 2;  % 조건 안 맞으면 원래 차선 유지
+                    %     end
+                    % end
                 end
                 
 
