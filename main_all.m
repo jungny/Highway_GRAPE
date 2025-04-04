@@ -25,13 +25,13 @@ Simulation.Setting.LogPath = @(finalRandomSeed) ...
 cycle_GRAPE =2; % GRAPE instance per 5 seconds
 
 Simulation.Setting.InitialRandomSeed = 1;
-Simulation.Setting.Iterations = 2; % number of iterations
+Simulation.Setting.Iterations = 20; % number of iterations
 Simulation.Setting.Time = 10000;
 
 Simulation.Setting.SpawnType = 1; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times, 2: Debug mode
 Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
-Simulation.Setting.BubbleRadiusList = [0,1,5,10,20,30,35,40,45,50,60,100,150,300,500,2100];
+Simulation.Setting.BubbleRadiusList = [0,1,5,10,15,20,25,30,35,40,45,50,60,70,80,90,100,150,300,500,1000,2100];
 %Simulation.Setting.BubbleRadiusList = [0];
 Simulation.Setting.Util_type = 'GS'; 
 %Simulation.Setting.Util_type = 'HOS'; 
@@ -67,7 +67,7 @@ end
 
 % 🔹 엑셀 파일 경로 설정
 timestamp = datestr(now, 'HH-MM');  % 현재 시간 가져오기 (시-분-초 형식)
-filename = fullfile(Simulation.Setting.SaveFolder, ['noDLC_' greedy_status2 '_' Simulation.Setting.Util_type '_' timestamp '.xlsx']);
+filename = fullfile(Simulation.Setting.SaveFolder, ['nht_' greedy_status2 '_' Simulation.Setting.Util_type '_' timestamp '.xlsx']);
 sheet = 'Results';
 
 % 🔹 실험할 참가자 모드 설정

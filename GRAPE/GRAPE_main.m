@@ -63,76 +63,57 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
 
                 else
                 
-                    obj = List.Vehicle.Object{vehicle_id};
-                    currentLane = obj.Lane;
-                    decelflag = false;
-                    leftflag = false;
-                    rightflag = false;
+                    % obj = List.Vehicle.Object{vehicle_id};
+                    % currentLane = obj.Lane;
+                    % decelflag = false;
+                    % leftflag = false;
+                    % rightflag = false;
                 
-                    % (4) 내가 감속 중이면 decelflag
-                    if obj.Acceleration < -1 && obj.Velocity < 25
-                        decelflag = true;
-                    end
+                    % % (4) 내가 감속 중이면 decelflag
+                    % if obj.Acceleration < -1 && obj.Velocity < 25
+                    %     decelflag = true;
+                    % end
                 
-                    % 현재 차선의 선행 차량 거리
-                    [cur_front_vehicle, cur_front_dist] = GetFrontVehicle(obj, currentLane, List, Parameter);
-                    if isempty(cur_front_vehicle)
-                        cur_front_dist = inf;
-                    end
+                    % % 현재 차선의 선행 차량 거리
+                    % [cur_front_vehicle, cur_front_dist] = GetFrontVehicle(obj, currentLane, List, Parameter);
+                    % if isempty(cur_front_vehicle)
+                    %     cur_front_dist = inf;
+                    % end
                 
-                    % 왼쪽 차선 조건
-                    if currentLane > 1
-                        leftLane = currentLane - 1;
-                        [left_front_vehicle, left_front_dist] = GetFrontVehicle(obj, leftLane, List, Parameter);
-                        if isempty(left_front_vehicle)
-                            left_front_dist = inf;
-                        end
+                    % % 왼쪽 차선 조건
+                    % if currentLane > 1
+                    %     leftLane = currentLane - 1;
+                    %     [left_front_vehicle, left_front_dist] = GetFrontVehicle(obj, leftLane, List, Parameter);
+                    %     if isempty(left_front_vehicle)
+                    %         left_front_dist = inf;
+                    %     end
                 
-                        if left_front_dist > cur_front_dist  % (5)
-                            leftflag = true;
-                        end
-                    end
+                    %     if left_front_dist > cur_front_dist  % (5)
+                    %         leftflag = true;
+                    %     end
+                    % end
                 
-                    % 오른쪽 차선 조건
-                    if currentLane < Parameter.Map.Lane
-                        rightLane = currentLane + 1;
-                        [right_front_vehicle, right_front_dist] = GetFrontVehicle(obj, rightLane, List, Parameter);
-                        if isempty(right_front_vehicle)
-                            right_front_dist = inf;
-                        end
+                    % % 오른쪽 차선 조건
+                    % if currentLane < Parameter.Map.Lane
+                    %     rightLane = currentLane + 1;
+                    %     [right_front_vehicle, right_front_dist] = GetFrontVehicle(obj, rightLane, List, Parameter);
+                    %     if isempty(right_front_vehicle)
+                    %         right_front_dist = inf;
+                    %     end
                 
-                        if right_front_dist > cur_front_dist  % (5)
-                            rightflag = true;
-                        end
-                    end
+                    %     if right_front_dist > cur_front_dist  % (5)
+                    %         rightflag = true;
+                    %     end
+                    % end
                 
                     % (4)+(5): 감속 중이고, 양옆 차선 선행차가 더 멀면 → 해당 차선 weight 크게
                     weights = ones(Parameter.Map.Lane, 1);
-                    if decelflag && leftflag
-                        weights(currentLane - 1) = 2;
-                    elseif decelflag && rightflag
-                        weights(currentLane + 1) = 2;
-                    else
-                        weights(currentLane) = 2;  % 조건 안 맞으면 원래 차선 유지
-                    end
-                    % if Setting.GreedyAlloc && Setting.BubbleRadius == 0
-                    %     weights = zeros(Parameter.Map.Lane, 1); % 일단 다 0으로 초기화
-                    %     if decelflag && leftflag
-                    %         weights(currentLane - 1) = 1;
-                    %     elseif decelflag && rightflag
-                    %         weights(currentLane + 1) = 1;
-                    %     else
-                    %         weights(currentLane) = 1;  % 조건 안 맞으면 원래 차선 유지
-                    %     end
+                    % if decelflag && leftflag
+                    %     weights(currentLane - 1) = 2;
+                    % elseif decelflag && rightflag
+                    %     weights(currentLane + 1) = 2;
                     % else
-                    %     weights = ones(Parameter.Map.Lane, 1);
-                    %     if decelflag && leftflag
-                    %         weights(currentLane - 1) = 2;
-                    %     elseif decelflag && rightflag
-                    %         weights(currentLane + 1) = 2;
-                    %     else
-                    %         weights(currentLane) = 2;  % 조건 안 맞으면 원래 차선 유지
-                    %     end
+                    %     weights(currentLane) = 2;  % 조건 안 맞으면 원래 차선 유지
                     % end
                 end
                 
