@@ -1,6 +1,6 @@
 function GetWindow(Map, ~)
-    %viewType = 'Default';
-    viewType = 'FullHighway';
+    viewType = 'Default';
+    %viewType = 'FullHighway';
     %viewType = 'ScrollableHighway';
     % viewType에 따라 창을 생성
     switch viewType

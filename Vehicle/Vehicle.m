@@ -26,6 +26,7 @@ classdef Vehicle < handle
         Object
         Patch
         Parameter
+        ParameterMap
         TimeStep   
         DistanceStep
         MaxVel
@@ -120,7 +121,7 @@ classdef Vehicle < handle
             end
 
 
-
+            obj.ParameterMap = Parameter.Map;
             obj.Parameter = Parameter.Veh;
             obj.TimeStep = Parameter.Physics;
             obj.DistanceStep = 1/Parameter.Map.Scale;
@@ -197,6 +198,13 @@ classdef Vehicle < handle
                 end
             else
                 obj.Location = nextLocation;
+
+                SaveFolder = 'C:\Users\user\Desktop\250326_0409';
+                logFileName = fullfile(SaveFolder, ...
+                       ['log_2.txt']);
+                fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
+                fprintf(fileID, '\n nextLocation  %d \n', nextLocation);
+                fclose(fileID);
                 obj.Velocity = nextVelocity;
                 obj.Object.Matrix(1:2,4) = obj.Trajectory(:,obj.Location);
                 obj.Object.Matrix(1:2,1:2) = GetRotation(obj);
