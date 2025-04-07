@@ -112,7 +112,7 @@ classdef Vehicle < handle
                     'VerticalAlignment', 'middle', ...
                     'Parent', obj.Object, ...
                     'FontSize', 9, 'Color', 'black');
-            else
+            elseif false
                  obj.Text = text(x_center, y_center+0.1, sprintf('        %d', exit_index), ...
                     'HorizontalAlignment', 'center', ...
                     'VerticalAlignment', 'middle', ...
@@ -140,11 +140,12 @@ classdef Vehicle < handle
         
 
         function MoveVehicle(obj,Time,Parameter,List)
-            if obj.Location * Parameter.Map.Scale >= 200
-                set(obj.Patch, 'FaceColor', 'white');
-            else
-                set(obj.Patch, 'FaceColor', '#a9a9a9');
-            end
+            set(obj.Patch, 'FaceColor', 'white');
+            % if obj.Location * Parameter.Map.Scale >= 200
+            %     set(obj.Patch, 'FaceColor', 'white');
+            % else
+            %     set(obj.Patch, 'FaceColor', '#a9a9a9');
+            % end
 
             % if obj.ColorCount > 0
             %     set(obj.Patch, 'FaceColor', '#f589e6');
@@ -160,7 +161,7 @@ classdef Vehicle < handle
             % end
 
 
-            if obj.LaneChangeFlag == 1
+            if ~isempty(obj.LaneChangeFlag) && obj.LaneChangeFlag == 1 && ~obj.IsChangingLane
                 % obj.ColorCount = 10;
                 set(obj.Patch, 'FaceColor', '#f589e6');
 
@@ -171,7 +172,22 @@ classdef Vehicle < handle
                 
                 change_steps = 3000; 
                 start_idx = obj.Location; 
-                end_idx = min(obj.Location + change_steps - 1, size(obj.Trajectory, 2)); 
+                end_idx = min(obj.Location + change_steps - 1, size(obj.Trajectory, 2));
+                
+                % 예상 궤적의 x, y 좌표 계산
+                x_traj = obj.Trajectory(1, start_idx:end_idx);
+                y_traj = linspace(obj.Trajectory(2, start_idx), new_y, end_idx - start_idx + 1);
+                
+                % 예상 궤적 그리기 (점선으로)
+                if obj.ID == 1 
+                    plot(x_traj, y_traj, '-', 'Color', 'red', 'LineWidth', 2);
+                elseif obj.ID == 2
+                    plot(x_traj, y_traj, '-', 'Color', [1 0.5 0], 'LineWidth', 2);  % orange
+                elseif obj.ID == 3
+                    plot(x_traj, y_traj, '-', 'Color', 'yellow', 'LineWidth', 2);
+                else
+                    plot(x_traj, y_traj, '-', 'Color', '#f589e6', 'LineWidth', 2);  % 기존 분홍색
+                end
                 
                 % change_steps 동안 new_y에 도달
                 obj.Trajectory(2, start_idx:end_idx) = linspace(obj.Trajectory(2, start_idx), new_y, end_idx - start_idx + 1);

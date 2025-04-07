@@ -86,7 +86,7 @@ function [SpawnSeed, NewListOrTotalVehicles] = GetSeed(Setting, Parameter, Total
 
         case 3  % Debug for Vehicle Dynamics
             % 차량 3대
-            TotalVehicles = 11;
+            TotalVehicles = 3;
             SpawnSeed = zeros(6, TotalVehicles);
 
             % 1: Vehicle ID
@@ -95,12 +95,12 @@ function [SpawnSeed, NewListOrTotalVehicles] = GetSeed(Setting, Parameter, Total
             % 2: Spawn Lane (같은 차선에서 스폰되도록 설정)
             SpawnSeed(2,:) = ones(1, TotalVehicles);
             %SpawnSeed(2,:) = 1;
-            SpawnSeed(2,:) = randi([1, Parameter.Map.Lane], [1, TotalVehicles]);
+            SpawnSeed(2,:) = [1,2,3];
 
             % 3: Exit (랜덤 할당)
             %SpawnSeed(3, :) = Parameter.Map.Exit(2);
             NumExits = length(Parameter.Map.Exit);
-            SpawnSeed(3, :) = Parameter.Map.Exit(randi(NumExits, 1, TotalVehicles));
+            SpawnSeed(3, :) = ones(1, TotalVehicles) * Parameter.Map.Exit(2);
 
             % 4: Politeness Factor (기본값 1)
             SpawnSeed(4,:) = ones(1, TotalVehicles);
@@ -116,8 +116,12 @@ function [SpawnSeed, NewListOrTotalVehicles] = GetSeed(Setting, Parameter, Total
             max_interval = 1.5;
             SpawnTimes = cumsum(min_interval + (max_interval - min_interval) * rand(1, TotalVehicles));
             SpawnSeed(6, :) = SpawnTimes;
+            SpawnSeed(6,:) = [0, 1, 0.9];
 
             NewListOrTotalVehicles = TotalVehicles;
+            % SpawnSeed를 반환하기 전에 6번째 행(시간)을 기준으로 정렬
+            [~, order] = sort(SpawnSeed(6,:));  % 6번째 행(시간)을 기준으로 정렬 인덱스 얻기
+            SpawnSeed = SpawnSeed(:,order);     % 전체 행렬을 정렬된 순서로 재배열
 
     end
     

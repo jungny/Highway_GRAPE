@@ -23,7 +23,7 @@ function P = GetParameters(Setting)
     P.Map.Scale = 0.01;
 
     P.Map.Tile = 3.05; %m
-    P.Map.Road = 400; %400
+    P.Map.Road = 600; %400
     %P.Map.Road = randi([400,2500]);
     %P.Map.Road = 2005; %m
     
@@ -34,12 +34,12 @@ function P = GetParameters(Setting)
     P.Map.Lane = 3;
     
 
-    P.Map.Margin = 10;
+    P.Map.Margin = 5;
     P.Map.Stop = 6;
     P.Map.Center = [0;0];
     P.Map.SpawnZone = 500; % new vehicle to be spawned at anywhere between [0,200m]
     %P.Map.Exit = [1040, 1970];
-    P.Map.Exit = [380,5000];
+    P.Map.Exit = [580,5000];
     %P.Map.Exit = RandomExitGenerator(P.Map.Road);
     %P.Map.Exit = [P.Map.Road-330, P.Map.Road-30];
     %P.Map.Exit = [1200,2000, 2805];

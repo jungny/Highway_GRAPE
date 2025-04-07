@@ -4,6 +4,7 @@ clear
 clc
 addpath('Map\','Vehicle\','Signal\','Manager\','v2v\','GRAPE\')
 
+lcOrderDone = false;
 Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
 Simulation.Setting.StopOnGrapeError = 1;
@@ -12,6 +13,10 @@ Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250326_0409';
 
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
 Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
+timestamp = datestr(now, 'HH-MM');
+% videoFilename = Simulation.Setting.VideoPath(participantModes{mode_idx}, randomSeed, timestamp);
+% videoFilename = filename;
+videoFilename = fullfile(Simulation.Setting.SaveFolder, ['\video\경로제대로바꾸고색깔' '_' timestamp]);
 Simulation.Setting.RecordExcel = 0;  % 1: Record Excel file, 0: Do not record
 
 Simulation.Setting.VideoPath = @(mode, randomSeed, timestamp) ...
@@ -139,10 +144,7 @@ for Iteration = 1:Simulation.Setting.Iterations
         Parameter.Trajectory = GetTrajectory(Parameter.Map,Simulation.Setting);
 
         if Simulation.Setting.RecordVideo
-            timestamp = datestr(now, 'HH-MM');
-            % videoFilename = Simulation.Setting.VideoPath(participantModes{mode_idx}, randomSeed, timestamp);
-            % videoFilename = filename;
-            videoFilename = fullfile(Simulation.Setting.SaveFolder, ['\video\dynamicsproblem\2' greedy_status2 '_' Simulation.Setting.Util_type '_' timestamp '_' Simulation.Setting.NumberOfParticipants]);
+            
             videoWriter = VideoWriter(videoFilename, 'MPEG-4');
             videoWriter.FrameRate = 30; 
             open(videoWriter);
@@ -175,7 +177,7 @@ for Iteration = 1:Simulation.Setting.Iterations
         for Time = 0:Parameter.Physics:Parameter.Sim.Time
             GRAPE_done = 0;            
             % 제목 출력
-            title(sprintf('Random Seed: %d   |   %s   |   Participants Mode: %s   |   Time: %.2f s', ...
+            title(sprintf('3초에서만 1→2, 2→3, 3→2 지시. 기존 차선변경 모델', ...
                 randomSeed, greedy_status, strrep(participantModes{mode_idx}, '_', ' '), Time));
 
 
@@ -206,14 +208,14 @@ for Iteration = 1:Simulation.Setting.Iterations
                     List.Vehicle.Object = cell(size(SpawnVehicle,2),1);
                     firstCount = 1;
                 end
-                if ~isempty(SpawnVehicle) 
-                    if int32(Time/Parameter.Physics) == int32(SpawnVehicle(6,1)/Parameter.Physics)
-                        List.Vehicle.Object{SpawnVehicle(1,1)} = Vehicle(SpawnVehicle(:,1),Time,Parameter);
-                        if ~isempty(SpawnVehicle)
-                            SpawnVehicle = SpawnVehicle(:,2:end);
-                        end
+
+                while ~isempty(SpawnVehicle) && int32(Time/Parameter.Physics) == int32(SpawnVehicle(6,1)/Parameter.Physics)
+                    List.Vehicle.Object{SpawnVehicle(1,1)} = Vehicle(SpawnVehicle(:,1),Time,Parameter);
+                    if ~isempty(SpawnVehicle)
+                        SpawnVehicle = SpawnVehicle(:,2:end);
                     end
                 end
+
             end
 
             % Update Vehicle Data
@@ -221,31 +223,39 @@ for Iteration = 1:Simulation.Setting.Iterations
             List.Vehicle.Active = List.Vehicle.Data(List.Vehicle.Data(:,2)>0,:);
             List.Vehicle.Object = GetAcceleration(List.Vehicle.Object, List.Vehicle.Data, Parameter.Veh);
 
-            if Simulation.Setting.GreedyAlloc
-                environment = GRAPE_main(List,Parameter,Simulation.Setting,Iteration);
-                lane_alloc = GRAPE_instance(environment).Alloc;
-
-            elseif mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0  %&& Time > 8
-                disp("calling Grape Instance. . . | "+ Time);
-                environment = GRAPE_main(List,Parameter,Simulation.Setting,Iteration);
-                try
-                    GRAPE_output = GRAPE_instance(environment);
-                    % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
-                    lane_alloc = GRAPE_output.Alloc;
-                    if any(lane_alloc == 0)
-                        fileID = fopen(Simulation.Setting.LogFile, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
-                        fprintf(fileID, 'VOID TASK at %d \n', Iteration);
-                        fclose(fileID);
-                    end
+            if ~lcOrderDone 
+                if Time > 3
+                    lane_alloc = [2; 3; 3];
+                    lcOrderDone = true;
                     GRAPE_done = 1;
-                catch ME
-                    if Simulation.Setting.StopOnGrapeError
-                        rethrow(ME);
-                    else
-                        warning(ME.identifier, 'GRAPE error occurred, ignoring and continuing: %s', ME.message);
-                    end
                 end
             end
+        
+            % elseif Simulation.Setting.GreedyAlloc
+            %     environment = GRAPE_main(List,Parameter,Simulation.Setting,Iteration);
+            %     lane_alloc = GRAPE_instance(environment).Alloc;
+
+            % elseif mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0  %&& Time > 8
+            %     disp("calling Grape Instance. . . | "+ Time);
+            %     environment = GRAPE_main(List,Parameter,Simulation.Setting,Iteration);
+            %     try
+            %         GRAPE_output = GRAPE_instance(environment);
+            %         % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
+            %         lane_alloc = GRAPE_output.Alloc;
+            %         if any(lane_alloc == 0)
+            %             fileID = fopen(Simulation.Setting.LogFile, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
+            %             fprintf(fileID, 'VOID TASK at %d \n', Iteration);
+            %             fclose(fileID);
+            %         end
+            %         GRAPE_done = 1;
+            %     catch ME
+            %         if Simulation.Setting.StopOnGrapeError
+            %             rethrow(ME);
+            %         else
+            %             warning(ME.identifier, 'GRAPE error occurred, ignoring and continuing: %s', ME.message);
+            %         end
+            %     end
+            % end
         
             % Move Vehicle
             for i = 1:size(List.Vehicle.Active,1)
@@ -272,9 +282,9 @@ for Iteration = 1:Simulation.Setting.Iterations
                         end
                         
                         % warm up 구간 동안은 차선 변경 안 되게 설정
-                        if current_vehicle.Location * Parameter.Map.Scale < 200
-                            feasible = false;
-                        end
+                        % if current_vehicle.Location * Parameter.Map.Scale < 200
+                        %     feasible = false;
+                        % end
 
                         if feasible %&& Simulation.Setting.GreedyAlloc
                             if current_vehicle.IsChangingLane 
@@ -301,6 +311,12 @@ for Iteration = 1:Simulation.Setting.Iterations
                 end
 
                 MoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)},Time,Parameter,List)
+            end
+            
+            % 모든 차량 객체를 궤적 위로 올리기
+            for i = 1:size(List.Vehicle.Active,1)
+                vehicle_id = List.Vehicle.Active(i, 1);
+                uistack(List.Vehicle.Object{vehicle_id}.Object, 'top');
             end
         
             % Remove Processed Vehicles
