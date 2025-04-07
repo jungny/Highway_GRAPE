@@ -160,7 +160,7 @@ classdef Vehicle < handle
             % end
 
 
-            if obj.LaneChangeFlag == 1
+            if ~isempty(obj.LaneChangeFlag) && obj.LaneChangeFlag == 1 && ~obj.IsChangingLane
                 % obj.ColorCount = 10;
                 set(obj.Patch, 'FaceColor', '#f589e6');
 

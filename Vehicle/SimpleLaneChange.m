@@ -24,8 +24,8 @@ function feasible = CheckLaneChangeFeasibility(obj, targetLane, List, Parameter)
 
     % 목표 차선의 선행/후행 차량 찾기
     distances = lane_vehicles(:,4)*Parameter.Map.Scale - double(current_x);
-    front_distances = distances(distances > 0);
-    rear_distances = distances(distances < 0);
+    front_distances = distances(distances >= 0);
+    rear_distances = distances(distances <= 0);
 
     % 안전 거리 조건
     safe_distance = Parameter.Veh.SafeDistance;
@@ -47,7 +47,7 @@ function [front_vehicle, front_distance] = GetFrontVehicle(obj, targetLane, List
     distances = lane_vehicles(:,4) * Parameter.Map.Scale - current_x;
 
     % 선행 차량 거리 필터링
-    front_distances = distances(distances > 0);
+    front_distances = distances(distances >= 0);
 
     % 초기화
     front_vehicle = [];
@@ -78,7 +78,7 @@ function [rear_vehicle, rear_distance] = GetRearVehicle(obj, targetLane, List, P
     distances = lane_vehicles(:,4) * Parameter.Map.Scale - current_x;
 
     % 후행 차량 거리 필터링
-    rear_distances = distances(distances < 0);
+    rear_distances = distances(distances <= 0);
 
     % 초기화
     rear_vehicle = [];

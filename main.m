@@ -7,11 +7,11 @@ addpath('Map\','Vehicle\','Signal\','Manager\','v2v\','GRAPE\')
 Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
 Simulation.Setting.StopOnGrapeError = 1;
-Simulation.Setting.PauseTime = 0.02; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
+Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250326_0409';
 
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
-Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
+Simulation.Setting.RecordVideo = 1;  % 1: Record video file, 0: Do not record
 Simulation.Setting.RecordExcel = 0;  % 1: Record Excel file, 0: Do not record
 
 Simulation.Setting.VideoPath = @(mode, randomSeed, timestamp) ...
@@ -28,7 +28,7 @@ Simulation.Setting.InitialRandomSeed = 1;
 Simulation.Setting.Iterations = 1; % number of iterations
 Simulation.Setting.Time = 10000;
 
-Simulation.Setting.SpawnType = 3; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times, 2: Debug mode
+Simulation.Setting.SpawnType = 1; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times, 2: Debug mode
 Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
 Simulation.Setting.BubbleRadiusList = [];
@@ -142,7 +142,7 @@ for Iteration = 1:Simulation.Setting.Iterations
             timestamp = datestr(now, 'HH-MM');
             % videoFilename = Simulation.Setting.VideoPath(participantModes{mode_idx}, randomSeed, timestamp);
             % videoFilename = filename;
-            videoFilename = fullfile(Simulation.Setting.SaveFolder, ['\video\dynamicsproblem\2' greedy_status2 '_' Simulation.Setting.Util_type '_' timestamp '_' Simulation.Setting.NumberOfParticipants]);
+            videoFilename = fullfile(Simulation.Setting.SaveFolder, ['\video\충돌문제완전해결' greedy_status2 '_' Simulation.Setting.Util_type '_' timestamp '_' Simulation.Setting.NumberOfParticipants]);
             videoWriter = VideoWriter(videoFilename, 'MPEG-4');
             videoWriter.FrameRate = 30; 
             open(videoWriter);
@@ -206,12 +206,10 @@ for Iteration = 1:Simulation.Setting.Iterations
                     List.Vehicle.Object = cell(size(SpawnVehicle,2),1);
                     firstCount = 1;
                 end
-                if ~isempty(SpawnVehicle) 
-                    if int32(Time/Parameter.Physics) == int32(SpawnVehicle(6,1)/Parameter.Physics)
-                        List.Vehicle.Object{SpawnVehicle(1,1)} = Vehicle(SpawnVehicle(:,1),Time,Parameter);
-                        if ~isempty(SpawnVehicle)
-                            SpawnVehicle = SpawnVehicle(:,2:end);
-                        end
+                while ~isempty(SpawnVehicle) && int32(Time/Parameter.Physics) == int32(SpawnVehicle(6,1)/Parameter.Physics)
+                    List.Vehicle.Object{SpawnVehicle(1,1)} = Vehicle(SpawnVehicle(:,1),Time,Parameter);
+                    if ~isempty(SpawnVehicle)
+                        SpawnVehicle = SpawnVehicle(:,2:end);
                     end
                 end
             end
@@ -269,10 +267,13 @@ for Iteration = 1:Simulation.Setting.Iterations
                             [feasible, a_c_sim] = MOBIL(current_vehicle, desired_lane, List, Parameter);
                         elseif strcmp(Simulation.Setting.LaneChangeMode, 'SimpleLaneChange')
                             [feasible] = SimpleLaneChange(current_vehicle, desired_lane, List, Parameter);
+                            if ~feasible
+                                disp("sdf");
+                            end
                         end
                         
                         % warm up 구간 동안은 차선 변경 안 되게 설정
-                        if current_vehicle.Location * Parameter.Map.Scale < 200
+                        if current_vehicle.Location * Parameter.Map.Scale < 20
                             feasible = false;
                         end
 
