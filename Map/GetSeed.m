@@ -86,7 +86,7 @@ function [SpawnSeed, NewListOrTotalVehicles] = GetSeed(Setting, Parameter, Total
 
         case 3  % Debug for Vehicle Dynamics
             % 차량 3대
-            TotalVehicles = 1;
+            TotalVehicles = 11;
             SpawnSeed = zeros(6, TotalVehicles);
 
             % 1: Vehicle ID
@@ -94,10 +94,13 @@ function [SpawnSeed, NewListOrTotalVehicles] = GetSeed(Setting, Parameter, Total
 
             % 2: Spawn Lane (같은 차선에서 스폰되도록 설정)
             SpawnSeed(2,:) = ones(1, TotalVehicles);
-            SpawnSeed(2,:) = 1;
+            %SpawnSeed(2,:) = 1;
+            SpawnSeed(2,:) = randi([1, Parameter.Map.Lane], [1, TotalVehicles]);
 
             % 3: Exit (랜덤 할당)
-            SpawnSeed(3, :) = Parameter.Map.Exit(2);
+            %SpawnSeed(3, :) = Parameter.Map.Exit(2);
+            NumExits = length(Parameter.Map.Exit);
+            SpawnSeed(3, :) = Parameter.Map.Exit(randi(NumExits, 1, TotalVehicles));
 
             % 4: Politeness Factor (기본값 1)
             SpawnSeed(4,:) = ones(1, TotalVehicles);
@@ -106,11 +109,15 @@ function [SpawnSeed, NewListOrTotalVehicles] = GetSeed(Setting, Parameter, Total
             SpawnSeed(5,:) = ones(1, TotalVehicles); % 전부 1로 설정
 
             % 6: Spawn Time (간격을 200m 이상 벌리기 위해 조절)
-            SpawnSeed(6,1) = 0;     % 첫 번째 차량 스폰 시간
+            %SpawnSeed(6,1) = 0;     % 첫 번째 차량 스폰 시간
             % SpawnSeed(6,2) = 0.7;   % 두 번째 차량 (거의 동시에)
             % SpawnSeed(6,3) = 7;    % 세 번째 차량 (충분히 나중에)
+            min_interval = 0.3;
+            max_interval = 1.5;
+            SpawnTimes = cumsum(min_interval + (max_interval - min_interval) * rand(1, TotalVehicles));
+            SpawnSeed(6, :) = SpawnTimes;
 
-            NewListOrTotalVehicles = 1;
+            NewListOrTotalVehicles = TotalVehicles;
 
     end
     

@@ -11,7 +11,7 @@ Simulation.Setting.PauseTime = 0.02; % 0: No pause. >0: Pause duration in second
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250326_0409';
 
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
-Simulation.Setting.RecordVideo = 1;  % 1: Record video file, 0: Do not record
+Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
 Simulation.Setting.RecordExcel = 0;  % 1: Record Excel file, 0: Do not record
 
 Simulation.Setting.VideoPath = @(mode, randomSeed, timestamp) ...
@@ -271,7 +271,7 @@ for Iteration = 1:Simulation.Setting.Iterations
                             [feasible] = SimpleLaneChange(current_vehicle, desired_lane, List, Parameter);
                         end
                         
-                        % warm up 구간 동안은 차선 변경 안 되게 설정정
+                        % warm up 구간 동안은 차선 변경 안 되게 설정
                         if current_vehicle.Location * Parameter.Map.Scale < 200
                             feasible = false;
                         end
