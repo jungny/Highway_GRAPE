@@ -10,7 +10,9 @@ Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250326_0409';
 
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
-Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
+Simulation.Setting.RecordVideo = 1;  % 1: Record video file, 0: Do not record
+memo = 'Baseline용 GS, Bubble 50m | Exit : Through = 2 : 8';
+videomemo = 'BaseGS_20%_';
 Simulation.Setting.RecordExcel = 0;  % 1: Record Excel file, 0: Do not record
 
 Simulation.Setting.VideoPath = @(mode, randomSeed, timestamp) ...
@@ -21,9 +23,9 @@ Simulation.Setting.LogPath = @(finalRandomSeed) ...
     fullfile(Simulation.Setting.SaveFolder, 'Simulations', ...
     ['log_' num2str(finalRandomSeed) '.txt']);
 
-cycle_GRAPE =500; % GRAPE instance per 5 seconds
+cycle_GRAPE =5; % GRAPE instance per 5 seconds
 
-Simulation.Setting.InitialRandomSeed = 1;
+Simulation.Setting.InitialRandomSeed = 2;
 Simulation.Setting.Iterations = 1; % number of iterations
 Simulation.Setting.Time = 10000;
 
@@ -141,9 +143,9 @@ for Iteration = 1:Simulation.Setting.Iterations
             timestamp = datestr(now, 'HH-MM');
             % videoFilename = Simulation.Setting.VideoPath(participantModes{mode_idx}, randomSeed, timestamp);
             % videoFilename = filename;
-            videoFilename = fullfile(Simulation.Setting.SaveFolder, ['\video\30_' greedy_status2 '_' Simulation.Setting.Util_type '_' timestamp '_' Simulation.Setting.NumberOfParticipants]);
+            videoFilename = fullfile(Simulation.Setting.SaveFolder, ['video\' videomemo '_' timestamp]);
             videoWriter = VideoWriter(videoFilename, 'MPEG-4');
-            videoWriter.FrameRate = 30; 
+            videoWriter.FrameRate = 15; 
             open(videoWriter);
         end
 
@@ -174,8 +176,9 @@ for Iteration = 1:Simulation.Setting.Iterations
         for Time = 0:Parameter.Physics:Parameter.Sim.Time
             GRAPE_done = 0;            
             % 제목 출력
-            title(sprintf('Random Seed: %d   |   %s   |   Participants Mode: %s   |   Time: %.2f s', ...
-                randomSeed, greedy_status, strrep(participantModes{mode_idx}, '_', ' '), Time));
+            % title(sprintf('Random Seed: %d   |   %s   |   Participants Mode: %s   |   Time: %.2f s', ...
+            %     randomSeed, greedy_status, strrep(participantModes{mode_idx}, '_', ' '), Time));
+            title(memo);
 
 
             if Simulation.Setting.SpawnType == 0 
@@ -266,9 +269,9 @@ for Iteration = 1:Simulation.Setting.Iterations
                             [feasible, a_c_sim] = MOBIL(current_vehicle, desired_lane, List, Parameter);
                         elseif strcmp(Simulation.Setting.LaneChangeMode, 'SimpleLaneChange')
                             [feasible] = SimpleLaneChange(current_vehicle, desired_lane, List, Parameter);
-                            % if ~feasible
-                            %     disp("sdf");
-                            % end
+                            if ~feasible
+                                disp("sdf");
+                            end
                         end
                         
                         % warm up 구간 동안은 차선 변경 안 되게 설정
@@ -292,7 +295,7 @@ for Iteration = 1:Simulation.Setting.Iterations
                     end
                 end
                 
-                if List.Vehicle.Object{vehicle_id}.Exit - List.Vehicle.Object{vehicle_id}.Location * Parameter.Map.Scale <= Parameter.ExitThreshold 
+                if List.Vehicle.Object{vehicle_id}.Exit - List.Vehicle.Active(i, 4) * Parameter.Map.Scale <= Parameter.ExitThreshold 
                     if current_lane == Parameter.Map.Lane
                         List.Vehicle.Object{vehicle_id}.ExitState = 1;
                     else
@@ -319,7 +322,7 @@ for Iteration = 1:Simulation.Setting.Iterations
                 %end
 
 
-                if List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location * Parameter.Map.Scale > Parameter.Map.Road % through vehicles
+                if List.Vehicle.Active(i,4) * Parameter.Map.Scale > Parameter.Map.Road % through vehicles
                     spawn_time = List.Vehicle.Object{List.Vehicle.Active(i,1)}.EntryTime;
                     exit_time = Time;
                     travel_time = exit_time - spawn_time;
@@ -340,7 +343,7 @@ for Iteration = 1:Simulation.Setting.Iterations
                     TotalVehicles = TotalVehicles - 1;
                 
 
-                elseif List.Vehicle.Object{List.Vehicle.Active(i,1)}.ExitState >= 0 && List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location * Parameter.Map.Scale >= List.Vehicle.Object{List.Vehicle.Active(i,1)}.Exit - 2 
+                elseif List.Vehicle.Object{List.Vehicle.Active(i,1)}.ExitState >= 0 && List.Vehicle.Active(i,4) * Parameter.Map.Scale >= List.Vehicle.Object{List.Vehicle.Active(i,1)}.Exit - 2 
                     % record travel time, avg speed
                     spawn_time = List.Vehicle.Object{List.Vehicle.Active(i,1)}.EntryTime;
                     exit_time = Time;
@@ -372,8 +375,12 @@ for Iteration = 1:Simulation.Setting.Iterations
 
                 pause(Simulation.Setting.PauseTime);
 
-                if Simulation.Setting.RecordVideo == 1 %&& mod(int32(Time/Parameter.Physics), 4) == 0
+                if Simulation.Setting.RecordVideo == 1 %&& mod(int32(Time/Parameter.Physics), 2) == 0
                     frame = getframe(gcf); 
+                    [H, W, ~] = size(frame.cdata);
+                    H = H + mod(H, 2);  % 높이가 홀수면 +1
+                    W = W + mod(W, 2);  % 너비가 홀수면 +1
+                    frame.cdata = imresize(frame.cdata, [H, W]);
                     % frame.cdata = imresize(frame.cdata, 0.5);
                     writeVideo(videoWriter, frame); 
                 end

@@ -45,7 +45,10 @@ function environment = GRAPE_main(List, Parameter,Setting,testiteration)
 
                 
 
-                if (distance_to_exit <= L1+L2)  && vehicle_lane == 1 % && (distance_to_exit > L2)
+                if (distance_to_exit <= L1+L2) && vehicle_lane == 3
+                    weights = [0; 0; 1];
+
+                elseif (distance_to_exit <= L1+L2)  && vehicle_lane ~= 3 && (distance_to_exit > L2)
                     weights = [0; 1; 0];
                     % if strcmp(strategy, 'FOS')
                     %     weights = [0; 1; 1];

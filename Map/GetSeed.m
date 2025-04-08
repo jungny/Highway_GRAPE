@@ -30,7 +30,7 @@ function [SpawnSeed, NewListOrTotalVehicles] = GetSeed(Setting, Parameter, Total
 
             SpawnSeed(6,:) = zeros(1,SpawnCount); % redundant property
         case 1
-            TotalVehicles = 50;
+            TotalVehicles = 30;
             SpawnSeed = zeros(6,TotalVehicles);
             
             % 1: Vehicle ID, 2: Spawn Lane
@@ -68,7 +68,7 @@ function [SpawnSeed, NewListOrTotalVehicles] = GetSeed(Setting, Parameter, Total
                 
                 SpawnTimes(i) = last_spawn_time(current_lane) + interval;
                 last_spawn_time(current_lane) = SpawnTimes(i);
-                fprintf('Vehicle %d: Lane %d, Spawn Time %.2f\n', i, current_lane, SpawnTimes(i));
+                % fprintf('Vehicle %d: Lane %d, Spawn Time %.2f\n', i, current_lane, SpawnTimes(i));
             end
             
             % Sort vehicles by spawn time
