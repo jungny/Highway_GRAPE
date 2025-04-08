@@ -10,7 +10,7 @@ Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250326_0409';
 
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
-Simulation.Setting.RecordVideo = 1;  % 1: Record video file, 0: Do not record
+Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
 Simulation.Setting.ExitPercent = 80;
 memo = 'Baseline용 GS, Bubble 50m';
 videomemo = 'BaseGS';
@@ -194,7 +194,7 @@ for Iteration = 1:Simulation.Setting.Iterations
             % 제목 출력
             % title(sprintf('Random Seed: %d   |   %s   |   Participants Mode: %s   |   Time: %.2f s', ...
             %     randomSeed, greedy_status, strrep(participantModes{mode_idx}, '_', ' '), Time));
-            title(memo);
+            title(sprintf('%s   |   Time: %.2f s', memo, Time));
 
 
             if Simulation.Setting.SpawnType == 0 
@@ -276,6 +276,9 @@ for Iteration = 1:Simulation.Setting.Iterations
                     if current_lane ~= desired_lane 
                         %List.Vehicle.Object{vehicle_id}.TargetLane = desired_lane;
                         %List.Vehicle.Object{vehicle_id}.LaneChangeFlag = 1; 
+                        if abs(current_lane - desired_lane) > 1
+                            disp("no jump");
+                        end
                         if current_lane > desired_lane
                             desired_lane = current_lane - 1;
                         elseif current_lane < desired_lane
@@ -392,7 +395,7 @@ for Iteration = 1:Simulation.Setting.Iterations
 
                 pause(Simulation.Setting.PauseTime);
 
-                if Simulation.Setting.RecordVideo == 1 %&& mod(int32(Time/Parameter.Physics), 2) == 0
+                if Simulation.Setting.RecordVideo == 1 && mod(Time, 1/15) < Parameter.Physics
                     frame = getframe(gcf); 
                     [H, W, ~] = size(frame.cdata);
                     H = H + mod(H, 2);  % 높이가 홀수면 +1

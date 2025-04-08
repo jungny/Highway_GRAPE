@@ -34,8 +34,13 @@ switch Util_type
     case {'GS', 'HOS', 'FOS', 'ES'}
         
         cost = abs(t_location(task_id, 2)- a_location(agent_id, 2));
-        if cost > 0
-            util_value = (t_demand(task_id)/n_participants)-0.01;
+        % cost는 environment.Parameter.Map.Tile의 정수배
+        % 한 번의 차선 변경으로 닿을 수 없는 차선 <=> cost > 3.05
+        if (cost - environment.Parameter.Map.Tile) > 1e-6
+            util_value = (t_demand(task_id)/n_participants)*0.0001;
+        elseif cost > 0
+        % if cost > 0
+            util_value = (t_demand(task_id)/n_participants)*0.99;
             % if min(t_demand(task_id))>0
             %     util_value = util_value * 0.01;
             % end
