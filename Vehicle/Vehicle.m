@@ -15,6 +15,7 @@ classdef Vehicle < handle
         Data
         %Reward
         Destination
+        temp_GRAPE_result
         TargetLane
         LaneChangeFlag
         PolitenessFactor
@@ -109,18 +110,24 @@ classdef Vehicle < handle
                 exit_index = -1;
             end
 
+            if exit_index == 1
+                exit_index = 'Ex';
+            elseif exit_index == 2
+                exit_index = 'Th';
+            end
+
             if Parameter.Label
-                obj.Text = text(x_center+3, y_center+0.1, sprintf('%d   %d', obj.ID, exit_index), ...
+                obj.Text = text(x_center+6, y_center+0.1, sprintf('       %d   %s', obj.ID, exit_index), ...
                     'HorizontalAlignment', 'center', ...
                     'VerticalAlignment', 'middle', ...
                     'Parent', obj.Object, ...
-                    'FontSize', 9, 'Color', 'black');
+                    'FontSize', 8, 'Color', 'black');
             else
-                 obj.Text = text(x_center, y_center+0.1, sprintf('        %d', exit_index), ...
+                 obj.Text = text(x_center, y_center+0.1, sprintf('        %s', exit_index), ...
                     'HorizontalAlignment', 'center', ...
                     'VerticalAlignment', 'middle', ...
                     'Parent', obj.Object, ...
-                    'FontSize', 9, 'Color', 'black');
+                    'FontSize', 8, 'Color', 'black');
             end
 
 
@@ -144,11 +151,12 @@ classdef Vehicle < handle
 
         function MoveVehicle(obj,Time,Parameter,List)
             if ~obj.IsChangingLane
-                if obj.Location * Parameter.Map.Scale >= 20 
-                    set(obj.Patch, 'FaceColor', 'white');
-                else
-                    set(obj.Patch, 'FaceColor', '#a9a9a9');
-                end
+                set(obj.Patch, 'FaceColor', 'white');
+                % if obj.Location * Parameter.Map.Scale >= 20 
+                %     set(obj.Patch, 'FaceColor', 'white');
+                % else
+                %     set(obj.Patch, 'FaceColor', '#a9a9a9');
+                % end
             end
 
             % if obj.ColorCount > 0
@@ -245,8 +253,26 @@ classdef Vehicle < handle
             x_center = mean(obj.Size(1,:));
             y_center = mean(obj.Size(2,:));
 
+            exit_index = find(obj.ParameterMap.Exit == obj.Exit, 1);
+            if isempty(exit_index)
+                exit_index = -1;
+            end
+
+            if exit_index == 1
+                exit_index = 'Ex';
+            elseif exit_index == 2
+                exit_index = 'Th';
+            end
+
             if Parameter.Label
-                set(obj.Text, 'Position', [x_center+3, y_center+0.1]);
+                if ~isempty(obj.temp_GRAPE_result)
+                    set(obj.Text, 'String', sprintf('%d     %d   %s', obj.temp_GRAPE_result, obj.ID, exit_index));
+                end
+                set(obj.Text, 'Position', [x_center, y_center+0.1]);
+            else
+                if ~isempty(obj.temp_GRAPE_result)
+                    set(obj.Text, 'String', sprintf('%d        %s', obj.temp_GRAPE_result, exit_index));
+                end
             end
 
             % 차선 변경 완료 시

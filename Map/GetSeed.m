@@ -39,7 +39,19 @@ function [SpawnSeed, NewListOrTotalVehicles] = GetSeed(Setting, Parameter, Total
             SpawnSeed(2,:) = temp_lanes(1:TotalVehicles);  % 한 줄로 합침
             
             % 3: Exit, 4: Politeness, 5: Spawn Position
-            SpawnSeed(3, :) = Parameter.Map.Exit(randsample([1, 2], TotalVehicles, true, [0.2, 0.8]));
+            if Setting.ExitPercent == 20
+                % Exit:Through = 2:8 
+                SpawnSeed(3, :) = Parameter.Map.Exit(randsample([1, 2], TotalVehicles, true, [0.2, 0.8]));
+            elseif Setting.ExitPercent == 50
+                % Exit:Through = 5:5
+                SpawnSeed(3, :) = Parameter.Map.Exit(randsample([1, 2], TotalVehicles, true, [0.5, 0.5]));
+            elseif Setting.ExitPercent == 80
+                % Exit:Through = 8:2
+                SpawnSeed(3, :) = Parameter.Map.Exit(randsample([1, 2], TotalVehicles, true, [0.8, 0.2]));
+            else
+                error('지원하지 않는 ExitPercent 값입니다: %d', Setting.ExitPercent);
+            end
+            
             SpawnSeed(4,:) = ones(1,TotalVehicles);
             SpawnSeed(5,:) = ones(1,TotalVehicles);
             

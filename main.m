@@ -11,8 +11,24 @@ Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250326_0409';
 
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
 Simulation.Setting.RecordVideo = 1;  % 1: Record video file, 0: Do not record
-memo = 'Baseline용 GS, Bubble 50m | Exit : Through = 2 : 8';
-videomemo = 'BaseGS_20%_';
+Simulation.Setting.ExitPercent = 80;
+memo = 'Baseline용 GS, Bubble 50m';
+videomemo = 'BaseGS';
+exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
+
+if exitpercent == 20
+    memo = [memo ' | Exit : Through = 2 : 8'];
+    videomemo = [videomemo '_20%_'];
+elseif exitpercent == 50
+    memo = [memo ' | Exit : Through = 5 : 5'];
+    videomemo = [videomemo '_50%_'];
+elseif exitpercent == 80
+    memo = [memo ' | Exit : Through = 8 : 2'];
+    videomemo = [videomemo '_80%_'];
+end
+
+
+
 Simulation.Setting.RecordExcel = 0;  % 1: Record Excel file, 0: Do not record
 
 Simulation.Setting.VideoPath = @(mode, randomSeed, timestamp) ...
@@ -255,6 +271,7 @@ for Iteration = 1:Simulation.Setting.Iterations
                 
                 if GRAPE_done == 1 || Simulation.Setting.GreedyAlloc
                     desired_lane = lane_alloc(i);
+                    current_vehicle.temp_GRAPE_result = desired_lane;
                 
                     if current_lane ~= desired_lane 
                         %List.Vehicle.Object{vehicle_id}.TargetLane = desired_lane;
@@ -275,9 +292,9 @@ for Iteration = 1:Simulation.Setting.Iterations
                         end
                         
                         % warm up 구간 동안은 차선 변경 안 되게 설정
-                        if current_vehicle.Location * Parameter.Map.Scale < 20
-                            feasible = false;
-                        end
+                        % if current_vehicle.Location * Parameter.Map.Scale < 20
+                        %     feasible = false;
+                        % end
 
                         if feasible %&& Simulation.Setting.GreedyAlloc
                             if current_vehicle.IsChangingLane 
