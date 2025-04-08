@@ -1,4 +1,3 @@
-
 function [SpawnSeed, NewListOrTotalVehicles] = GetSeed(Setting, Parameter, TotalVehicles, SpawnLanes, OldList)
     switch Setting.SpawnType
         case 0
@@ -31,27 +30,52 @@ function [SpawnSeed, NewListOrTotalVehicles] = GetSeed(Setting, Parameter, Total
 
             SpawnSeed(6,:) = zeros(1,SpawnCount); % redundant property
         case 1
-            %TotalVehicles = randi([2,50]);
-            TotalVehicles = randi([70,120]);
-            %TotalVehicles = 20;
+            TotalVehicles = 50;
             SpawnSeed = zeros(6,TotalVehicles);
-
-            % 1: Vehicle ID
-            % 2: Spawn Lane
-            % 3: Exit
-            % 4: Politeness Factor
-            % 5: Spawn Position
-            % 6: Spawn Time
+            
+            % 1: Vehicle ID, 2: Spawn Lane
             SpawnSeed(1,:) = 1:TotalVehicles;
-            SpawnSeed(2,:) = randi([1, Parameter.Map.Lane], [1, TotalVehicles]);
-            NumExits = length(Parameter.Map.Exit);
-            SpawnSeed(3, :) = Parameter.Map.Exit(randi(NumExits, 1, TotalVehicles));
+            temp_lanes = repmat(1:Parameter.Map.Lane, 1, ceil(TotalVehicles/Parameter.Map.Lane));
+            SpawnSeed(2,:) = temp_lanes(1:TotalVehicles);  % 한 줄로 합침
+            
+            % 3: Exit, 4: Politeness, 5: Spawn Position
+            SpawnSeed(3, :) = Parameter.Map.Exit(randsample([1, 2], TotalVehicles, true, [0.2, 0.8]));
             SpawnSeed(4,:) = ones(1,TotalVehicles);
-            SpawnSeed(5,:) = ones(1,TotalVehicles); % redundant property
-            min_interval = 0.3;
-            max_interval = 1.5;
-            SpawnTimes = cumsum(min_interval + (max_interval - min_interval) * rand(1, TotalVehicles));
-            SpawnSeed(6, :) = SpawnTimes;
+            SpawnSeed(5,:) = ones(1,TotalVehicles);
+            
+            % Spawn interval parameters for each group
+            group1_interval = [0.4, 1.5];  % [min, max] for first 20%
+            group2_interval = [1.5, 3];  % [min, max] for next 70%
+            group3_interval = [4, 5.0];  % [min, max] for last 10%
+            
+            % Generate spawn times
+            group1_count = round(TotalVehicles * 0.2);
+            group2_count = round(TotalVehicles * 0.7);
+            SpawnTimes = zeros(1, TotalVehicles);
+            last_spawn_time = zeros(1, Parameter.Map.Lane);
+            
+            for i = 1:TotalVehicles
+                current_lane = SpawnSeed(2,i);
+                
+                % Determine interval based on group
+                if i <= group1_count
+                    interval = group1_interval(1) + (group1_interval(2) - group1_interval(1)) * rand();
+                elseif i <= (group1_count + group2_count)
+                    interval = group2_interval(1) + (group2_interval(2) - group2_interval(1)) * rand();
+                else
+                    interval = group3_interval(1) + (group3_interval(2) - group3_interval(1)) * rand();
+                end
+                
+                SpawnTimes(i) = last_spawn_time(current_lane) + interval;
+                last_spawn_time(current_lane) = SpawnTimes(i);
+                fprintf('Vehicle %d: Lane %d, Spawn Time %.2f\n', i, current_lane, SpawnTimes(i));
+            end
+            
+            % Sort vehicles by spawn time
+            [~, sort_idx] = sort(SpawnTimes);
+            SpawnSeed = SpawnSeed(:, sort_idx);
+            SpawnSeed(6, :) = SpawnTimes(sort_idx);
+            
             NewListOrTotalVehicles = TotalVehicles;
             
         case 2  % Debug for task allocation issue

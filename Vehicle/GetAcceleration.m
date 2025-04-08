@@ -97,9 +97,6 @@ function ObjectList = GetAcceleration(ObjectList, VehicleList, Parameter)
     % 모든 차선 계산이 끝난 후, 차선 변경 중인 차량들의 최종 가속도 결정
     for idx = 1:size(ObjectData,1)
         if ObjectData(idx,1) > 0 && ObjectList{ObjectData(idx,1)}.IsChangingLane
-            if ObjectList{ObjectData(idx,1)}.ID == 9
-                disp("stop");
-            end
             % 저장된 모든 가속도 중 최소값 선택
             ObjectList{ObjectData(idx,1)}.Acceleration = min(ObjectList{ObjectData(idx,1)}.Acceleration);
         end

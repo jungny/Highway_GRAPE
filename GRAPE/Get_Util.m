@@ -36,6 +36,9 @@ switch Util_type
         cost = abs(t_location(task_id, 2)- a_location(agent_id, 2));
         if cost > 0
             util_value = (t_demand(task_id)/n_participants)-0.01;
+            % if min(t_demand(task_id))>0
+            %     util_value = util_value * 0.01;
+            % end
         else % cost = 0
             util_value = t_demand(task_id)/n_participants;
         end
