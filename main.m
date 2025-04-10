@@ -9,11 +9,11 @@ Simulation.Setting.StopOnGrapeError = 1;
 Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250326_0409';
 
-Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
-Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
-Simulation.Setting.ExitPercent = 80;
-memo = 'Baseline용 GS, Bubble 50m';
-videomemo = 'BaseGS';
+Simulation.Setting.RecordLog = 1;    % 1: Record log file, 0: Do not record
+Simulation.Setting.RecordVideo =1 ;  % 1: Record video file, 0: Do not record
+Simulation.Setting.ExitPercent = 50;
+memo = 'greedy  Baseline용 GS, Bubble 50m';
+videomemo = 'GreedyBaseGS';
 exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
 
 if exitpercent == 20
@@ -46,7 +46,7 @@ Simulation.Setting.Iterations = 1; % number of iterations
 Simulation.Setting.Time = 10000;
 
 Simulation.Setting.SpawnType = 1; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times, 2: Debug mode
-Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
+Simulation.Setting.GreedyAlloc = 1; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
 Simulation.Setting.BubbleRadiusList = [50];
 %Simulation.Setting.BubbleRadiusList = [0];
@@ -63,7 +63,7 @@ if Simulation.Setting.RecordLog
     finalRandomSeed = Simulation.Setting.InitialRandomSeed + Simulation.Setting.Iterations - 1;
     %logFileName = Simulation.Setting.LogPath(finalRandomSeed);
     logFileName = fullfile(Simulation.Setting.SaveFolder, ...
-        ['log.txt']);
+        [videomemo '_log.txt']);
 
     % 새 로그 파일 생성 및 헤더 작성
     fileID = fopen(logFileName, 'w');
@@ -237,9 +237,10 @@ for Iteration = 1:Simulation.Setting.Iterations
             List.Vehicle.Active = List.Vehicle.Data(List.Vehicle.Data(:,2)>0,:);
             List.Vehicle.Object = GetAcceleration(List.Vehicle.Object, List.Vehicle.Data, Parameter.Veh);
 
-            if Simulation.Setting.GreedyAlloc
+            if Simulation.Setting.GreedyAlloc %&& mod(Time, cycle_GRAPE) == cycle_GRAPE-1
                 environment = GRAPE_main(List,Parameter,Simulation.Setting,Iteration);
                 lane_alloc = GRAPE_instance(environment).Alloc;
+                GRAPE_done = 1;
 
             elseif mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0  %&& Time > 8
                 disp("calling Grape Instance. . . | "+ Time);
@@ -269,7 +270,7 @@ for Iteration = 1:Simulation.Setting.Iterations
                 current_vehicle = List.Vehicle.Object{vehicle_id};
                 current_lane = List.Vehicle.Object{vehicle_id}.Lane; 
                 
-                if GRAPE_done == 1 || Simulation.Setting.GreedyAlloc
+                if GRAPE_done == 1 %|| Simulation.Setting.GreedyAlloc
                     desired_lane = lane_alloc(i);
                     current_vehicle.temp_GRAPE_result = desired_lane;
                 
@@ -346,13 +347,13 @@ for Iteration = 1:Simulation.Setting.Iterations
                     spawn_time = List.Vehicle.Object{List.Vehicle.Active(i,1)}.EntryTime;
                     exit_time = Time;
                     travel_time = exit_time - spawn_time;
-                    exit_location = List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location * Parameter.Map.Scale;
+                    exit_location = List.Vehicle.Active(i,4) * Parameter.Map.Scale;
 
                     travel_times = [travel_times, travel_time];
 
                     SaveFolder = 'C:\Users\user\Desktop\250326_0409';
                     logFileName = fullfile(SaveFolder, ...
-                        ['log.txt']);
+                        [videomemo '_log.txt']);
                     fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
                     fprintf(fileID,'Through Vehicle %d exited at location %.2f m with travel time %.2f s\n', ...
                             List.Vehicle.Object{List.Vehicle.Active(i,1)}.ID, exit_location, travel_time);
@@ -363,12 +364,12 @@ for Iteration = 1:Simulation.Setting.Iterations
                     TotalVehicles = TotalVehicles - 1;
                 
 
-                elseif List.Vehicle.Object{List.Vehicle.Active(i,1)}.ExitState >= 0 && List.Vehicle.Active(i,4) * Parameter.Map.Scale >= List.Vehicle.Object{List.Vehicle.Active(i,1)}.Exit - 2 
+                elseif List.Vehicle.Object{List.Vehicle.Active(i,1)}.ExitState >= 0 && List.Vehicle.Active(i,4) * Parameter.Map.Scale >= List.Vehicle.Object{List.Vehicle.Active(i,1)}.Exit - 1 
                     % record travel time, avg speed
                     spawn_time = List.Vehicle.Object{List.Vehicle.Active(i,1)}.EntryTime;
                     exit_time = Time;
                     travel_time = exit_time - spawn_time;
-                    exit_location = List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location * Parameter.Map.Scale;
+                    exit_location = List.Vehicle.Active(i,4) * Parameter.Map.Scale;
 
                     %travel_times = [travel_times, travel_time];
 
@@ -378,6 +379,13 @@ for Iteration = 1:Simulation.Setting.Iterations
                     else
                         exit_fail_count = exit_fail_count + 1;  % 🔹 최우측 차선이 아니면 exit fail로 기록
                     end
+                    SaveFolder = 'C:\Users\user\Desktop\250326_0409';
+                    logFileName = fullfile(SaveFolder, ...
+                        [videomemo '_log.txt']);
+                    fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
+                    fprintf(fileID,'Exit Vehicle %d exited at location %.2f m with travel time %.2f s\n', ...
+                            List.Vehicle.Object{List.Vehicle.Active(i,1)}.ID, exit_location, travel_time);
+                    fclose(fileID);
                     
                     
                     % remove vehicle
@@ -428,7 +436,7 @@ for Iteration = 1:Simulation.Setting.Iterations
 
         SaveFolder = 'C:\Users\user\Desktop\250326_0409';
         logFileName = fullfile(SaveFolder, ...
-            ['log.txt']);
+            [videomemo '_log.txt']);
         fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
         fprintf(fileID,'through avg travel time %.2f s\n', avg_travel_time);
         fclose(fileID);
