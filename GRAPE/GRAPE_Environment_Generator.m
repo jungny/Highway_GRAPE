@@ -71,6 +71,7 @@ function environment = GRAPE_Environment_Generator(List, Parameter,Setting,testi
                     decelflag = false;
                     leftflag = false;
                     rightflag = false;
+
                 
                     % (4) 내가 감속 중이면 decelflag
                     if obj.Acceleration < -1 && obj.Velocity < 25
@@ -105,13 +106,22 @@ function environment = GRAPE_Environment_Generator(List, Parameter,Setting,testi
                         end
                 
                         if right_front_dist > cur_front_dist  % (5)
-                            rightflag = true;
+                            if right_front_dist == left_front_dist
+                                rightflag = true; % leftflag = already true
+                            elseif right_front_dist > left_front_dist
+                                rightflag = true;
+                                leftflag = false;
+                            % else means right_front_dist < left_front_dist -> not need to change any flag
+                            end
                         end
                     end
                 
                     % (4)+(5): 감속 중이고, 양옆 차선 선행차가 더 멀면 → 해당 차선 weight 크게
                     weights = ones(Parameter.Map.Lane, 1);
-                    if decelflag && leftflag
+                    if decelflag && leftflag && rightflag
+                        weights(currentLane - 1) = 2;
+                        weights(currentLane + 1) = 2;
+                    elseif decelflag && leftflag
                         weights(currentLane - 1) = 2;
                     elseif decelflag && rightflag
                         weights(currentLane + 1) = 2;
@@ -240,7 +250,7 @@ function [front_vehicle, front_distance] = GetFrontVehicle(obj, targetLane, List
     distances = lane_vehicles(:,4) * Parameter.Map.Scale - current_x;
 
     % 선행 차량 거리 필터링
-    front_distances = distances(distances >= 0);
+    front_distances = distances(distances >= 0 & distances <= 200);
 
     % 초기화
     front_vehicle = [];
