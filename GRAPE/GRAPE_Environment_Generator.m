@@ -71,6 +71,9 @@ function environment = GRAPE_Environment_Generator(List, Parameter,Setting,testi
                     decelflag = false;
                     leftflag = false;
                     rightflag = false;
+                    %cur_front_dist = NaN;
+                    left_front_dist = -inf;
+                    right_front_dist = -inf;
 
                 
                     % (4) 내가 감속 중이면 decelflag
@@ -79,7 +82,8 @@ function environment = GRAPE_Environment_Generator(List, Parameter,Setting,testi
                     end
                 
                     % 현재 차선의 선행 차량 거리
-                    [cur_front_vehicle, cur_front_dist] = GetFrontVehicle(obj, currentLane, List, Parameter);
+                    [cur_front_vehicle, front_dist] = GetFrontVehicle(obj, currentLane, List, Parameter);
+                    cur_front_dist = front_dist; 
                     if isempty(cur_front_vehicle)
                         cur_front_dist = inf;
                     end
@@ -87,7 +91,8 @@ function environment = GRAPE_Environment_Generator(List, Parameter,Setting,testi
                     % 왼쪽 차선 조건
                     if currentLane > 1
                         leftLane = currentLane - 1;
-                        [left_front_vehicle, left_front_dist] = GetFrontVehicle(obj, leftLane, List, Parameter);
+                        [left_front_vehicle, front_dist] = GetFrontVehicle(obj, leftLane, List, Parameter);
+                        left_front_dist = front_dist;
                         if isempty(left_front_vehicle)
                             left_front_dist = inf;
                         end
@@ -100,7 +105,8 @@ function environment = GRAPE_Environment_Generator(List, Parameter,Setting,testi
                     % 오른쪽 차선 조건
                     if currentLane < Parameter.Map.Lane
                         rightLane = currentLane + 1;
-                        [right_front_vehicle, right_front_dist] = GetFrontVehicle(obj, rightLane, List, Parameter);
+                        [right_front_vehicle, front_dist] = GetFrontVehicle(obj, rightLane, List, Parameter);
+                        right_front_dist = front_dist;
                         if isempty(right_front_vehicle)
                             right_front_dist = inf;
                         end
@@ -136,77 +142,6 @@ function environment = GRAPE_Environment_Generator(List, Parameter,Setting,testi
                     t_demand(lane, i) = normalized_weights(lane); 
                 end
 
-            end
-
-
-
-        case 'Test'
-            for i = 1:size(List.Vehicle.Active, 1)
-                vehicle_id = List.Vehicle.Active(i, 1);  % 차량 ID
-                vehicle_lane = List.Vehicle.Object{vehicle_id}.Lane;
-                transition_distance = 300 + 15*(Parameter.Map.Lane-vehicle_lane)^2;
-                distance_to_exit = List.Vehicle.Object{vehicle_id}.Exit - ...
-                                    List.Vehicle.Object{vehicle_id}.Location * Parameter.Map.Scale;  % Exit까지 거리
-
-                delta_d = transition_distance - distance_to_exit;
-                % Case 1: Distance greater than transition distance (uniform weights)
-                if delta_d<0 % distance_to_exit > transition_distance
-                    weights = ones(Parameter.Map.Lane, 1) / Parameter.Map.Lane;  % 균일 분포
-                else
-                    % Case 2: Distance less than or equal to transition distance
-                    for lane = 1:Parameter.Map.Lane
-                        k = 2; % k 작을수록 lane별 더 극단적인 차이가 발생 
-                        % Weight increases as lane number increases
-                        raw_weights(lane) = exp(double(-(transition_distance - distance_to_exit) / (k * lane)));
-                    end
-                    
-                    % Normalize weights to ensure they sum to 1
-                    weights = raw_weights / sum(raw_weights);
-                end
-            
-                % t_demand에 반영
-                for lane = 1:Parameter.Map.Lane
-                    normalized_weights(lane) = floor(weights(lane)*100)/100;
-                    t_demand(lane, i) = size(List.Vehicle.Active, 1)*normalized_weights(lane);  % vehicle 수 곱해 비율 유지
-                end
-            end
-        
-        case 'ES' % exponential strategy
-            for i = 1:size(List.Vehicle.Active, 1)
-                vehicle_id = List.Vehicle.Active(i, 1);  % 차량 ID
-                vehicle_lane = List.Vehicle.Object{vehicle_id}.Lane;
-                transition_distance = 300 + 15*(Parameter.Map.Lane-vehicle_lane)^2;
-
-                exit_list = Parameter.Map.Exit;
-                vehicle_exit = List.Vehicle.Object{vehicle_id}.Exit;
-                vehicle_x_position = List.Vehicle.Object{vehicle_id}.Location * Parameter.Map.Scale;
-                distance_to_exit = vehicle_exit - vehicle_x_position;
-
-                exit_idx = find(exit_list == vehicle_exit, 1);
-                delta_d = transition_distance - distance_to_exit;
-
-
-                if (exit_idx > 1 && delta_d >= 0 && vehicle_x_position > exit_list(exit_idx - 1)) ...
-                    || (exit_idx == 1 && delta_d >= 0)
-                    % Case 2: Distance less than or equal to transition distance
-                    for lane = 1:Parameter.Map.Lane
-                        k = 2; % k 작을수록 lane별 더 극단적인 차이가 발생 
-                        % Weight increases as lane number increases
-                        raw_weights(lane) = exp(double(-(transition_distance - distance_to_exit) / (k * lane)));
-                    end
-                    % Normalize weights to ensure they sum to 1
-                    weights = raw_weights / sum(raw_weights);
-
-                % Case 1 (uniform weights)
-                else
-                    weights = ones(Parameter.Map.Lane, 1) / Parameter.Map.Lane;  % 균일 분포
-                end
-            
-                % t_demand에 반영
-                for lane = 1:Parameter.Map.Lane
-                    normalized_weights(lane) = floor(weights(lane)*100)/100;
-                    t_demand(lane, i) = size(List.Vehicle.Active, 1)*normalized_weights(lane);  % vehicle 수 곱해 비율 유지
-                end
             end
     end
 
