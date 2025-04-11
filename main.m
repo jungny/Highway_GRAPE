@@ -10,11 +10,24 @@ Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250409_0423';
 
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
-Simulation.Setting.RecordVideo =0 ;  % 1: Record video file, 0: Do not record
-Simulation.Setting.ExitPercent = 50;
-memo = 'test';
-videomemo = 'test';
+Simulation.Setting.RecordVideo = 1 ;  % 1: Record video file, 0: Do not record
+Simulation.Setting.ExitPercent = 80;
+memo = '수정전';
+videomemo = '수정전';
 exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
+
+Simulation.Setting.GRAPEmode = 2;
+% 0: GRAPE, 1: Greedy, 2: CycleGreedy
+if Simulation.Setting.GRAPEmode == 0
+    memo = [memo ' | GRAPE'];
+    videomemo = [videomemo '_GRAPE'];
+elseif Simulation.Setting.GRAPEmode == 1
+    memo = [memo ' | Greedy'];
+    videomemo = [videomemo '_Greedy'];
+else % Simulation.Setting.GRAPEmode == 2
+    memo = [memo ' | CycleGreedy'];
+    videomemo = [videomemo '_CycleGreedy'];
+end
 
 if exitpercent == 20
     memo = [memo ' | Exit : Through = 2 : 8'];
@@ -76,17 +89,17 @@ if Simulation.Setting.SpawnType % If vehicles are spawned manually based on pred
 end
 
 % GreedyAlloc 여부를 아이콘으로 변환
-if Simulation.Setting.GreedyAlloc == 1
-    greedy_status = 'GRAPE ❌';
-    greedy_status2 = 'Greedy';
-else
-    greedy_status = 'GRAPE ⭕';
-    greedy_status2 = 'GRAPE';
-end
+% if Simulation.Setting.GreedyAlloc == 1
+%     greedy_status = 'GRAPE ❌';
+%     greedy_status2 = 'Greedy';
+% else
+%     greedy_status = 'GRAPE ⭕';
+%     greedy_status2 = 'GRAPE';
+% end
 
 % 🔹 엑셀 파일 경로 설정
 timestamp = datestr(now, 'HH-MM');  % 현재 시간 가져오기 (시-분-초 형식)
-filename = fullfile(Simulation.Setting.SaveFolder, ['noDLC_' greedy_status2 '_' Simulation.Setting.Util_type '_' timestamp '.xlsx']);
+%filename = fullfile(Simulation.Setting.SaveFolder, ['noDLC_' greedy_status2 '_' Simulation.Setting.Util_type '_' timestamp '.xlsx']);
 sheet = 'Results';
 
 % 🔹 실험할 참가자 모드 설정
@@ -237,12 +250,23 @@ for Iteration = 1:Simulation.Setting.Iterations
             List.Vehicle.Active = List.Vehicle.Data(List.Vehicle.Data(:,2)>0,:);
             List.Vehicle.Object = GetAcceleration(List.Vehicle.Object, List.Vehicle.Data, Parameter.Veh);
 
-            if Simulation.Setting.GreedyAlloc %&& mod(Time, cycle_GRAPE) == cycle_GRAPE-1
+            % if Simulation.Setting.GreedyAlloc %&& mod(Time, cycle_GRAPE) == cycle_GRAPE-1
+            %     environment = GRAPE_Environment_Generator(List,Parameter,Simulation.Setting,Iteration);
+            %     lane_alloc = GRAPE_instance(environment).Alloc;
+            %     GRAPE_done = 1;
+
+            if Simulation.Setting.GRAPEmode == 1 % Greedy (no cycle, at any time step)
+                environment = GRAPE_Environment_Generator(List,Parameter,Simulation.Setting,Iteration);
+                lane_alloc = GRAPE_instance(environment).Alloc;
+
+            elseif Simulation.Setting.GRAPEmode == 2 ... % CycleGreedy (yes cycle) 
+                   && mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0
                 environment = GRAPE_Environment_Generator(List,Parameter,Simulation.Setting,Iteration);
                 lane_alloc = GRAPE_instance(environment).Alloc;
                 GRAPE_done = 1;
 
             elseif mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0  %&& Time > 8
+                % GRAPE (yes cycle)
                 disp("calling Grape Instance. . . | "+ Time);
                 environment = GRAPE_Environment_Generator(List,Parameter,Simulation.Setting,Iteration);
                 try
@@ -270,7 +294,7 @@ for Iteration = 1:Simulation.Setting.Iterations
                 current_vehicle = List.Vehicle.Object{vehicle_id};
                 current_lane = List.Vehicle.Object{vehicle_id}.Lane; 
                 
-                if GRAPE_done == 1 %|| Simulation.Setting.GreedyAlloc
+                if GRAPE_done == 1 || Simulation.Setting.GRAPEmode == 1
                     desired_lane = lane_alloc(i);
                     current_vehicle.temp_GRAPE_result = desired_lane;
                 
@@ -437,13 +461,15 @@ for Iteration = 1:Simulation.Setting.Iterations
         if isempty(travel_times)
             avg_travel_time = NaN;
         end
-
-        SaveFolder = 'C:\Users\user\Desktop\250326_0409';
-        logFileName = fullfile(SaveFolder, ...
-            [videomemo '_log.txt']);
-        fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
-        fprintf(fileID,'through avg travel time %.2f s\n', avg_travel_time);
-        fclose(fileID);
+        
+        if Simulation.Setting.RecordLog
+            SaveFolder = 'C:\Users\user\Desktop\250326_0409';
+            logFileName = fullfile(SaveFolder, ...
+                [videomemo '_log.txt']);
+            fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
+            fprintf(fileID,'through avg travel time %.2f s\n', avg_travel_time);
+            fclose(fileID);
+        end
 
         % 🔹 각 mode_idx마다 결과 저장 (Avg Travel Time + Exit Fail Rate)
         result_row{2+mode_idx} = avg_travel_time;

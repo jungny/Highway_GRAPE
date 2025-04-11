@@ -142,12 +142,12 @@ while a_satisfied~=n
         %%%%% Line 6-11 of Algorithm 1
         if Best_utility == 0
             Alloc_(i,1) = 0; % Go th the void
-            if environment.Setting.GreedyAlloc
+            if environment.Setting.GRAPEmode ~= 0 % 1(Greedy) or 2(CycleGreedy) 
                 GreedyAlloc(i,1) = 0;
             end
         else
             Alloc_(i,1) = Best_task;
-            if environment.Setting.GreedyAlloc
+            if environment.Setting.GRAPEmode ~= 0 % 1(Greedy) or 2(CycleGreedy) 
                 GreedyAlloc(i,1) = Best_task;
             end
         end
@@ -168,7 +168,7 @@ while a_satisfied~=n
         Timestamp_agent_current(i) = agent(i).time_stamp;        
     end
 
-    if environment.Setting.GreedyAlloc
+    if environment.Setting.GRAPEmode ~= 0 % 1(Greedy) or 2(CycleGreedy) 
         break
     end
     
@@ -267,7 +267,7 @@ while a_satisfied~=n
     iteration_history(Case) = iteration;
 end
 
-if environment.Setting.GreedyAlloc
+if environment.Setting.GRAPEmode ~= 0 % 1(Greedy) or 2(CycleGreedy) 
     output.Alloc = GreedyAlloc;
 else
 

@@ -188,7 +188,7 @@ function G = GRAPE_instance(environment)
 
     G.Alloc = output.Alloc;
 
-    if ~environment.Setting.GreedyAlloc
+    if environment.Setting.GRAPEmode == 0 % means GRAPE done 
         G.a_utility = output.a_utility;
         G.iteration = output.iteration;
         G.flag_problem = output.flag_problem; % If the result has a problem, then 1. 
