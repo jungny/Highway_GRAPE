@@ -7,13 +7,13 @@ Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
 Simulation.Setting.StopOnGrapeError = 1;
 Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
-Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250326_0409';
+Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250409_0423';
 
-Simulation.Setting.RecordLog = 1;    % 1: Record log file, 0: Do not record
-Simulation.Setting.RecordVideo =1 ;  % 1: Record video file, 0: Do not record
+Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
+Simulation.Setting.RecordVideo =0 ;  % 1: Record video file, 0: Do not record
 Simulation.Setting.ExitPercent = 50;
-memo = 'greedy  Baseline용 GS, Bubble 50m';
-videomemo = 'GreedyBaseGS';
+memo = 'test';
+videomemo = 'test';
 exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
 
 if exitpercent == 20
@@ -46,7 +46,7 @@ Simulation.Setting.Iterations = 1; % number of iterations
 Simulation.Setting.Time = 10000;
 
 Simulation.Setting.SpawnType = 1; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times, 2: Debug mode
-Simulation.Setting.GreedyAlloc = 1; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
+Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
 Simulation.Setting.BubbleRadiusList = [50];
 %Simulation.Setting.BubbleRadiusList = [0];
@@ -238,13 +238,13 @@ for Iteration = 1:Simulation.Setting.Iterations
             List.Vehicle.Object = GetAcceleration(List.Vehicle.Object, List.Vehicle.Data, Parameter.Veh);
 
             if Simulation.Setting.GreedyAlloc %&& mod(Time, cycle_GRAPE) == cycle_GRAPE-1
-                environment = GRAPE_main(List,Parameter,Simulation.Setting,Iteration);
+                environment = GRAPE_Environment_Generator(List,Parameter,Simulation.Setting,Iteration);
                 lane_alloc = GRAPE_instance(environment).Alloc;
                 GRAPE_done = 1;
 
             elseif mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0  %&& Time > 8
                 disp("calling Grape Instance. . . | "+ Time);
-                environment = GRAPE_main(List,Parameter,Simulation.Setting,Iteration);
+                environment = GRAPE_Environment_Generator(List,Parameter,Simulation.Setting,Iteration);
                 try
                     GRAPE_output = GRAPE_instance(environment);
                     % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
@@ -350,14 +350,16 @@ for Iteration = 1:Simulation.Setting.Iterations
                     exit_location = List.Vehicle.Active(i,4) * Parameter.Map.Scale;
 
                     travel_times = [travel_times, travel_time];
-
-                    SaveFolder = 'C:\Users\user\Desktop\250326_0409';
-                    logFileName = fullfile(SaveFolder, ...
-                        [videomemo '_log.txt']);
-                    fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
-                    fprintf(fileID,'Through Vehicle %d exited at location %.2f m with travel time %.2f s\n', ...
-                            List.Vehicle.Object{List.Vehicle.Active(i,1)}.ID, exit_location, travel_time);
-                    fclose(fileID);
+                    
+                    if Simulation.Setting.RecordLog 
+                        SaveFolder = 'C:\Users\user\Desktop\250409_0423';
+                        logFileName = fullfile(SaveFolder, ...
+                            [videomemo '_log.txt']);
+                        fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
+                        fprintf(fileID,'Through Vehicle %d exited at location %.2f m with travel time %.2f s\n', ...
+                                List.Vehicle.Object{List.Vehicle.Active(i,1)}.ID, exit_location, travel_time);
+                        fclose(fileID);
+                    end
 
                     RemoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)})
                     List.Vehicle.Object{List.Vehicle.Active(i,1)} = [];
@@ -379,13 +381,15 @@ for Iteration = 1:Simulation.Setting.Iterations
                     else
                         exit_fail_count = exit_fail_count + 1;  % 🔹 최우측 차선이 아니면 exit fail로 기록
                     end
-                    SaveFolder = 'C:\Users\user\Desktop\250326_0409';
-                    logFileName = fullfile(SaveFolder, ...
-                        [videomemo '_log.txt']);
-                    fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
-                    fprintf(fileID,'Exit Vehicle %d exited at location %.2f m with travel time %.2f s\n', ...
-                            List.Vehicle.Object{List.Vehicle.Active(i,1)}.ID, exit_location, travel_time);
-                    fclose(fileID);
+                    if Simulation.Setting.RecordLog 
+                        SaveFolder = 'C:\Users\user\Desktop\250409_0423';
+                        logFileName = fullfile(SaveFolder, ...
+                            [videomemo '_log.txt']);
+                        fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
+                        fprintf(fileID,'Exit Vehicle %d exited at location %.2f m with travel time %.2f s\n', ...
+                                List.Vehicle.Object{List.Vehicle.Active(i,1)}.ID, exit_location, travel_time);
+                        fclose(fileID);
+                    end
                     
                     
                     % remove vehicle

@@ -30,7 +30,7 @@ function [SpawnSeed, NewListOrTotalVehicles] = GetSeed(Setting, Parameter, Total
 
             SpawnSeed(6,:) = zeros(1,SpawnCount); % redundant property
         case 1
-            TotalVehicles = 30;
+            TotalVehicles = 15;
             SpawnSeed = zeros(6,TotalVehicles);
             
             % 1: Vehicle ID, 2: Spawn Lane

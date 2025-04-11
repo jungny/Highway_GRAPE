@@ -130,9 +130,6 @@ while a_satisfied~=n
                 n_participants = 1;
                 Candidate(t) = Get_Util(i, t, n_participants,environment);
             else
-                if i == 10 || i == 11
-                    disp("cje");
-                end
                 Candidate(t) = Get_Util(i, t, n_participants,environment);
             end
         end
@@ -140,9 +137,6 @@ while a_satisfied~=n
         % Select Best alternative
         [Best_utility,Best_task] = max(Candidate);
         %%%%% End of Line 5 of Algorithm 1
-        if i == 10 || i == 11
-            disp("checkpoint");
-        end
         
         
         %%%%% Line 6-11 of Algorithm 1
