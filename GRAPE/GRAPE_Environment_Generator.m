@@ -1,4 +1,11 @@
 function environment = GRAPE_Environment_Generator(List, Parameter,Setting,testiteration)
+    % AllocationLaneDuringGRAPE 초기화
+    for i = 1:size(List.Vehicle.Active, 1)
+        vehicle_id = List.Vehicle.Active(i, 1); 
+        vehicle = List.Vehicle.Object{vehicle_id};
+        vehicle.AllocLaneDuringGRAPE = vehicle.Lane;
+    end
+    
     % a_location 생성
     a_location = zeros(size(List.Vehicle.Active, 1), 2);
     for i = 1:size(List.Vehicle.Active, 1)
@@ -167,7 +174,7 @@ function environment = GRAPE_Environment_Generator(List, Parameter,Setting,testi
     environment.Util_type = Setting.Util_type;
     environment.Setting = Setting;
     environment.Parameter = Parameter;
-
+    environment.List = List;
 
 end
 
@@ -179,7 +186,20 @@ function [front_vehicle, front_distance] = GetFrontVehicle(obj, targetLane, List
     current_x = double(obj.Location * Parameter.Map.Scale);
 
     % 목표 차선의 차량 필터링
-    lane_vehicles = List.Vehicle.Active(List.Vehicle.Active(:,3) == targetLane, :);
+    vehicle_ids = List.Vehicle.Active(:,1);  % 모든 vehicle id 추출
+    is_target = false(size(vehicle_ids));   % 논리 인덱싱 초기화
+    
+    for i = 1:length(vehicle_ids)
+        vid = vehicle_ids(i);
+        if isfield(List.Vehicle.Object{vid}, 'AllocLaneDuringGRAPE') && ...
+           ~isempty(List.Vehicle.Object{vid}.AllocLaneDuringGRAPE) && ...
+           List.Vehicle.Object{vid}.AllocLaneDuringGRAPE == targetLane
+            is_target(i) = true;
+        end
+    end
+    
+    % 필터링된 Active 정보
+    lane_vehicles = List.Vehicle.Active(is_target, :);
 
     % 모든 차량의 거리 계산
     distances = lane_vehicles(:,4) * Parameter.Map.Scale - current_x;
