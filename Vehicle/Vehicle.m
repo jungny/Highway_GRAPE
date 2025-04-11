@@ -20,6 +20,7 @@ classdef Vehicle < handle
         LaneChangeFlag
         PolitenessFactor
         IsChangingLane
+        AllocLaneDuringGRAPE
     end
 
     properties(Hidden = false) % Properties
@@ -77,6 +78,7 @@ classdef Vehicle < handle
             obj.ColorCount = 0;
             obj.IsChangingLane = false;
             obj.trajectory_plot = [];
+            obj.AllocLaneDuringGRAPE = [];
 
             % 고속도로에서는 방향(Destination) 관련 로직 불필요
             % 경로(Trajectory) 설정: 출발점(Source) → 도착점(Sink)

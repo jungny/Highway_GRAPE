@@ -29,6 +29,7 @@ MST = input.MST;
 MST_bubble = input.MST_bubble;
 environment = input.environment;
 Type = environment.Type;
+List = environment.List;
 
 %% For visualisation
 Alloc_history = zeros(n,10);
@@ -226,6 +227,16 @@ while a_satisfied~=n
         agent_(i).Alloc = agent(valid_agent_id).Alloc;
         agent_(i).time_stamp = agent(valid_agent_id).time_stamp;
         agent_(i).iteration = agent(valid_agent_id).iteration;
+
+        % task demand 계산 시 활용할 수 있도록 vehicle의 property에도 반영
+        % i는 List.Vehicle.Active(i, 1)의 i
+        vehicle_id = List.Vehicle.Active(i, 1); 
+        current_vehicle = List.Vehicle.Object{vehicle_id};
+        current_lane = current_vehicle.Lane;
+
+        if agent_(i).Alloc(i) ~= current_lane
+            current_vehicle.AllocLaneDuringGRAPE = agent_(i).Alloc(i);
+        end
         
         if min(agent(i).Alloc == agent_(i).Alloc)==1 % If local information is changed
         else

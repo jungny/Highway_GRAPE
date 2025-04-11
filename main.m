@@ -11,9 +11,9 @@ Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250409_0423';
 
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
 Simulation.Setting.RecordVideo =0 ;  % 1: Record video file, 0: Do not record
-Simulation.Setting.ExitPercent = 50;
-memo = 'test';
-videomemo = 'test';
+Simulation.Setting.ExitPercent = 20;
+memo = '수정후Greedy';
+videomemo = '수정후Greedy';
 exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
 
 if exitpercent == 20
@@ -46,7 +46,7 @@ Simulation.Setting.Iterations = 1; % number of iterations
 Simulation.Setting.Time = 10000;
 
 Simulation.Setting.SpawnType = 1; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times, 2: Debug mode
-Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
+Simulation.Setting.GreedyAlloc = 1; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
 Simulation.Setting.BubbleRadiusList = [50];
 %Simulation.Setting.BubbleRadiusList = [0];
@@ -438,12 +438,14 @@ for Iteration = 1:Simulation.Setting.Iterations
             avg_travel_time = NaN;
         end
 
-        SaveFolder = 'C:\Users\user\Desktop\250326_0409';
-        logFileName = fullfile(SaveFolder, ...
-            [videomemo '_log.txt']);
-        fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
-        fprintf(fileID,'through avg travel time %.2f s\n', avg_travel_time);
-        fclose(fileID);
+        if Simulation.Setting.RecordLog 
+            SaveFolder = 'C:\Users\user\Desktop\250326_0409';
+            logFileName = fullfile(SaveFolder, ...
+                [videomemo '_log.txt']);
+            fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
+            fprintf(fileID,'through avg travel time %.2f s\n', avg_travel_time);
+            fclose(fileID);
+        end
 
         % 🔹 각 mode_idx마다 결과 저장 (Avg Travel Time + Exit Fail Rate)
         result_row{2+mode_idx} = avg_travel_time;
