@@ -205,7 +205,7 @@ function [front_vehicle, front_distance] = GetFrontVehicle(obj, targetLane, List
     distances = lane_vehicles(:,4) * Parameter.Map.Scale - current_x;
 
     % 선행 차량 거리 필터링
-    front_distances = distances(distances >= 0 & distances <= 200);
+    front_distances = distances(distances > 0 & distances <= 200);
 
     % 초기화
     front_vehicle = [];
