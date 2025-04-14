@@ -10,13 +10,13 @@ Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250409_0423';
 
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
-Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
+Simulation.Setting.RecordVideo = 1;  % 1: Record video file, 0: Do not record
 Simulation.Setting.ExitPercent = 80;
-memo = '수정전';
-videomemo = '수정전';
+memo = '수정후';
+videomemo = '수정후';
 exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
 
-Simulation.Setting.GRAPEmode = 0;
+Simulation.Setting.GRAPEmode = 2;
 % 0: GRAPE, 1: Greedy, 2: CycleGreedy
 if Simulation.Setting.GRAPEmode == 0
     memo = [memo ' | GRAPE'];
@@ -296,9 +296,9 @@ for Iteration = 1:Simulation.Setting.Iterations
                 
                 if GRAPE_done == 1 || Simulation.Setting.GRAPEmode == 1
                     desired_lane = lane_alloc(i);
-                    current_vehicle.temp_GRAPE_result = desired_lane;
                 
                     if current_lane ~= desired_lane 
+                        current_vehicle.temp_GRAPE_result = desired_lane;
                         %List.Vehicle.Object{vehicle_id}.TargetLane = desired_lane;
                         %List.Vehicle.Object{vehicle_id}.LaneChangeFlag = 1; 
                         if abs(current_lane - desired_lane) > 1
