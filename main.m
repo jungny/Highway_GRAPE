@@ -272,9 +272,9 @@ for Iteration = 1:Simulation.Setting.Iterations
                 
                 if GRAPE_done == 1 %|| Simulation.Setting.GreedyAlloc
                     desired_lane = lane_alloc(i);
-                    current_vehicle.temp_GRAPE_result = desired_lane;
                 
                     if current_lane ~= desired_lane 
+                        current_vehicle.temp_GRAPE_result = desired_lane;
                         %List.Vehicle.Object{vehicle_id}.TargetLane = desired_lane;
                         %List.Vehicle.Object{vehicle_id}.LaneChangeFlag = 1; 
                         if abs(current_lane - desired_lane) > 1
