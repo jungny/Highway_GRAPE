@@ -38,6 +38,9 @@ function environment = GRAPE_Environment_Generator(List, Parameter,Setting,testi
 
             for i = 1:size(List.Vehicle.Active, 1)
                 vehicle_id = List.Vehicle.Active(i, 1);  % 차량 ID
+                if vehicle_id == 17
+                    disp("tdemand");
+                end
                 vehicle_lane = List.Vehicle.Object{vehicle_id}.Lane;
 
                 distance_to_exit = List.Vehicle.Object{vehicle_id}.Exit - ...
@@ -185,7 +188,7 @@ function [front_vehicle, front_distance] = GetFrontVehicle(obj, targetLane, List
     distances = lane_vehicles(:,4) * Parameter.Map.Scale - current_x;
 
     % 선행 차량 거리 필터링
-    front_distances = distances(distances >= 0 & distances <= 200);
+    front_distances = distances(distances > 0 & distances <= 200);
 
     % 초기화
     front_vehicle = [];
