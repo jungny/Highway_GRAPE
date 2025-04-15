@@ -182,7 +182,26 @@ function [front_vehicle, front_distance] = GetFrontVehicle(obj, targetLane, List
     current_x = double(obj.Location * Parameter.Map.Scale);
 
     % 목표 차선의 차량 필터링
-    lane_vehicles = List.Vehicle.Active(List.Vehicle.Active(:,3) == targetLane, :);
+    vehicle_ids = List.Vehicle.Active(:,1);  % 모든 vehicle id 추출
+    is_target = false(size(vehicle_ids));   % 논리 인덱싱 초기화
+    
+    for i = 1:length(vehicle_ids)
+        vid = vehicle_ids(i);
+        
+        if ~isempty(List.Vehicle.Object{vid}.TargetLane)
+            if List.Vehicle.Object{vid}.TargetLane == targetLane
+                is_target(i) = true;
+            end
+        else % vehicle.TargetLane is empty
+            if List.Vehicle.Object{vid}.Lane == targetLane
+                is_target(i) = true;
+            end
+        end
+
+    end
+    
+    % 필터링된 Active 정보
+    lane_vehicles = List.Vehicle.Active(is_target, :);
 
     % 모든 차량의 거리 계산
     distances = lane_vehicles(:,4) * Parameter.Map.Scale - current_x;
