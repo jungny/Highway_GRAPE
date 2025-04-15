@@ -3,7 +3,7 @@ function environment = GRAPE_Environment_Generator(List, Parameter,Setting,testi
     for i = 1:size(List.Vehicle.Active, 1)
         vehicle_id = List.Vehicle.Active(i, 1); 
         vehicle = List.Vehicle.Object{vehicle_id};
-        vehicle.AllocLaneDuringGRAPE = vehicle.Lane;
+        vehicle.AllocLaneDuringGRAPE = [];
     end
     
     % a_location 생성
@@ -89,7 +89,7 @@ function environment = GRAPE_Environment_Generator(List, Parameter,Setting,testi
                     end
                 
                     % 현재 차선의 선행 차량 거리
-                    [cur_front_vehicle, front_dist] = GetFrontVehicle(obj, currentLane, List, Parameter);
+                    [cur_front_vehicle, front_dist] = GetFrontVehicle(obj, currentLane, List, Parameter, Setting);
                     cur_front_dist = front_dist; 
                     if isempty(cur_front_vehicle)
                         cur_front_dist = inf;
@@ -98,7 +98,7 @@ function environment = GRAPE_Environment_Generator(List, Parameter,Setting,testi
                     % 왼쪽 차선 조건
                     if currentLane > 1
                         leftLane = currentLane - 1;
-                        [left_front_vehicle, front_dist] = GetFrontVehicle(obj, leftLane, List, Parameter);
+                        [left_front_vehicle, front_dist] = GetFrontVehicle(obj, leftLane, List, Parameter, Setting);
                         left_front_dist = front_dist;
                         if isempty(left_front_vehicle)
                             left_front_dist = inf;
@@ -112,7 +112,7 @@ function environment = GRAPE_Environment_Generator(List, Parameter,Setting,testi
                     % 오른쪽 차선 조건
                     if currentLane < Parameter.Map.Lane
                         rightLane = currentLane + 1;
-                        [right_front_vehicle, front_dist] = GetFrontVehicle(obj, rightLane, List, Parameter);
+                        [right_front_vehicle, front_dist] = GetFrontVehicle(obj, rightLane, List, Parameter, Setting);
                         right_front_dist = front_dist;
                         if isempty(right_front_vehicle)
                             right_front_dist = inf;
@@ -129,6 +129,9 @@ function environment = GRAPE_Environment_Generator(List, Parameter,Setting,testi
                         end
                     end
                 
+                    % 각 차선의 선행차량과의 거리를 한 줄로 출력
+                    % fprintf('V%d(L%d) - Cur:%.1f, L:%.1f, R:%.1f\n', vehicle_id, currentLane, cur_front_dist, left_front_dist, right_front_dist);
+                
                     % (4)+(5): 감속 중이고, 양옆 차선 선행차가 더 멀면 → 해당 차선 weight 크게
                     weights = ones(Parameter.Map.Lane, 1);
                     if decelflag && leftflag && rightflag
@@ -141,6 +144,10 @@ function environment = GRAPE_Environment_Generator(List, Parameter,Setting,testi
                     else
                         weights(currentLane) = 2;  % 조건 안 맞으면 원래 차선 유지
                     end
+                end
+
+                if vehicle_id == 17
+                    %disp(weights);
                 end
                 
 
@@ -181,7 +188,7 @@ end
 %%
 %%
 
-function [front_vehicle, front_distance] = GetFrontVehicle(obj, targetLane, List, Parameter)
+function [front_vehicle, front_distance] = GetFrontVehicle(obj, targetLane, List, Parameter, Setting)
     % 현재 차선의 선행 차량 찾기
     current_x = double(obj.Location * Parameter.Map.Scale);
 
@@ -191,10 +198,35 @@ function [front_vehicle, front_distance] = GetFrontVehicle(obj, targetLane, List
     
     for i = 1:length(vehicle_ids)
         vid = vehicle_ids(i);
-        if isfield(List.Vehicle.Object{vid}, 'AllocLaneDuringGRAPE') && ...
-           ~isempty(List.Vehicle.Object{vid}.AllocLaneDuringGRAPE) && ...
-           List.Vehicle.Object{vid}.AllocLaneDuringGRAPE == targetLane
-            is_target(i) = true;
+        
+        if Setting.GRAPEmode == 0 % GRAPE
+            if ~isempty(List.Vehicle.Object{vid}.AllocLaneDuringGRAPE) 
+                if List.Vehicle.Object{vid}.AllocLaneDuringGRAPE == targetLane
+                    is_target(i) = true;
+                end
+            else % vehicle.AllocLaneDuringGRAPE is empty. 
+                 % not empty at very start of the GRAPE instance or the veh doesnot change lane during phase 2 
+                if ~isempty(List.Vehicle.Object{vid}.TargetLane) % this would not happen bc all vehs
+                                                                 % normally success their lc before another GRAPE
+                    if List.Vehicle.Object{vid}.TargetLane == targetLane
+                        is_target(i) = true;
+                    end
+                else % vehicle.TargetLane is empty
+                    if List.Vehicle.Object{vid}.Lane == targetLane
+                        is_target(i) = true;
+                    end
+                end
+            end
+        else % Greedy or CycleGreedy
+            if ~isempty(List.Vehicle.Object{vid}.TargetLane)
+                if List.Vehicle.Object{vid}.TargetLane == targetLane
+                    is_target(i) = true;
+                end
+            else % vehicle.TargetLane is empty
+                if List.Vehicle.Object{vid}.Lane == targetLane
+                    is_target(i) = true;
+                end
+            end
         end
     end
     

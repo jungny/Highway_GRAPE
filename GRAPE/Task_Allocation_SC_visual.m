@@ -234,8 +234,15 @@ while a_satisfied~=n
         current_vehicle = List.Vehicle.Object{vehicle_id};
         current_lane = current_vehicle.Lane;
  
-        if agent_(i).Alloc(i) ~= current_lane
-            current_vehicle.AllocLaneDuringGRAPE = agent_(i).Alloc(i);
+        if isempty(current_vehicle.AllocLaneDuringGRAPE)
+            if agent_(i).Alloc(i) ~= current_lane
+                current_vehicle.AllocLaneDuringGRAPE = agent_(i).Alloc(i);
+            end
+        else
+            if agent_(i).Alloc(i) ~= current_vehicle.AllocLaneDuringGRAPE
+                % not needed but if loop for debug
+                current_vehicle.AllocLaneDuringGRAPE = agent_(i).Alloc(i);
+            end
         end
 
         if min(agent(i).Alloc == agent_(i).Alloc)==1 % If local information is changed
