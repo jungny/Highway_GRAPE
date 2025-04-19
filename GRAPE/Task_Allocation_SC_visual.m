@@ -77,6 +77,9 @@ Timestamp_agent_current = zeros(n,1);
 
 %% GRAPE Algorithm
 while a_satisfied~=n
+
+    environment = GRAPE_Environment_Generator(List,environment.Parameter,environment.Setting);
+    List = environment.List;
     
     for i=1:n % For Each Agent 
         

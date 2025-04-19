@@ -6,12 +6,12 @@ addpath('Map\','Vehicle\','Signal\','Manager\','v2v\','GRAPE\')
 Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
 Simulation.Setting.StopOnGrapeError = 1;
-Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
+Simulation.Setting.PauseTime = 0.02; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250409_0423';
 
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
 Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
-Simulation.Setting.ExitPercent = 20;
+Simulation.Setting.ExitPercent = -1;
 memo = '2차수정';
 videomemo = '2차수정';
 exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
@@ -29,7 +29,10 @@ else % Simulation.Setting.GRAPEmode == 2
     videomemo = [videomemo '_CycleGreedy'];
 end
 
-if exitpercent == 20
+if exitpercent == 0
+    memo = [memo ' | Exit : Through = 0 : 10'];
+    videomemo = [videomemo '_0%_'];
+elseif exitpercent == 20
     memo = [memo ' | Exit : Through = 2 : 8'];
     videomemo = [videomemo '_20%_'];
 elseif exitpercent == 50
@@ -58,10 +61,10 @@ Simulation.Setting.InitialRandomSeed = 2;
 Simulation.Setting.Iterations = 1; % number of iterations
 Simulation.Setting.Time = 10000;
 
-Simulation.Setting.SpawnType = 1; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times, 2: Debug mode
+Simulation.Setting.SpawnType = 4; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times, 2: Debug mode
 Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
-Simulation.Setting.BubbleRadiusList = [50];
+Simulation.Setting.BubbleRadiusList = [0];
 %Simulation.Setting.BubbleRadiusList = [0];
 Simulation.Setting.Util_type = 'GS'; 
 %Simulation.Setting.Util_type = 'HOS'; 
@@ -231,7 +234,7 @@ for Iteration = 1:Simulation.Setting.Iterations
                 end
 
             elseif Simulation.Setting.SpawnType == 1 || Simulation.Setting.SpawnType == 2 || ...
-                   Simulation.Setting.SpawnType == 3
+                   Simulation.Setting.SpawnType == 3 ||  Simulation.Setting.SpawnType == 4
                 if firstCount == 0
                     [SpawnVehicle, TotalVehicles] = GetSeed(Simulation.Setting, Parameter, TotalVehicles, SpawnLanes, NextArrivalTime);
                     List.Vehicle.Object = cell(size(SpawnVehicle,2),1);
@@ -251,24 +254,24 @@ for Iteration = 1:Simulation.Setting.Iterations
             List.Vehicle.Object = GetAcceleration(List.Vehicle.Object, List.Vehicle.Data, Parameter.Veh);
 
             % if Simulation.Setting.GreedyAlloc %&& mod(Time, cycle_GRAPE) == cycle_GRAPE-1
-            %     environment = GRAPE_Environment_Generator(List,Parameter,Simulation.Setting,Iteration);
+            %     environment = GRAPE_Environment_Generator(List,Parameter,Simulation.Setting);
             %     lane_alloc = GRAPE_instance(environment).Alloc;
             %     GRAPE_done = 1;
 
             if Simulation.Setting.GRAPEmode == 1 % Greedy (no cycle, at any time step)
-                environment = GRAPE_Environment_Generator(List,Parameter,Simulation.Setting,Iteration);
+                environment = GRAPE_Environment_Generator(List,Parameter,Simulation.Setting);
                 lane_alloc = GRAPE_instance(environment).Alloc;
 
             elseif Simulation.Setting.GRAPEmode == 2 ... % CycleGreedy (yes cycle) 
                    && mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0
-                environment = GRAPE_Environment_Generator(List,Parameter,Simulation.Setting,Iteration);
+                environment = GRAPE_Environment_Generator(List,Parameter,Simulation.Setting);
                 lane_alloc = GRAPE_instance(environment).Alloc;
                 GRAPE_done = 1;
 
             elseif mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0  %&& Time > 8
                 % GRAPE (yes cycle)
                 disp("calling Grape Instance. . . | "+ Time);
-                environment = GRAPE_Environment_Generator(List,Parameter,Simulation.Setting,Iteration);
+                environment = GRAPE_Environment_Generator(List,Parameter,Simulation.Setting);
                 try
                     GRAPE_output = GRAPE_instance(environment);
                     % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당

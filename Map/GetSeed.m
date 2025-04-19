@@ -155,6 +155,26 @@ function [SpawnSeed, NewListOrTotalVehicles] = GetSeed(Setting, Parameter, Total
 
             NewListOrTotalVehicles = TotalVehicles;
 
+        case 4 % ALDG 구현을 위한 세팅. 모두가 2차선에서 생성
+            TotalVehicles = 2;
+            SpawnSeed = zeros(6,TotalVehicles);
+            
+            % 1: Vehicle ID, 2: Spawn Lane
+            SpawnSeed(1,:) = 1:TotalVehicles;
+            SpawnSeed(2,1) = 1;
+            SpawnSeed(2,2) = 2;
+            % 3: Exit, 4: Politeness, 5: Spawn Position
+            SpawnSeed(3,1) = Parameter.Map.Exit(1);
+            SpawnSeed(3,2) = Parameter.Map.Exit(2);
+            
+            SpawnSeed(4,:) = ones(1,TotalVehicles);
+            SpawnSeed(5,:) = ones(1,TotalVehicles);
+            
+            SpawnSeed(6,1) = 0;     % 첫 번째 차량 스폰 시간
+            SpawnSeed(6,2) = 0.7;   % 두 번째 차량 (거의 동시에)
+            
+            NewListOrTotalVehicles = TotalVehicles;
+
     end
     
 end

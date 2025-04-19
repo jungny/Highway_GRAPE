@@ -1,4 +1,4 @@
-function environment = GRAPE_Environment_Generator(List, Parameter,Setting,testiteration)
+function environment = GRAPE_Environment_Generator(List, Parameter,Setting)
     % AllocationLaneDuringGRAPE 초기화
     for i = 1:size(List.Vehicle.Active, 1)
         vehicle_id = List.Vehicle.Active(i, 1); 
@@ -84,9 +84,11 @@ function environment = GRAPE_Environment_Generator(List, Parameter,Setting,testi
 
                 
                     % (4) 내가 감속 중이면 decelflag
-                    if obj.Acceleration < -1 && obj.Velocity < 25
-                        decelflag = true;
-                    end
+                    % if obj.Acceleration < -1 && obj.Velocity < 25
+                    %     decelflag = true;
+                    % end
+                    % ALDG의 효과가 나타나는지 확인하기 위해 조건 간소화
+                    decelflag = true;
                 
                     % 현재 차선의 선행 차량 거리
                     [cur_front_vehicle, front_dist] = GetFrontVehicle(obj, currentLane, List, Parameter, Setting);
@@ -175,7 +177,6 @@ function environment = GRAPE_Environment_Generator(List, Parameter,Setting,testi
     environment.Alloc_current = Alloc_current;
     environment.Type = Setting.NumberOfParticipants;
     environment.LogFile = Setting.LogPath;
-    environment.test_iteration = testiteration;
     environment.x_relation = GetXRelation(List);
     environment.number_of_tasks = Parameter.Map.Lane;
     environment.Util_type = Setting.Util_type;
