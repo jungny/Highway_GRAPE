@@ -12,8 +12,8 @@ Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250409_0423';
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
 Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
 Simulation.Setting.ExitPercent = -1;
-memo = '2차수정';
-videomemo = '2차수정';
+memo = 'ALDG-2대예시-후';
+videomemo = 'ALDG_2대예시_후';
 exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
 
 Simulation.Setting.GRAPEmode = 0;
@@ -64,7 +64,7 @@ Simulation.Setting.Time = 10000;
 Simulation.Setting.SpawnType = 4; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times, 2: Debug mode
 Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
-Simulation.Setting.BubbleRadiusList = [0];
+Simulation.Setting.BubbleRadiusList = [200];
 %Simulation.Setting.BubbleRadiusList = [0];
 Simulation.Setting.Util_type = 'GS'; 
 %Simulation.Setting.Util_type = 'HOS'; 

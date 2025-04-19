@@ -137,14 +137,14 @@ function environment = GRAPE_Environment_Generator(List, Parameter,Setting)
                     % (4)+(5): 감속 중이고, 양옆 차선 선행차가 더 멀면 → 해당 차선 weight 크게
                     weights = ones(Parameter.Map.Lane, 1);
                     if decelflag && leftflag && rightflag
-                        weights(currentLane - 1) = 2;
-                        weights(currentLane + 1) = 2;
+                        weights(currentLane - 1) = 3;
+                        weights(currentLane + 1) = 3;
                     elseif decelflag && leftflag
-                        weights(currentLane - 1) = 2;
+                        weights(currentLane - 1) = 3;
                     elseif decelflag && rightflag
-                        weights(currentLane + 1) = 2;
+                        weights(currentLane + 1) = 3;
                     else
-                        weights(currentLane) = 2;  % 조건 안 맞으면 원래 차선 유지
+                        weights(currentLane) = 3;  % 조건 안 맞으면 원래 차선 유지
                     end
                 end
 
