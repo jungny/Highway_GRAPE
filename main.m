@@ -259,19 +259,19 @@ for Iteration = 1:Simulation.Setting.Iterations
             %     GRAPE_done = 1;
 
             if Simulation.Setting.GRAPEmode == 1 % Greedy (no cycle, at any time step)
-                environment = GRAPE_Environment_Generator(List,Parameter,Simulation.Setting);
+                environment = GRAPE_Environment_Initialize(List,Parameter,Simulation.Setting);
                 lane_alloc = GRAPE_instance(environment).Alloc;
 
             elseif Simulation.Setting.GRAPEmode == 2 ... % CycleGreedy (yes cycle) 
                    && mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0
-                environment = GRAPE_Environment_Generator(List,Parameter,Simulation.Setting);
+                environment = GRAPE_Environment_Initialize(List,Parameter,Simulation.Setting);
                 lane_alloc = GRAPE_instance(environment).Alloc;
                 GRAPE_done = 1;
 
             elseif mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0  %&& Time > 8
                 % GRAPE (yes cycle)
                 disp("calling Grape Instance. . . | "+ Time);
-                environment = GRAPE_Environment_Generator(List,Parameter,Simulation.Setting);
+                environment = GRAPE_Environment_Initialize(List,Parameter,Simulation.Setting);
                 try
                     GRAPE_output = GRAPE_instance(environment);
                     % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당

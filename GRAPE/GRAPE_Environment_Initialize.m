@@ -1,4 +1,4 @@
-function environment = GRAPE_Environment_Generator(List, Parameter,Setting)
+function environment = GRAPE_Environment_Initialize(List, Parameter,Setting)
     % AllocationLaneDuringGRAPE 초기화
     for i = 1:size(List.Vehicle.Active, 1)
         vehicle_id = List.Vehicle.Active(i, 1); 
@@ -189,6 +189,7 @@ end
 %%
 %%
 
+% Initialize에서 ALDG를 쓸 일은 없지만, 이대로도 잘 기능하는 코드이므로 그대로 두기로 함
 function [front_vehicle, front_distance] = GetFrontVehicle(obj, targetLane, List, Parameter, Setting)
     % 현재 차선의 선행 차량 찾기
     current_x = double(obj.Location * Parameter.Map.Scale);
