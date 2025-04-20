@@ -45,6 +45,7 @@ classdef Vehicle < handle
         Acceleration
         ExitState
         TempGreedyWait
+        DistanceToExit
     end
 
     properties(Hidden = true) % Control
@@ -79,6 +80,7 @@ classdef Vehicle < handle
             obj.IsChangingLane = false;
             obj.trajectory_plot = [];
             obj.AllocLaneDuringGRAPE = [];
+            obj.DistanceToExit = [];
 
             % 고속도로에서는 방향(Destination) 관련 로직 불필요
             % 경로(Trajectory) 설정: 출발점(Source) → 도착점(Sink)
@@ -107,14 +109,24 @@ classdef Vehicle < handle
 
             x_center = mean(obj.Size(1,:));
             y_center = mean(obj.Size(2,:));
-            exit_index = find(Parameter.Map.Exit == obj.Exit, 1);
-            if isempty(exit_index)
-                exit_index = -1;
-            end
+            % exit_index = find(Parameter.Map.Exit == obj.Exit, 1);
+            % if isempty(exit_index)
+            %     exit_index = -1;
+            % end
 
-            if exit_index == 1
+            % if exit_index == 1
+            %     exit_index = 'Ex';
+            % elseif exit_index == 2
+            %     exit_index = 'Th';
+            % end
+
+            obj.DistanceToExit = obj.Exit - ...
+                               obj.Location * Parameter.Map.Scale;  % Exit까지 거리
+            
+            if obj.DistanceToExit <= 200+200
                 exit_index = 'Ex';
-            elseif exit_index == 2
+                % disp(distance_to_exit);
+            else
                 exit_index = 'Th';
             end
 
@@ -255,25 +267,37 @@ classdef Vehicle < handle
             x_center = mean(obj.Size(1,:));
             y_center = mean(obj.Size(2,:));
 
-            exit_index = find(obj.ParameterMap.Exit == obj.Exit, 1);
-            if isempty(exit_index)
-                exit_index = -1;
-            end
+            % exit_index = find(obj.ParameterMap.Exit == obj.Exit, 1);
+            % if isempty(exit_index)
+            %     exit_index = -1;
+            % end
 
-            if exit_index == 1
+            % if exit_index == 1
+            %     exit_index = 'Ex';
+            % elseif exit_index == 2
+            %     exit_index = 'Th';
+            % end
+            obj.DistanceToExit = obj.Exit - ...
+                                obj.Location * Parameter.Map.Scale;  % Exit까지 거리
+
+            if obj.DistanceToExit <= 200+200
                 exit_index = 'Ex';
-            elseif exit_index == 2
+            else
                 exit_index = 'Th';
             end
 
             if Parameter.Label
                 if ~isempty(obj.temp_GRAPE_result)
                     set(obj.Text, 'String', sprintf('%d     %d   %s', obj.temp_GRAPE_result, obj.ID, exit_index));
+                else
+                    set(obj.Text, 'String', sprintf('%d     %d   %s', obj.Lane, obj.ID, exit_index));
                 end
                 set(obj.Text, 'Position', [x_center, y_center+0.1]);
             else
                 if ~isempty(obj.temp_GRAPE_result)
                     set(obj.Text, 'String', sprintf('%d        %s', obj.temp_GRAPE_result, exit_index));
+                else
+                    set(obj.Text, 'String', sprintf('%d     %d   %s', obj.Lane, obj.ID, exit_index));
                 end
             end
 

@@ -39,7 +39,10 @@ function [SpawnSeed, NewListOrTotalVehicles] = GetSeed(Setting, Parameter, Total
             SpawnSeed(2,:) = temp_lanes(1:TotalVehicles);  % 한 줄로 합침
             
             % 3: Exit, 4: Politeness, 5: Spawn Position
-            if Setting.ExitPercent == 20
+            if Setting.ExitPercent == 0
+                % Exit:Through = 0:10
+                SpawnSeed(3, :) = Parameter.Map.Exit(randsample([1, 2], TotalVehicles, true, [0, 1]));
+            elseif Setting.ExitPercent == 20
                 % Exit:Through = 2:8 
                 SpawnSeed(3, :) = Parameter.Map.Exit(randsample([1, 2], TotalVehicles, true, [0.2, 0.8]));
             elseif Setting.ExitPercent == 50
@@ -80,7 +83,7 @@ function [SpawnSeed, NewListOrTotalVehicles] = GetSeed(Setting, Parameter, Total
                 
                 SpawnTimes(i) = last_spawn_time(current_lane) + interval;
                 last_spawn_time(current_lane) = SpawnTimes(i);
-                fprintf('Vehicle %d: Lane %d, Spawn Time %.2f\n', i, current_lane, SpawnTimes(i));
+                fprintf('Vehicle %d: Lane %d, Spawn Time %.2f, Exit %d\n', i, current_lane, SpawnTimes(i), SpawnSeed(3,i));
             end
             
             % Sort vehicles by spawn time
