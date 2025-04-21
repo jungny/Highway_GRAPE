@@ -10,10 +10,10 @@ Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250409_0423';
 
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
-Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
-Simulation.Setting.ExitPercent = 80;
-memo = 'D_';
-videomemo = 'D_';
+Simulation.Setting.RecordVideo = 1;  % 1: Record video file, 0: Do not record
+Simulation.Setting.ExitPercent = 0;
+memo = 'D_LIFI만_';
+videomemo = 'D_LIFI만_';
 exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
 
 Simulation.Setting.GRAPEmode = 0;
@@ -251,6 +251,9 @@ for Iteration = 1:Simulation.Setting.Iterations
             % Update Vehicle Data
             List.Vehicle.Data = UpdateData(List.Vehicle.Object,Parameter.Sim.Data);
             List.Vehicle.Active = List.Vehicle.Data(List.Vehicle.Data(:,2)>0,:);
+            if Time > 4
+                % disp("stop here");
+            end
             List.Vehicle.Object = GetAcceleration(List.Vehicle.Object, List.Vehicle.Data, Parameter.Veh);
 
             % if Simulation.Setting.GreedyAlloc %&& mod(Time, cycle_GRAPE) == cycle_GRAPE-1
@@ -313,14 +316,15 @@ for Iteration = 1:Simulation.Setting.Iterations
                             desired_lane = current_lane + 1;
                         end
 
-                        if strcmp(Simulation.Setting.LaneChangeMode, 'MOBIL')
-                            [feasible, a_c_sim] = MOBIL(current_vehicle, desired_lane, List, Parameter);
-                        elseif strcmp(Simulation.Setting.LaneChangeMode, 'SimpleLaneChange')
-                            [feasible] = SimpleLaneChange(current_vehicle, desired_lane, List, Parameter);
-                            if ~feasible
-                                disp("sdf");
-                            end
-                        end
+                        % if strcmp(Simulation.Setting.LaneChangeMode, 'MOBIL')
+                        %     [feasible, a_c_sim] = MOBIL(current_vehicle, desired_lane, List, Parameter);
+                        % elseif strcmp(Simulation.Setting.LaneChangeMode, 'SimpleLaneChange')
+                        %     [feasible] = SimpleLaneChange(current_vehicle, desired_lane, List, Parameter);
+                        %     if ~feasible
+                        %         disp("sdf");
+                        %     end
+                        % end
+                        feasible = true;
                         
                         % warm up 구간 동안은 차선 변경 안 되게 설정
                         % if current_vehicle.Location * Parameter.Map.Scale < 20

@@ -17,6 +17,7 @@ classdef Vehicle < handle
         Destination
         temp_GRAPE_result
         TargetLane
+        LaneIfFullyInside
         LaneChangeFlag
         PolitenessFactor
         IsChangingLane
@@ -81,6 +82,7 @@ classdef Vehicle < handle
             obj.trajectory_plot = [];
             obj.AllocLaneDuringGRAPE = [];
             obj.DistanceToExit = [];
+            obj.LaneIfFullyInside = [];
 
             % 고속도로에서는 방향(Destination) 관련 로직 불필요
             % 경로(Trajectory) 설정: 출발점(Source) → 도착점(Sink)
@@ -223,9 +225,9 @@ classdef Vehicle < handle
                 end
                 
                 % 궤적 그리기와 핸들 저장
-                % if obj.Exit > 600
+                if Parameter.ShowTraj
                     obj.trajectory_plot = plot(x_traj, y_traj, '-', 'Color', trajectory_color, 'LineWidth', 2);
-                % end
+                end
                 
                 % 차량 색상도 궤적 색상과 동일하게 설정
                 set(obj.Patch, 'FaceColor', trajectory_color);
@@ -266,6 +268,33 @@ classdef Vehicle < handle
 
             x_center = mean(obj.Size(1,:));
             y_center = mean(obj.Size(2,:));
+
+            % 1. 차량 중심 위치
+            location = obj.Trajectory(:, obj.Location);  % [x; y]
+
+            % 2. 회전 행렬
+            rotation = obj.Object.Matrix(1:2,1:2);
+
+            % 3. 로컬 좌표계 상 꼭짓점 (4x2 행렬)
+            localCorners = obj.Size(1:2,:);  % 2x4
+
+            % 4. 글로벌 좌표계로 변환
+            globalCorners = rotation * localCorners + location;  % 2x4
+            LaneIfFullyInside = [];
+
+            for j = 1:Parameter.Map.Lane
+                y_min = (Parameter.Map.Lane - j) * Parameter.Map.Tile;
+                y_max = (Parameter.Map.Lane + 1 - j) * Parameter.Map.Tile;
+                
+                if all(globalCorners(2,:) >= y_min) && all(globalCorners(2,:) < y_max)
+                    LaneIfFullyInside = j;
+                    break;
+                end
+            end
+
+            obj.LaneIfFullyInside = LaneIfFullyInside;
+           
+            
 
             % exit_index = find(obj.ParameterMap.Exit == obj.Exit, 1);
             % if isempty(exit_index)

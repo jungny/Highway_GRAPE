@@ -4,6 +4,7 @@ function P = GetParameters(Setting)
     P.Physics = 0.1; % 한 시뮬레이션 타임스텝이 0.1초초
     P.Control = 0.1;
     P.Label = 1; % 1: label 보임, 0: 안보임
+    P.ShowTraj = true;
     P.RemoveTraj = true;  % 궤적 유지 여부 설정 (기본값: false)
     P.Flow = 2100; % veh/hour/lane, only used in spawntype = 1.
     
@@ -59,8 +60,8 @@ function P = GetParameters(Setting)
     P.Veh.Safety = 2; % Original: 2 , 정적 안전 거리: 속도와 무관하게 항상 유지할 기본 간격
     P.Veh.Headway = 1.5; % Original: 1.6, 동적 반응 거리: 시간 기반 간격 (속도가 높을수록 더 멀리 떨어지도록 유도)
     P.Veh.Exp = 4; %4
-    P.Veh.SafeDistance = 9;
-    P.Veh.AccelThreshold = -20;
+    P.Veh.SafeDistance = 4; % Lane Change feasibility 판별
+    P.Veh.AccelThreshold = -20; % MOBIL에서만 사용
 
     % Signal
     P.Sig = 0;
