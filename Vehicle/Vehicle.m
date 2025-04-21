@@ -15,9 +15,13 @@ classdef Vehicle < handle
         Data
         %Reward
         Destination
+        temp_GRAPE_result
         TargetLane
+        LaneIfFullyInside
         LaneChangeFlag
         PolitenessFactor
+        IsChangingLane
+        AllocLaneDuringGRAPE
     end
 
     properties(Hidden = false) % Properties
@@ -25,11 +29,13 @@ classdef Vehicle < handle
         Object
         Patch
         Parameter
+        ParameterMap
         TimeStep   
         DistanceStep
         MaxVel
         Margin
         ColorCount
+        trajectory_plot
     end
 
     properties(Hidden = false) % Dynamics
@@ -40,6 +46,7 @@ classdef Vehicle < handle
         Acceleration
         ExitState
         TempGreedyWait
+        DistanceToExit
     end
 
     properties(Hidden = true) % Control
@@ -71,6 +78,11 @@ classdef Vehicle < handle
             SpawnPosition = Seed(5);
             %obj.SpawnTime = Seed(6);
             obj.ColorCount = 0;
+            obj.IsChangingLane = false;
+            obj.trajectory_plot = [];
+            obj.AllocLaneDuringGRAPE = [];
+            obj.DistanceToExit = [];
+            obj.LaneIfFullyInside = [];
 
             % 고속도로에서는 방향(Destination) 관련 로직 불필요
             % 경로(Trajectory) 설정: 출발점(Source) → 도착점(Sink)
@@ -90,35 +102,52 @@ classdef Vehicle < handle
             obj.Size(2,:) = [Parameter.Veh.Size(2)/2 Parameter.Veh.Size(2)/2 -Parameter.Veh.Size(2)/2 -Parameter.Veh.Size(2)/2];
             obj.Size(3,:) = obj.Size(1,:) + [Parameter.Veh.Buffer(1) -Parameter.Veh.Buffer(1) -Parameter.Veh.Buffer(1) Parameter.Veh.Buffer(1)];
             obj.Size(4,:) = obj.Size(2,:) + [Parameter.Veh.Buffer(2) Parameter.Veh.Buffer(2) -Parameter.Veh.Buffer(2) -Parameter.Veh.Buffer(2)];
-            if obj.Agent == 1
-                obj.Patch = patch('XData',obj.Size(1,:),'YData',obj.Size(2,:),'FaceColor','white','Parent',obj.Object);
-            else
-                obj.Patch = patch('XData',obj.Size(1,:),'YData',obj.Size(2,:),'FaceColor','white','Parent',obj.Object); % #cfcdc0
-            end
+            obj.Patch = patch('XData',obj.Size(1,:),'YData',obj.Size(2,:),'FaceColor','white','Parent',obj.Object);
+            % if obj.Agent == 1
+            %     obj.Patch = patch('XData',obj.Size(1,:),'YData',obj.Size(2,:),'FaceColor','white','Parent',obj.Object);
+            % else
+            %     obj.Patch = patch('XData',obj.Size(1,:),'YData',obj.Size(2,:),'FaceColor','white','Parent',obj.Object); % #cfcdc0
+            % end
 
             x_center = mean(obj.Size(1,:));
             y_center = mean(obj.Size(2,:));
-            exit_index = find(Parameter.Map.Exit == obj.Exit, 1);
-            if isempty(exit_index)
-                exit_index = -1;
+            % exit_index = find(Parameter.Map.Exit == obj.Exit, 1);
+            % if isempty(exit_index)
+            %     exit_index = -1;
+            % end
+
+            % if exit_index == 1
+            %     exit_index = 'Ex';
+            % elseif exit_index == 2
+            %     exit_index = 'Th';
+            % end
+
+            obj.DistanceToExit = obj.Exit - ...
+                               obj.Location * Parameter.Map.Scale;  % Exit까지 거리
+            
+            if obj.DistanceToExit <= 200+200
+                exit_index = 'Ex';
+                % disp(distance_to_exit);
+            else
+                exit_index = 'Th';
             end
 
             if Parameter.Label
-                obj.Text = text(x_center+3, y_center+0.1, sprintf('%d   %d', obj.ID, exit_index), ...
+                obj.Text = text(x_center+6, y_center+0.1, sprintf('       %d   %s', obj.ID, exit_index), ...
                     'HorizontalAlignment', 'center', ...
                     'VerticalAlignment', 'middle', ...
                     'Parent', obj.Object, ...
-                    'FontSize', 9, 'Color', 'black');
+                    'FontSize', 8, 'Color', 'black');
             else
-                 obj.Text = text(x_center, y_center+0.1, sprintf('        %d', exit_index), ...
+                 obj.Text = text(x_center, y_center+0.1, sprintf('        %s', exit_index), ...
                     'HorizontalAlignment', 'center', ...
                     'VerticalAlignment', 'middle', ...
                     'Parent', obj.Object, ...
-                    'FontSize', 9, 'Color', 'black');
+                    'FontSize', 8, 'Color', 'black');
             end
 
 
-
+            obj.ParameterMap = Parameter.Map;
             obj.Parameter = Parameter.Veh;
             obj.TimeStep = Parameter.Physics;
             obj.DistanceStep = 1/Parameter.Map.Scale;
@@ -137,25 +166,32 @@ classdef Vehicle < handle
         
 
         function MoveVehicle(obj,Time,Parameter,List)
-            if obj.Location * Parameter.Map.Scale >= Parameter.Map.GrapeThreshold
+            if ~obj.IsChangingLane
                 set(obj.Patch, 'FaceColor', 'white');
+                % if obj.Location * Parameter.Map.Scale >= 20 
+                %     set(obj.Patch, 'FaceColor', 'white');
+                % else
+                %     set(obj.Patch, 'FaceColor', '#a9a9a9');
+                % end
             end
 
-            if obj.ColorCount > 0
-                set(obj.Patch, 'FaceColor', '#f589e6');
-                obj.ColorCount = obj.ColorCount-1;
-            end
-
-            if obj.TempGreedyWait > 0
-                obj.TempGreedyWait = obj.TempGreedyWait - Parameter.Physics;
-            end
+            % if obj.ColorCount > 0
+            %     set(obj.Patch, 'FaceColor', '#f589e6');
+            %     obj.ColorCount = obj.ColorCount-1;
+            % end
 
 
-            if obj.LaneChangeFlag == 1
-                obj.ColorCount = 10;
-                set(obj.Patch, 'FaceColor', '#f589e6');
+
+            % if obj.TempGreedyWait > 0
+            %     obj.TempGreedyWait = obj.TempGreedyWait - Parameter.Physics;
+            % end
+
+
+            if ~isempty(obj.LaneChangeFlag) && obj.LaneChangeFlag == 1 && ~obj.IsChangingLane
+                % obj.ColorCount = 10;
 
                 targetLane = obj.TargetLane;
+                obj.IsChangingLane = true;
                 % change lane to obj.TargetLane
                 new_y = (Parameter.Map.Lane-targetLane+0.5)*Parameter.Map.Tile;
                 
@@ -165,25 +201,46 @@ classdef Vehicle < handle
                 
                 % change_steps 동안 new_y에 도달
                 obj.Trajectory(2, start_idx:end_idx) = linspace(obj.Trajectory(2, start_idx), new_y, end_idx - start_idx + 1);
+
+                % 예상 궤적의 x, y 좌표 계산
+                x_traj = obj.Trajectory(1, start_idx:end_idx);
+                y_traj = linspace(obj.Trajectory(2, start_idx), new_y, end_idx - start_idx + 1);
                 
+                % 현재 차선과 목표 차선에 따라 색상 결정
+                current_lane = obj.Lane;
+                target_lane = obj.TargetLane;
+                
+                if current_lane < target_lane  % 오른쪽 방향 (파란 계열)
+                    if current_lane == 1  % 1→2: 연한 파란색
+                        trajectory_color = '#91c4ed';
+                    else  % 2→3: 진한 파란색
+                        trajectory_color = '#5a9bd4';
+                    end
+                else  % 왼쪽 방향 (핑크 계열)
+                    if current_lane == 3  % 3→2: 연한 핑크색
+                        trajectory_color = '#ed91ae';
+                    else  % 2→1: 진한 핑크색
+                        trajectory_color = '#d46b8c';
+                    end
+                end
+                
+                % 궤적 그리기와 핸들 저장
+                if Parameter.ShowTraj
+                    obj.trajectory_plot = plot(x_traj, y_traj, '-', 'Color', trajectory_color, 'LineWidth', 2);
+                end
+                
+                % 차량 색상도 궤적 색상과 동일하게 설정
+                set(obj.Patch, 'FaceColor', trajectory_color);
+
                 % 이후 구간 고정
                 if end_idx < size(obj.Trajectory, 2)
                     obj.Trajectory(2, end_idx+1:end) = new_y;
                 end
 
-                obj.LaneChangeFlag = [];
-                obj.Lane = targetLane;
-                obj.TargetLane = [];
             end
                 
 
-            if ~isempty(obj.ExitState)
-                if obj.ExitState == 1
-                    set(obj.Patch, 'FaceColor', 'green');
-                elseif obj.ExitState == 0
-                    set(obj.Patch, 'FaceColor', 'black');
-                end
-            end
+            
 
             [nextVelocity,nextLocation] = GetDynamics(obj);
             obj.Data = GetObservation(obj);
@@ -197,6 +254,13 @@ classdef Vehicle < handle
                 end
             else
                 obj.Location = nextLocation;
+
+                % SaveFolder = 'C:\Users\user\Desktop\250326_0409';
+                % logFileName = fullfile(SaveFolder, ...
+                %        ['log_2.txt']);
+                % fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
+                % fprintf(fileID, '\n nextLocation  %d \n', nextLocation);
+                % fclose(fileID);
                 obj.Velocity = nextVelocity;
                 obj.Object.Matrix(1:2,4) = obj.Trajectory(:,obj.Location);
                 obj.Object.Matrix(1:2,1:2) = GetRotation(obj);
@@ -205,9 +269,96 @@ classdef Vehicle < handle
             x_center = mean(obj.Size(1,:));
             y_center = mean(obj.Size(2,:));
 
-            if Parameter.Label
-                set(obj.Text, 'Position', [x_center+3, y_center+0.1]);
+            % 1. 차량 중심 위치
+            location = obj.Trajectory(:, obj.Location);  % [x; y]
+
+            % 2. 회전 행렬
+            rotation = obj.Object.Matrix(1:2,1:2);
+
+            % 3. 로컬 좌표계 상 꼭짓점 (4x2 행렬)
+            localCorners = obj.Size(1:2,:);  % 2x4
+
+            % 4. 글로벌 좌표계로 변환
+            globalCorners = rotation * localCorners + location;  % 2x4
+            LaneIfFullyInside = [];
+
+            for j = 1:Parameter.Map.Lane
+                y_min = (Parameter.Map.Lane - j) * Parameter.Map.Tile;
+                y_max = (Parameter.Map.Lane + 1 - j) * Parameter.Map.Tile;
+                
+                if all(globalCorners(2,:) >= y_min) && all(globalCorners(2,:) < y_max)
+                    LaneIfFullyInside = j;
+                    break;
+                end
             end
+
+            obj.LaneIfFullyInside = LaneIfFullyInside;
+           
+            
+
+            % exit_index = find(obj.ParameterMap.Exit == obj.Exit, 1);
+            % if isempty(exit_index)
+            %     exit_index = -1;
+            % end
+
+            % if exit_index == 1
+            %     exit_index = 'Ex';
+            % elseif exit_index == 2
+            %     exit_index = 'Th';
+            % end
+            obj.DistanceToExit = obj.Exit - ...
+                                obj.Location * Parameter.Map.Scale;  % Exit까지 거리
+
+            if obj.DistanceToExit <= 200+200
+                exit_index = 'Ex';
+            else
+                exit_index = 'Th';
+            end
+
+            if Parameter.Label
+                if ~isempty(obj.temp_GRAPE_result)
+                    set(obj.Text, 'String', sprintf('%d     %d   %s', obj.temp_GRAPE_result, obj.ID, exit_index));
+                else
+                    set(obj.Text, 'String', sprintf('%d     %d   %s', obj.Lane, obj.ID, exit_index));
+                end
+                set(obj.Text, 'Position', [x_center, y_center+0.1]);
+            else
+                if ~isempty(obj.temp_GRAPE_result)
+                    set(obj.Text, 'String', sprintf('%d        %s', obj.temp_GRAPE_result, exit_index));
+                else
+                    set(obj.Text, 'String', sprintf('%d     %d   %s', obj.Lane, obj.ID, exit_index));
+                end
+            end
+
+            % 차선 변경 완료 시
+            if obj.IsChangingLane
+                target_y = (Parameter.Map.Lane - obj.TargetLane + 0.5) * Parameter.Map.Tile;
+                current_y = obj.Object.Matrix(2, 4);
+                if abs(current_y - target_y) < 1e-2
+                    obj.Lane = obj.TargetLane;
+                    obj.TargetLane = [];
+                    obj.LaneChangeFlag = [];
+                    obj.IsChangingLane = false;
+                    set(obj.Patch, 'FaceColor', 'white');
+                    
+                    % NoRemoveTraj 설정에 따라 궤적 삭제 여부 결정
+                    if Parameter.RemoveTraj
+                        if ~isempty(obj.trajectory_plot) && ishandle(obj.trajectory_plot)
+                            delete(obj.trajectory_plot);
+                            obj.trajectory_plot = [];
+                        end
+                    end
+                end
+            end
+
+            if ~isempty(obj.ExitState)
+                if obj.ExitState == 1
+                    set(obj.Patch, 'FaceColor', 'green');
+                elseif obj.ExitState == 0
+                    set(obj.Patch, 'FaceColor', 'black');
+                end
+            end
+
 
         end
 

@@ -29,6 +29,7 @@ MST = input.MST;
 MST_bubble = input.MST_bubble;
 environment = input.environment;
 Type = environment.Type;
+List = environment.List;
 
 %% For visualisation
 Alloc_history = zeros(n,10);
@@ -50,13 +51,23 @@ end
 GreedyAlloc = input.Alloc_existing;
 
 %% Neighbour agents identification (Assumming a static situation)
+if startsWith(Type, 'BubbleAhead')
+    Type = 'BubbleAhead';
+elseif startsWith(Type, 'Bubble')
+    Type = 'Bubble';
+end
+
 for i = 1:n
     switch Type
         case {'Default', 'Ahead'}
             agent_info(i).set_neighbour_agent_id = find(MST(i, :) > 0);
 
         case {'Bubble', 'BubbleAhead'}
-            agent_info(i).set_neighbour_agent_id = find(MST_bubble(i, :) > 0);
+            if environment.Setting.BubbleRadius > 200
+                agent_info(i).set_neighbour_agent_id = find(MST(i, :) > 0);
+            else
+                agent_info(i).set_neighbour_agent_id = find(MST_bubble(i, :) > 0);
+            end
 
     end
 end
@@ -66,6 +77,11 @@ Timestamp_agent_current = zeros(n,1);
 
 %% GRAPE Algorithm
 while a_satisfied~=n
+
+    % 이 부분을 진짜진짜 바꿔야한다!!
+    environment = GRAPE_Environment_Update(List,environment.Parameter,environment.Setting,environment);
+    List = environment.List;
+
     
     for i=1:n % For Each Agent 
         
@@ -114,9 +130,14 @@ while a_satisfied~=n
                     % fprintf('i = %d, t = %d, n_participants = %d\n', i, t, n_participants);
 
             end
-            
+
             % Obtain possible individual utility value
-            Candidate(t) = Get_Util(i, t, n_participants,environment);
+            if environment.Setting.BubbleRadius == 0
+                n_participants = 1;
+                Candidate(t) = Get_Util(i, t, n_participants,environment);
+            else
+                Candidate(t) = Get_Util(i, t, n_participants,environment);
+            end
         end
         
         % Select Best alternative
@@ -127,12 +148,12 @@ while a_satisfied~=n
         %%%%% Line 6-11 of Algorithm 1
         if Best_utility == 0
             Alloc_(i,1) = 0; % Go th the void
-            if environment.Setting.GreedyAlloc
+            if environment.Setting.GRAPEmode ~= 0 % 1(Greedy) or 2(CycleGreedy) 
                 GreedyAlloc(i,1) = 0;
             end
         else
             Alloc_(i,1) = Best_task;
-            if environment.Setting.GreedyAlloc
+            if environment.Setting.GRAPEmode ~= 0 % 1(Greedy) or 2(CycleGreedy) 
                 GreedyAlloc(i,1) = Best_task;
             end
         end
@@ -153,7 +174,7 @@ while a_satisfied~=n
         Timestamp_agent_current(i) = agent(i).time_stamp;        
     end
 
-    if environment.Setting.GreedyAlloc
+    if environment.Setting.GRAPEmode ~= 0 % 1(Greedy) or 2(CycleGreedy) 
         break
     end
     
@@ -212,6 +233,23 @@ while a_satisfied~=n
         agent_(i).time_stamp = agent(valid_agent_id).time_stamp;
         agent_(i).iteration = agent(valid_agent_id).iteration;
         
+        % task demand 계산 시 활용할 수 있도록 vehicle의 property에도 반영
+        % i는 List.Vehicle.Active(i, 1)의 i
+        vehicle_id = List.Vehicle.Active(i, 1); 
+        current_vehicle = List.Vehicle.Object{vehicle_id};
+        current_lane = current_vehicle.Lane;
+ 
+        if isempty(current_vehicle.AllocLaneDuringGRAPE)
+            if agent_(i).Alloc(i) ~= current_lane
+                current_vehicle.AllocLaneDuringGRAPE = agent_(i).Alloc(i);
+            end
+        else
+            if agent_(i).Alloc(i) ~= current_vehicle.AllocLaneDuringGRAPE
+                % not needed but if loop for debug
+                current_vehicle.AllocLaneDuringGRAPE = agent_(i).Alloc(i);
+            end
+        end
+
         if min(agent(i).Alloc == agent_(i).Alloc)==1 % If local information is changed
         else
             agent_(i).satisfied_flag = 0;
@@ -252,7 +290,7 @@ while a_satisfied~=n
     iteration_history(Case) = iteration;
 end
 
-if environment.Setting.GreedyAlloc
+if environment.Setting.GRAPEmode ~= 0 % 1(Greedy) or 2(CycleGreedy) 
     output.Alloc = GreedyAlloc;
 else
 
@@ -279,7 +317,7 @@ else
                 if (sum(Alloc_1 == Alloc) == n)&&(iteration_1 == iteration)&&(time_stamp_1 == time_stamp)
                     % Consensus OK
                 else
-                    disp(['Problem: Non Consensus with Agent#1 and Agent#',num2str(i)]);
+                    %disp(['Problem: Non Consensus with Agent#1 and Agent#',num2str(i)]);
                     output.flag_problem = 1;
                 end        
             end

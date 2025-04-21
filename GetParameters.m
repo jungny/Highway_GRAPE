@@ -1,11 +1,12 @@
 function P = GetParameters(Setting)
     
-    P.ExitThreshold = 50;
+    P.ExitThreshold = 20;
     P.Physics = 0.1; % 한 시뮬레이션 타임스텝이 0.1초초
     P.Control = 0.1;
-    P.Label = 0; % 1: label 보임, 0: 안보임
-
-    P.Flow = 1500; % veh/hour/lane, only used in spawntype = 1.
+    P.Label = 1; % 1: label 보임, 0: 안보임
+    P.ShowTraj = true;
+    P.RemoveTraj = true;  % 궤적 유지 여부 설정 (기본값: false)
+    P.Flow = 2100; % veh/hour/lane, only used in spawntype = 1.
     
     % Sim
     P.Sim.Time = Setting.Time;
@@ -23,9 +24,9 @@ function P = GetParameters(Setting)
     P.Map.Scale = 0.01;
 
     P.Map.Tile = 3.05; %m
-    %P.Map.Road = 2000; %400
+    P.Map.Road = 520; %400
     %P.Map.Road = randi([400,2500]);
-    P.Map.Road = 1805; %m
+    %P.Map.Road = 2005; %m
     
     %minLanes = 2;
     %maxLanes = 8+1;
@@ -34,15 +35,15 @@ function P = GetParameters(Setting)
     P.Map.Lane = 3;
     
 
-    P.Map.Margin = 10;
+    P.Map.Margin = 5;
     P.Map.Stop = 6;
     P.Map.Center = [0;0];
-    P.Map.SpawnZone = 500; % new vehicle to be spawned at anywhere between [0,200m]
+    P.Map.SpawnZone = 520; % new vehicle to be spawned at anywhere between [0,200m]
     %P.Map.Exit = [1040, 1970];
-    %P.Map.Exit = [240,380];
+    P.Map.Exit = [500,5000];
     %P.Map.Exit = RandomExitGenerator(P.Map.Road);
     %P.Map.Exit = [P.Map.Road-330, P.Map.Road-30];
-    P.Map.Exit = [1000,1800];
+    %P.Map.Exit = [1200,2000, 2805];
     P.Map.GrapeThreshold = 200;
 
     % Vehicle
@@ -56,11 +57,11 @@ function P = GetParameters(Setting)
         P.Veh.State.Rejected = 1;
         P.Veh.State.Reserved = 2;
         P.Veh.State.Signal = 3;
-    P.Veh.Safety = 5; % Original: 2
-    P.Veh.Headway = 1.6; % Original: 1.6
+    P.Veh.Safety = 2; % Original: 2 , 정적 안전 거리: 속도와 무관하게 항상 유지할 기본 간격
+    P.Veh.Headway = 1.5; % Original: 1.6, 동적 반응 거리: 시간 기반 간격 (속도가 높을수록 더 멀리 떨어지도록 유도)
     P.Veh.Exp = 4; %4
-    P.Veh.SafeDistance = 9;
-    P.Veh.AccelThreshold = -20;
+    P.Veh.SafeDistance = 4; % Lane Change feasibility 판별
+    P.Veh.AccelThreshold = -20; % MOBIL에서만 사용
 
     % Signal
     P.Sig = 0;

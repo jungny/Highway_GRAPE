@@ -1,6 +1,6 @@
 function GetWindow(Map, ~)
-    %viewType = 'Default';
-    viewType = 'FullHighway';
+    viewType = 'Default';
+    %viewType = 'FullHighway';
     %viewType = 'ScrollableHighway';
     % viewType에 따라 창을 생성
     switch viewType
@@ -19,7 +19,7 @@ function CreateDefaultWindow(Map)
     % 기본 창 설정
     Margin = Map.Margin;
     MapWidth = Map.Road + Margin * 2;
-    MapHeight = Map.Tile * Map.Lane + Margin * 2;
+    MapHeight = Map.Tile * Map.Lane + Margin * 2 +10;
 
     ScreenSize = get(0, 'ScreenSize');
     ScreenWidth = ScreenSize(3);
