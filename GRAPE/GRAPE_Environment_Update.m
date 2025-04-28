@@ -85,7 +85,7 @@ function environment = GRAPE_Environment_Update(List, Parameter, Setting, past_e
                 
                     % (4) 내가 감속 중이면 decelflag
                     % if obj.Acceleration < -1 && obj.Velocity < 25
-                    %     decelflag = true;
+                        % decelflag = true;
                     % end
                     % ALDG의 효과가 나타나는지 확인하기 위해 조건 간소화
                     decelflag = true;

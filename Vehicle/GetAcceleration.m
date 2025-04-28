@@ -61,6 +61,10 @@ function ObjectList = GetAcceleration(ObjectList, VehicleList, Parameter)
 
                     Acceleration = max(min(Acceleration, Parameter.Accel(1)), -Parameter.Accel(2));
 
+                    if LocationDifference <= Parameter.SafeDistance
+                        Acceleration = -Parameter.Accel(2)*5;
+                    end
+
                     
                     if ~isreal(Acceleration) || isnan(Acceleration) || isinf(Acceleration)
                         % warning('Invalid acceleration detected. Setting acceleration to 0.');

@@ -7,16 +7,16 @@ Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
 Simulation.Setting.StopOnGrapeError = 1;
 Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
-Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250409_0423';
+Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250423_0430';
 
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
-Simulation.Setting.RecordVideo = 1;  % 1: Record video file, 0: Do not record
-Simulation.Setting.ExitPercent = 0;
-memo = 'D_LIFI만_';
-videomemo = 'D_LIFI만_';
+Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
+Simulation.Setting.ExitPercent = 20;
+memo = 'D_예외적급감_';
+videomemo = 'D_예외적급감_';
 exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
 
-Simulation.Setting.GRAPEmode = 0;
+Simulation.Setting.GRAPEmode = 1;
 % 0: GRAPE, 1: Greedy, 2: CycleGreedy
 if Simulation.Setting.GRAPEmode == 0
     memo = [memo ' | GRAPE'];
@@ -103,14 +103,16 @@ end
 % 🔹 엑셀 파일 경로 설정
 timestamp = datestr(now, 'HH-MM');  % 현재 시간 가져오기 (시-분-초 형식)
 %filename = fullfile(Simulation.Setting.SaveFolder, ['noDLC_' greedy_status2 '_' Simulation.Setting.Util_type '_' timestamp '.xlsx']);
+SaveFolder = 'C:\Users\user\Desktop\250423_0430';
+filename = fullfile(SaveFolder, [videomemo '.xlsx']);
 sheet = 'Results';
 
 % 🔹 실험할 참가자 모드 설정
 %participantModes = {'Default', 'Ahead'};  % 기본 모드
-participantModes = {};
+participantModes = {'Default'};
 % 🔹 Bubble Radius 값에 따라 Bubble 관련 모드 추가
 for r = Simulation.Setting.BubbleRadiusList
-    participantModes{end+1} = sprintf('Bubble_%dm', r);
+    %participantModes{end+1} = sprintf('Bubble_%dm', r);
     %participantModes{end+1} = sprintf('BubbleAhead_%dm', r);
 end
 num_modes = length(participantModes);
@@ -234,7 +236,8 @@ for Iteration = 1:Simulation.Setting.Iterations
                 end
 
             elseif Simulation.Setting.SpawnType == 1 || Simulation.Setting.SpawnType == 2 || ...
-                   Simulation.Setting.SpawnType == 3 ||  Simulation.Setting.SpawnType == 4
+                   Simulation.Setting.SpawnType == 3 ||  Simulation.Setting.SpawnType == 4 || ...
+                   Simulation.Setting.SpawnType == 0.5
                 if firstCount == 0
                     [SpawnVehicle, TotalVehicles] = GetSeed(Simulation.Setting, Parameter, TotalVehicles, SpawnLanes, NextArrivalTime);
                     List.Vehicle.Object = cell(size(SpawnVehicle,2),1);
@@ -251,9 +254,6 @@ for Iteration = 1:Simulation.Setting.Iterations
             % Update Vehicle Data
             List.Vehicle.Data = UpdateData(List.Vehicle.Object,Parameter.Sim.Data);
             List.Vehicle.Active = List.Vehicle.Data(List.Vehicle.Data(:,2)>0,:);
-            if Time > 4
-                % disp("stop here");
-            end
             List.Vehicle.Object = GetAcceleration(List.Vehicle.Object, List.Vehicle.Data, Parameter.Veh);
 
             % if Simulation.Setting.GreedyAlloc %&& mod(Time, cycle_GRAPE) == cycle_GRAPE-1
@@ -383,7 +383,7 @@ for Iteration = 1:Simulation.Setting.Iterations
                     travel_times = [travel_times, travel_time];
                     
                     if Simulation.Setting.RecordLog 
-                        SaveFolder = 'C:\Users\user\Desktop\250409_0423';
+                        SaveFolder = 'C:\Users\user\Desktop\250423_0430';
                         logFileName = fullfile(SaveFolder, ...
                             [videomemo '_log.txt']);
                         fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
@@ -413,7 +413,7 @@ for Iteration = 1:Simulation.Setting.Iterations
                         exit_fail_count = exit_fail_count + 1;  % 🔹 최우측 차선이 아니면 exit fail로 기록
                     end
                     if Simulation.Setting.RecordLog 
-                        SaveFolder = 'C:\Users\user\Desktop\250409_0423';
+                        SaveFolder = 'C:\Users\user\Desktop\250423_0430';
                         logFileName = fullfile(SaveFolder, ...
                             [videomemo '_log.txt']);
                         fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기

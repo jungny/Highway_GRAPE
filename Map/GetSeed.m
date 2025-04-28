@@ -29,6 +29,43 @@ function [SpawnSeed, NewListOrTotalVehicles] = GetSeed(Setting, Parameter, Total
             %SpawnSeed(5,:) = Parameter.Map.SpawnZone * rand(1, SpawnCount);
 
             SpawnSeed(6,:) = zeros(1,SpawnCount); % redundant property
+
+        case 0.5 % massive simulation 위해 case 1에서 SpawnTimes만 이전 세팅으로 , TotalVehicles에 랜덤성
+            TotalVehicles = randi([30,50]);
+            SpawnSeed = zeros(6,TotalVehicles);
+            
+            % 1: Vehicle ID, 2: Spawn Lane
+            SpawnSeed(1,:) = 1:TotalVehicles;
+            temp_lanes = repmat(1:Parameter.Map.Lane, 1, ceil(TotalVehicles/Parameter.Map.Lane));
+            SpawnSeed(2,:) = temp_lanes(1:TotalVehicles);  % 한 줄로 합침
+            
+            % 3: Exit, 4: Politeness, 5: Spawn Position
+            if Setting.ExitPercent == 0
+                % Exit:Through = 0:10
+                SpawnSeed(3, :) = Parameter.Map.Exit(randsample([1, 2], TotalVehicles, true, [0, 1]));
+            elseif Setting.ExitPercent == 20
+                % Exit:Through = 2:8 
+                SpawnSeed(3, :) = Parameter.Map.Exit(randsample([1, 2], TotalVehicles, true, [0.2, 0.8]));
+            elseif Setting.ExitPercent == 50
+                % Exit:Through = 5:5
+                SpawnSeed(3, :) = Parameter.Map.Exit(randsample([1, 2], TotalVehicles, true, [0.5, 0.5]));
+            elseif Setting.ExitPercent == 80
+                % Exit:Through = 8:2
+                SpawnSeed(3, :) = Parameter.Map.Exit(randsample([1, 2], TotalVehicles, true, [0.8, 0.2]));
+            else
+                error('지원하지 않는 ExitPercent 값입니다: %d', Setting.ExitPercent);
+            end
+            
+            SpawnSeed(4,:) = ones(1,TotalVehicles);
+            SpawnSeed(5,:) = ones(1,TotalVehicles);
+            
+            min_interval = 0.3;
+            max_interval = 1.5;
+            SpawnTimes = cumsum(min_interval + (max_interval - min_interval) * rand(1, TotalVehicles));
+            SpawnSeed(6, :) = SpawnTimes;
+            
+            NewListOrTotalVehicles = TotalVehicles;
+
         case 1
             TotalVehicles = 30;
             SpawnSeed = zeros(6,TotalVehicles);

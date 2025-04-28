@@ -41,6 +41,8 @@ Case = 0;
 a_satisfied = 0; % # Agents who satisfy the current partition
 
 for i=1:n
+    v_id = List.Vehicle.Active(i, 1); 
+    agent(i).ID = v_id; % 차량 ID 저장
     agent(i).iteration = 0;
     agent(i).time_stamp = rand;
     agent(i).Alloc = Alloc_existing;
@@ -68,8 +70,10 @@ for i = 1:n
             else
                 agent_info(i).set_neighbour_agent_id = find(MST_bubble(i, :) > 0);
             end
-
     end
+    % 이웃의 vehicle_id 리스트 저장
+    neighbour_index_list = agent_info(i).set_neighbour_agent_id;
+    agent(i).neighbour_v_id = List.Vehicle.Active(neighbour_index_list, 1);  % 차량 ID 리스트
 end
 
 Iteration_agent_current = zeros(n,1);
@@ -78,11 +82,9 @@ Timestamp_agent_current = zeros(n,1);
 %% GRAPE Algorithm
 while a_satisfied~=n
 
-    % 이 부분을 진짜진짜 바꿔야한다!!
     environment = GRAPE_Environment_Update(List,environment.Parameter,environment.Setting,environment);
     List = environment.List;
 
-    
     for i=1:n % For Each Agent 
         
         %%%%% Line 5 of Algorithm 1
