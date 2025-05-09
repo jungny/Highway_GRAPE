@@ -79,8 +79,8 @@ function environment = GRAPE_Environment_Initialize(List, Parameter,Setting)
                     leftflag = false;
                     rightflag = false;
                     %cur_front_dist = NaN;
-                    left_front_dist = -inf;
-                    right_front_dist = -inf;
+                    left_dist = -inf;
+                    right_dist = -inf;
 
                 
                     % (4) 내가 감속 중이면 decelflag
@@ -92,21 +92,34 @@ function environment = GRAPE_Environment_Initialize(List, Parameter,Setting)
                 
                     % 현재 차선의 선행 차량 거리
                     [cur_front_vehicle, front_dist] = GetFrontVehicle(obj, currentLane, List, Parameter, Setting);
+                    [cur_rear_vehicle, rear_dist] = GetRearVehicle(obj, currentLane, List, Parameter, Setting);
                     cur_front_dist = front_dist; 
+                    cur_rear_dist = rear_dist;
                     if isempty(cur_front_vehicle)
-                        cur_front_dist = inf;
+                        cur_front_dist = 200;
                     end
+                    if isempty(cur_rear_vehicle)
+                        cur_rear_dist = 200;
+                    end
+                    cur_dist = cur_front_dist + cur_rear_dist;
                 
                     % 왼쪽 차선 조건
                     if currentLane > 1
                         leftLane = currentLane - 1;
                         [left_front_vehicle, front_dist] = GetFrontVehicle(obj, leftLane, List, Parameter, Setting);
+                        [left_rear_vehicle, rear_dist] = GetRearVehicle(obj, leftLane, List, Parameter, Setting);
                         left_front_dist = front_dist;
+                        left_rear_dist = rear_dist;
                         if isempty(left_front_vehicle)
-                            left_front_dist = inf;
+                            left_front_dist = 200;
+                        end
+                        if isempty(left_rear_vehicle)
+                            left_rear_dist = 200;
                         end
                 
-                        if left_front_dist > cur_front_dist  % (5)
+                        left_dist = left_front_dist + left_rear_dist;
+                
+                        if left_dist > cur_dist  % (5)
                             leftflag = true;
                         end
                     end
@@ -115,15 +128,21 @@ function environment = GRAPE_Environment_Initialize(List, Parameter,Setting)
                     if currentLane < Parameter.Map.Lane
                         rightLane = currentLane + 1;
                         [right_front_vehicle, front_dist] = GetFrontVehicle(obj, rightLane, List, Parameter, Setting);
+                        [right_rear_vehicle, rear_dist] = GetRearVehicle(obj, rightLane, List, Parameter, Setting);
                         right_front_dist = front_dist;
+                        right_rear_dist = rear_dist;
                         if isempty(right_front_vehicle)
-                            right_front_dist = inf;
+                            right_front_dist = 200;
                         end
+                        if isempty(right_rear_vehicle)
+                            right_rear_dist = 200;
+                        end
+                        right_dist = right_front_dist + right_rear_dist;
                 
-                        if right_front_dist > cur_front_dist  % (5)
-                            if right_front_dist == left_front_dist
+                        if right_dist > cur_dist  % (5)
+                            if right_dist == left_dist
                                 rightflag = true; % leftflag = already true
-                            elseif right_front_dist > left_front_dist
+                            elseif right_dist > left_dist
                                 rightflag = true;
                                 leftflag = false;
                             % else means right_front_dist < left_front_dist -> not need to change any flag
@@ -137,14 +156,14 @@ function environment = GRAPE_Environment_Initialize(List, Parameter,Setting)
                     % (4)+(5): 감속 중이고, 양옆 차선 선행차가 더 멀면 → 해당 차선 weight 크게
                     weights = ones(Parameter.Map.Lane, 1);
                     if decelflag && leftflag && rightflag
-                        weights(currentLane - 1) = 3;
-                        weights(currentLane + 1) = 3;
+                        weights(currentLane - 1) = 1.5;
+                        weights(currentLane + 1) = 1.5;
                     elseif decelflag && leftflag
-                        weights(currentLane - 1) = 3;
+                        weights(currentLane - 1) = 1.5;
                     elseif decelflag && rightflag
-                        weights(currentLane + 1) = 3;
+                        weights(currentLane + 1) = 1.5;
                     else
-                        weights(currentLane) = 3;  % 조건 안 맞으면 원래 차선 유지
+                        weights(currentLane) = 1.5;  % 조건 안 맞으면 원래 차선 유지
                     end
                 end
 
@@ -255,5 +274,74 @@ function [front_vehicle, front_distance] = GetFrontVehicle(obj, targetLane, List
 
         % 해당 인덱스의 차량 정보 추출
         front_vehicle = lane_vehicles(original_idx, :);
+    end
+end
+
+function [rear_vehicle, rear_distance] = GetRearVehicle(obj, targetLane, List, Parameter, Setting)
+    % 현재 차선의 후행 차량 찾기
+    current_x = double(obj.Location * Parameter.Map.Scale);
+
+    % 목표 차선의 차량 필터링
+    vehicle_ids = List.Vehicle.Active(:,1);  % 모든 vehicle id 추출
+    is_target = false(size(vehicle_ids));   % 논리 인덱싱 초기화
+
+    for i = 1:length(vehicle_ids)
+        vid = vehicle_ids(i);
+
+        if Setting.GRAPEmode == 0 % GRAPE
+            if ~isempty(List.Vehicle.Object{vid}.AllocLaneDuringGRAPE) 
+                if List.Vehicle.Object{vid}.AllocLaneDuringGRAPE == targetLane
+                    is_target(i) = true;
+                end
+            else
+                if ~isempty(List.Vehicle.Object{vid}.TargetLane)
+                    if List.Vehicle.Object{vid}.TargetLane == targetLane
+                        is_target(i) = true;
+                    end
+                else
+                    if List.Vehicle.Object{vid}.Lane == targetLane
+                        is_target(i) = true;
+                    end
+                end
+            end
+        else % Greedy or CycleGreedy
+            if ~isempty(List.Vehicle.Object{vid}.TargetLane)
+                if List.Vehicle.Object{vid}.TargetLane == targetLane
+                    is_target(i) = true;
+                end
+            else
+                if List.Vehicle.Object{vid}.Lane == targetLane
+                    is_target(i) = true;
+                end
+            end
+        end
+    end
+
+    % 필터링된 Active 정보
+    lane_vehicles = List.Vehicle.Active(is_target, :);
+
+    % 모든 차량의 거리 계산
+    distances = lane_vehicles(:,4) * Parameter.Map.Scale - current_x;
+
+    % 후행 차량 거리 필터링
+    rear_distances = distances(distances < 0 & distances >= -200);
+
+    % 초기화
+    rear_vehicle = [];
+    rear_distance = inf;
+
+    if ~isempty(rear_distances)
+        % 가장 가까운 후행 차량 거리와 인덱스 찾기
+        [rear_distance, ~] = max(rear_distances); % rear는 뒤니까 max를 써야 함
+
+        % rear_distances 값이 distances에서의 원래 인덱스 찾기
+        tolerance = 1e-6; % 부동소수점 오차 허용
+        original_idx = find(abs(distances - rear_distance) < tolerance, 1, 'first');
+
+        % 해당 인덱스의 차량 정보 추출
+        rear_vehicle = lane_vehicles(original_idx, :);
+
+        % rear_distance는 양수로 바꿔줄게 (필요하면)
+        rear_distance = abs(rear_distance);
     end
 end

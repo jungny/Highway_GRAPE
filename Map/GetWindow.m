@@ -1,7 +1,8 @@
 function GetWindow(Map, ~)
-    viewType = 'Default';
+    %viewType = 'Default';
     %viewType = 'FullHighway';
     %viewType = 'ScrollableHighway';
+    viewType = 'TwoWindow';
     % viewType에 따라 창을 생성
     switch viewType
         case 'Default'
@@ -10,6 +11,8 @@ function GetWindow(Map, ~)
             CreateFullHighwayView(Map);
         case 'ScrollableHighway'
             CreateScrollableHighwayView(Map);
+        case 'TwoWindow'
+            TwoWindow(Map);
         otherwise
             error('Invalid viewType. Choose from "Default", "FullHighway", or "ScrollableHighway".');
     end
@@ -19,13 +22,45 @@ function CreateDefaultWindow(Map)
     % 기본 창 설정
     Margin = Map.Margin;
     MapWidth = Map.Road + Margin * 2;
-    MapHeight = Map.Tile * Map.Lane + Margin * 2 +10;
+    MapHeight = Map.Tile * Map.Lane + Margin * 2 +40;
 
     ScreenSize = get(0, 'ScreenSize');
     ScreenWidth = ScreenSize(3);
     ScreenHeight = ScreenSize(4);
 
     WindowWidth = ScreenWidth; % 창 너비를 스크린 너비로 설정
+    AspectRatio = MapWidth / MapHeight;
+    WindowHeight = WindowWidth / AspectRatio;
+
+    WindowX = 0;
+    WindowY = ScreenHeight - WindowHeight - 90; % 통일된 Y 위치
+
+    figure('Name', 'Default Highway View');
+    set(gcf, 'Position', [WindowX, WindowY, WindowWidth, WindowHeight]);
+    axis equal;
+    xlim([-Margin, Map.Road + Margin]);
+    ylim([-Margin, Map.Tile * Map.Lane + Margin]);
+
+    ax = gca;
+    ax.Units = 'normalized';
+    ax.Position = [0 0 1 1];
+    hold on;
+
+    % 맵 표시 (필요시 활성화)
+    % plotMap(Map);
+end
+
+function TwoWindow(Map)
+    % 기본 창 설정
+    Margin = Map.Margin;
+    MapWidth = Map.Road + Margin * 2;
+    MapHeight = Map.Tile * Map.Lane + Margin * 2 + 25;
+
+    ScreenSize = get(0, 'ScreenSize');
+    ScreenWidth = ScreenSize(3);
+    ScreenHeight = ScreenSize(4);
+
+    WindowWidth = ScreenWidth*2; % 창 너비를 스크린 너비로 설정
     AspectRatio = MapWidth / MapHeight;
     WindowHeight = WindowWidth / AspectRatio;
 

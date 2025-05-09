@@ -42,7 +42,7 @@ a_satisfied = 0; % # Agents who satisfy the current partition
 
 for i=1:n
     v_id = List.Vehicle.Active(i, 1); 
-    agent(i).ID = v_id; % 차량 ID 저장
+    agentsetting(i).ID = v_id; % 차량 ID 저장
     agent(i).iteration = 0;
     agent(i).time_stamp = rand;
     agent(i).Alloc = Alloc_existing;
@@ -73,7 +73,7 @@ for i = 1:n
     end
     % 이웃의 vehicle_id 리스트 저장
     neighbour_index_list = agent_info(i).set_neighbour_agent_id;
-    agent(i).neighbour_v_id = List.Vehicle.Active(neighbour_index_list, 1);  % 차량 ID 리스트
+    agentsetting(i).neighbour_v_id = List.Vehicle.Active(neighbour_index_list, 1);  % 차량 ID 리스트
 end
 
 Iteration_agent_current = zeros(n,1);
@@ -290,6 +290,10 @@ while a_satisfied~=n
     Alloc_history(:,Case) = Alloc_known_;
     Satisfied_history(:,Case) = Satisfied;
     iteration_history(Case) = iteration;
+
+    if Case > 5000
+        disp('check 5000 case');
+    end
 end
 
 if environment.Setting.GRAPEmode ~= 0 % 1(Greedy) or 2(CycleGreedy) 

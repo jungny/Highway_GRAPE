@@ -6,7 +6,7 @@ function P = GetParameters(Setting)
     P.Label = 1; % 1: label 보임, 0: 안보임
     P.ShowTraj = true;
     P.RemoveTraj = true;  % 궤적 유지 여부 설정 (기본값: false)
-    P.Flow = 2100; % veh/hour/lane, only used in spawntype = 1.
+    P.Flow = 1000; % veh/hour/lane, only used in spawntype = 1.
     
     % Sim
     P.Sim.Time = Setting.Time;
@@ -24,7 +24,7 @@ function P = GetParameters(Setting)
     P.Map.Scale = 0.01;
 
     P.Map.Tile = 3.05; %m
-    P.Map.Road = 520; %400
+    P.Map.Road = 1200; %400
     %P.Map.Road = randi([400,2500]);
     %P.Map.Road = 2005; %m
     
@@ -40,7 +40,7 @@ function P = GetParameters(Setting)
     P.Map.Center = [0;0];
     P.Map.SpawnZone = 520; % new vehicle to be spawned at anywhere between [0,200m]
     %P.Map.Exit = [1040, 1970];
-    P.Map.Exit = [500,5000];
+    P.Map.Exit = [600,5000];
     %P.Map.Exit = RandomExitGenerator(P.Map.Road);
     %P.Map.Exit = [P.Map.Road-330, P.Map.Road-30];
     %P.Map.Exit = [1200,2000, 2805];

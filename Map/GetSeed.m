@@ -31,7 +31,7 @@ function [SpawnSeed, NewListOrTotalVehicles] = GetSeed(Setting, Parameter, Total
             SpawnSeed(6,:) = zeros(1,SpawnCount); % redundant property
 
         case 0.5 % massive simulation 위해 case 1에서 SpawnTimes만 이전 세팅으로 , TotalVehicles에 랜덤성
-            TotalVehicles = randi([30,50]);
+            TotalVehicles = randi([30,100]);
             SpawnSeed = zeros(6,TotalVehicles);
             
             % 1: Vehicle ID, 2: Spawn Lane
@@ -59,21 +59,30 @@ function [SpawnSeed, NewListOrTotalVehicles] = GetSeed(Setting, Parameter, Total
             SpawnSeed(4,:) = ones(1,TotalVehicles);
             SpawnSeed(5,:) = ones(1,TotalVehicles);
             
-            min_interval = 0.3;
-            max_interval = 1.5;
-            SpawnTimes = cumsum(min_interval + (max_interval - min_interval) * rand(1, TotalVehicles));
+            min_interval = 0.2;
+            max_interval = 3;
+            mode_interval = 0.6; % 최빈값(=1초)
+            std_dev = Setting.SpawnStdDev;     % 퍼짐 정도. (원하면 조정 가능)
+            fprintf('Spawn StdDev 설정값: %.2f초\n', Setting.SpawnStdDev);
+
+
+            raw_intervals = mode_interval + std_dev * randn(1, TotalVehicles); % 정규분포 샘플링
+            raw_intervals = min(max(raw_intervals, min_interval), max_interval); % 0.2~3초로 클리핑
+
+            SpawnTimes = cumsum(raw_intervals);
             SpawnSeed(6, :) = SpawnTimes;
             
             NewListOrTotalVehicles = TotalVehicles;
 
         case 1
-            TotalVehicles = 30;
+            TotalVehicles = 60;
             SpawnSeed = zeros(6,TotalVehicles);
             
             % 1: Vehicle ID, 2: Spawn Lane
             SpawnSeed(1,:) = 1:TotalVehicles;
             temp_lanes = repmat(1:Parameter.Map.Lane, 1, ceil(TotalVehicles/Parameter.Map.Lane));
             SpawnSeed(2,:) = temp_lanes(1:TotalVehicles);  % 한 줄로 합침
+            % SpawnSeed(2,:) = 3*ones(1,TotalVehicles);
             
             % 3: Exit, 4: Politeness, 5: Spawn Position
             if Setting.ExitPercent == 0
@@ -96,9 +105,9 @@ function [SpawnSeed, NewListOrTotalVehicles] = GetSeed(Setting, Parameter, Total
             SpawnSeed(5,:) = ones(1,TotalVehicles);
             
             % Spawn interval parameters for each group
-            group1_interval = [0.4, 1.5];  % [min, max] for first 20%
-            group2_interval = [1.5, 3];  % [min, max] for next 70%
-            group3_interval = [4, 5.0];  % [min, max] for last 10%
+            group1_interval = [0.4, 1.5]*0.7;  % [min, max] for first 20%
+            group2_interval = [1.5, 3]*0.9;  % [min, max] for next 70%
+            group3_interval = [4, 5.0]*0.6;  % [min, max] for last 10%
             
             % Generate spawn times
             group1_count = round(TotalVehicles * 0.2);

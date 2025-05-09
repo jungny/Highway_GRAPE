@@ -11,12 +11,12 @@ Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250423_0430';
 
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
 Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
-Simulation.Setting.ExitPercent = 20;
+%Simulation.Setting.ExitPercent = 20;
 memo = 'D_예외적급감_';
 videomemo = 'D_예외적급감_';
-exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
+%exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
 
-Simulation.Setting.GRAPEmode = 1;
+Simulation.Setting.GRAPEmode = 0;
 % 0: GRAPE, 1: Greedy, 2: CycleGreedy
 if Simulation.Setting.GRAPEmode == 0
     memo = [memo ' | GRAPE'];
@@ -29,19 +29,7 @@ else % Simulation.Setting.GRAPEmode == 2
     videomemo = [videomemo '_CycleGreedy'];
 end
 
-if exitpercent == 0
-    memo = [memo ' | Exit : Through = 0 : 10'];
-    videomemo = [videomemo '_0%_'];
-elseif exitpercent == 20
-    memo = [memo ' | Exit : Through = 2 : 8'];
-    videomemo = [videomemo '_20%_'];
-elseif exitpercent == 50
-    memo = [memo ' | Exit : Through = 5 : 5'];
-    videomemo = [videomemo '_50%_'];
-elseif exitpercent == 80
-    memo = [memo ' | Exit : Through = 8 : 2'];
-    videomemo = [videomemo '_80%_'];
-end
+
 
 
 
@@ -55,16 +43,16 @@ Simulation.Setting.LogPath = @(finalRandomSeed) ...
     fullfile(Simulation.Setting.SaveFolder, 'Simulations', ...
     ['log_' num2str(finalRandomSeed) '.txt']);
 
-cycle_GRAPE =5; % GRAPE instance per 5 seconds
+cycle_GRAPE = 5; % GRAPE instance per 5 seconds
 
-Simulation.Setting.InitialRandomSeed = 2;
-Simulation.Setting.Iterations = 1; % number of iterations
+Simulation.Setting.InitialRandomSeed = 3;
+Simulation.Setting.Iterations = 300; % number of iterations
 Simulation.Setting.Time = 10000;
 
-Simulation.Setting.SpawnType = 1; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times, 2: Debug mode
+Simulation.Setting.SpawnType = 0.5; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times, 2: Debug mode
 Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
-Simulation.Setting.BubbleRadiusList = [50];
+Simulation.Setting.BubbleRadiusList = [200];
 %Simulation.Setting.BubbleRadiusList = [0];
 Simulation.Setting.Util_type = 'GS'; 
 %Simulation.Setting.Util_type = 'HOS'; 
@@ -109,10 +97,10 @@ sheet = 'Results';
 
 % 🔹 실험할 참가자 모드 설정
 %participantModes = {'Default', 'Ahead'};  % 기본 모드
-participantModes = {'Default'};
+participantModes = {};
 % 🔹 Bubble Radius 값에 따라 Bubble 관련 모드 추가
 for r = Simulation.Setting.BubbleRadiusList
-    %participantModes{end+1} = sprintf('Bubble_%dm', r);
+    participantModes{end+1} = sprintf('Bubble_%dm', r);
     %participantModes{end+1} = sprintf('BubbleAhead_%dm', r);
 end
 num_modes = length(participantModes);
@@ -137,6 +125,27 @@ for Iteration = 1:Simulation.Setting.Iterations
     randomSeed = Simulation.Setting.InitialRandomSeed + Iteration - 1;
     rng(randomSeed)
     %Simulation.Setting.RandomSeed = randomSeed;
+
+    %Simulation.Setting.ExitPercent = 20;
+    candidates = [0, 20, 50, 80];
+    Simulation.Setting.ExitPercent = candidates(randi(length(candidates)));
+    exitpercent = Simulation.Setting.ExitPercent;
+    candidates2 = [0.1, 0.2, 0.3, 0.4, 0.5];
+    Simulation.Setting.SpawnStdDev = candidates2(randi(length(candidates2)));
+
+    if exitpercent == 0
+        memo = [memo ' | Exit : Through = 0 : 10'];
+        videomemo = [videomemo '_0%_'];
+    elseif exitpercent == 20
+        memo = [memo ' | Exit : Through = 2 : 8'];
+        videomemo = [videomemo '_20%_'];
+    elseif exitpercent == 50
+        memo = [memo ' | Exit : Through = 5 : 5'];
+        videomemo = [videomemo '_50%_'];
+    elseif exitpercent == 80
+        memo = [memo ' | Exit : Through = 8 : 2'];
+        videomemo = [videomemo '_80%_'];
+    end
 
     % 현재 random seed에 대한 결과 저장할 행 초기화
     result_row = cell(1, (num_modes * 2) + 2);
@@ -272,6 +281,9 @@ for Iteration = 1:Simulation.Setting.Iterations
                 GRAPE_done = 1;
 
             elseif mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0  %&& Time > 8
+                if Time > 28
+                    %disp("debug point");
+                end
                 % GRAPE (yes cycle)
                 disp("calling Grape Instance. . . | "+ Time);
                 environment = GRAPE_Environment_Initialize(List,Parameter,Simulation.Setting);
