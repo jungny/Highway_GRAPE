@@ -7,7 +7,7 @@ Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
 Simulation.Setting.StopOnGrapeError = 1;
 Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
-Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250423_0430';
+Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250430_0514';
 
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
 Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
@@ -49,7 +49,8 @@ Simulation.Setting.InitialRandomSeed = 3;
 Simulation.Setting.Iterations = 300; % number of iterations
 Simulation.Setting.Time = 10000;
 
-Simulation.Setting.SpawnType = 0.5; % 0: Automatically spawn vehicles based on flow rate, 1: Manually define spawn times, 2: Debug mode
+Simulation.Setting.SpawnMode = 'auto'; %'fixed', 'auto' 
+Simulation.Setting.FixedSpawnType = 1; 
 Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
 Simulation.Setting.BubbleRadiusList = [200];
@@ -75,7 +76,7 @@ if Simulation.Setting.RecordLog
     fclose(fileID);
 end
 
-if Simulation.Setting.SpawnType % If vehicles are spawned manually based on predefined times
+if Simulation.Setting.SpawnMode ~= "fixed" % If vehicles are spawned manually based on predefined times
     Simulation.Setting.Time = 10000; % Set a very high simulation time to allow all vehicles to spawn
 end
 
@@ -177,6 +178,7 @@ for Iteration = 1:Simulation.Setting.Iterations
         RemovedVehicle = 0;
         exit_fail_count = 0;
         exit_success_count = 0;
+        TotalVehicles = 0;
 
         Parameter = GetParameters(Simulation.Setting);
         GetWindow(Parameter.Map,Simulation.Setting)
@@ -211,10 +213,11 @@ for Iteration = 1:Simulation.Setting.Iterations
         NextArrivalTime = zeros(Parameter.Map.Lane, 1); % 5차선 기준 [0;0;0;0;0]
         %NextArrivalTime = (3600 / Parameter.Flow) * rand(Parameter.Map.Lane, 1);
         %disp(NextArrivalTime);
-        TotalVehicles = 0;
         firstCount = 0;
         SpawnVehicle = [];
-        SpawnLanes = [];
+        List = struct();
+        InVehBuffer = [];
+        RandomValBCup = [];
 
         for Time = 0:Parameter.Physics:Parameter.Sim.Time
             GRAPE_done = 0;            
@@ -224,41 +227,18 @@ for Iteration = 1:Simulation.Setting.Iterations
             title(sprintf('%s   |   Time: %.2f s', memo, Time));
 
 
-            if Simulation.Setting.SpawnType == 0 
-                SpawnLanes = find(NextArrivalTime < Time+Parameter.Physics); % 차량 스폰 필요한 차선
-                SpawnCount = length(SpawnLanes); % 차량 스폰 필요한 차선의 개수
+            if Simulation.Setting.SpawnMode == "fixed"
+                [List, TotalVehicles_, SpawnVehicle, firstCount] = ...
+                    SpawnFixed(List, Simulation, Parameter, Time, SpawnVehicle, firstCount);
+                if ~isempty(TotalVehicles_ )
+                    TotalVehicles = TotalVehicles_;
+                end
+            elseif Simulation.Setting.SpawnMode == "auto"
+                [List, TotalVehicles, firstCount, InVehBuffer, RandomValBCup] = ...
+                    SpawnAuto(List, Parameter, Time, TotalVehicles, firstCount, InVehBuffer, RandomValBCup);
 
-                if SpawnCount > 0
-                    [SpawnVehicle, NextArrivalTime] = GetSeed(Simulation.Setting, Parameter, TotalVehicles, SpawnLanes, NextArrivalTime);
-                    TotalVehicles = TotalVehicles + SpawnCount;
-                    if firstCount == 0
-                        List.Vehicle.Object = cell(size(SpawnVehicle,2),1);
-                        firstCount = 1;
-                    end
-                    List.Vehicle.Object = cat(1, List.Vehicle.Object, cell(size(SpawnVehicle,2),1));
-                end
-
-                % Generate Vehicles
-                while ~isempty(SpawnVehicle)
-                    List.Vehicle.Object{SpawnVehicle(1,1)} = Vehicle(SpawnVehicle(:,1),Time,Parameter);
-                    SpawnVehicle = SpawnVehicle(:,2:end);  % 생성된 차량 삭제
-                end
-
-            elseif Simulation.Setting.SpawnType == 1 || Simulation.Setting.SpawnType == 2 || ...
-                   Simulation.Setting.SpawnType == 3 ||  Simulation.Setting.SpawnType == 4 || ...
-                   Simulation.Setting.SpawnType == 0.5
-                if firstCount == 0
-                    [SpawnVehicle, TotalVehicles] = GetSeed(Simulation.Setting, Parameter, TotalVehicles, SpawnLanes, NextArrivalTime);
-                    List.Vehicle.Object = cell(size(SpawnVehicle,2),1);
-                    firstCount = 1;
-                end
-                while ~isempty(SpawnVehicle) && int32(Time/Parameter.Physics) == int32(SpawnVehicle(6,1)/Parameter.Physics)
-                        List.Vehicle.Object{SpawnVehicle(1,1)} = Vehicle(SpawnVehicle(:,1),Time,Parameter);
-                        if ~isempty(SpawnVehicle)
-                            SpawnVehicle = SpawnVehicle(:,2:end);
-                    end
-                end
             end
+
 
             % Update Vehicle Data
             List.Vehicle.Data = UpdateData(List.Vehicle.Object,Parameter.Sim.Data);
@@ -460,7 +440,8 @@ for Iteration = 1:Simulation.Setting.Iterations
                     writeVideo(videoWriter, frame); 
                 end
             end
-            if Simulation.Setting.SpawnType && isempty(List.Vehicle.Active) && isempty(SpawnVehicle)
+            if strcmp(Simulation.Setting.SpawnMode, "fixed") && ...
+               isempty(List.Vehicle.Active) && isempty(SpawnVehicle)
                 break
             end
 
