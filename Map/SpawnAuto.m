@@ -1,5 +1,5 @@
-function [List, TotalVehicles, firstCount, InVehBuffer, RandomValBCup] = ...
-    SpawnAuto(List, Parameter, Time, TotalVehicles, firstCount, InVehBuffer, RandomValBCup)
+function [List, TotalVehicles, firstCount, InVehBuffer, RandomValBCup, vehIDCounter] = ...
+    SpawnAuto(List, Parameter, Time, TotalVehicles, firstCount, InVehBuffer, RandomValBCup, vehIDCounter)
 
     % 상수 설정
     dt = Parameter.Physics;
@@ -24,7 +24,8 @@ function [List, TotalVehicles, firstCount, InVehBuffer, RandomValBCup] = ...
     % 생성 조건 확인
     if InVehBuffer >= RandomValBCup
         RandomValBCup = 1 + randomAmplitude * (2 * rand() - 1);
-        vehID = TotalVehicles + 1;
+        vehIDCounter = vehIDCounter + 1;
+        vehID = vehIDCounter;
         lane = randi(numLanes);
         exit = randsample(Parameter.Map.Exit, 1);
         politeness = 1;
@@ -38,7 +39,7 @@ function [List, TotalVehicles, firstCount, InVehBuffer, RandomValBCup] = ...
             firstCount = 1;
         end
 
-        TotalVehicles = vehID;
+        TotalVehicles = TotalVehicles + 1;
         InVehBuffer = InVehBuffer - 1;
     end
 end

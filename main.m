@@ -43,7 +43,7 @@ Simulation.Setting.LogPath = @(finalRandomSeed) ...
     fullfile(Simulation.Setting.SaveFolder, 'Simulations', ...
     ['log_' num2str(finalRandomSeed) '.txt']);
 
-cycle_GRAPE = 5; % GRAPE instance per 5 seconds
+cycle_GRAPE = 500; % GRAPE instance per 5 seconds
 
 Simulation.Setting.InitialRandomSeed = 3;
 Simulation.Setting.Iterations = 300; % number of iterations
@@ -218,6 +218,7 @@ for Iteration = 1:Simulation.Setting.Iterations
         List = struct();
         InVehBuffer = [];
         RandomValBCup = [];
+        vehIDCounter = 0;
 
         for Time = 0:Parameter.Physics:Parameter.Sim.Time
             GRAPE_done = 0;            
@@ -234,8 +235,8 @@ for Iteration = 1:Simulation.Setting.Iterations
                     TotalVehicles = TotalVehicles_;
                 end
             elseif Simulation.Setting.SpawnMode == "auto"
-                [List, TotalVehicles, firstCount, InVehBuffer, RandomValBCup] = ...
-                    SpawnAuto(List, Parameter, Time, TotalVehicles, firstCount, InVehBuffer, RandomValBCup);
+                [List, TotalVehicles, firstCount, InVehBuffer, RandomValBCup, vehIDCounter] = ...
+                    SpawnAuto(List, Parameter, Time, TotalVehicles, firstCount, InVehBuffer, RandomValBCup, vehIDCounter);
 
             end
 
