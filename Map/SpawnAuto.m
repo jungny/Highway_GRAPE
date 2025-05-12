@@ -1,5 +1,5 @@
-function [List, TotalVehicles, firstCount, InVehBuffer, RandomValBCup, vehIDCounter] = ...
-    SpawnAuto(List, Parameter, Time, TotalVehicles, firstCount, InVehBuffer, RandomValBCup, vehIDCounter)
+function [List, TotalVehicles, InVehBuffer, RandomValBCup, vehIDCounter] = ...
+    SpawnAuto(List, Parameter, Time, TotalVehicles, InVehBuffer, RandomValBCup, vehIDCounter)
 
     % 상수 설정
     dt = Parameter.Physics;
@@ -26,18 +26,45 @@ function [List, TotalVehicles, firstCount, InVehBuffer, RandomValBCup, vehIDCoun
         RandomValBCup = 1 + randomAmplitude * (2 * rand() - 1);
         vehIDCounter = vehIDCounter + 1;
         vehID = vehIDCounter;
-        lane = randi(numLanes);
-        exit = randsample(Parameter.Map.Exit, 1);
+
+
+        % 차선별 마지막 차량 위치 조사
+        lane_gaps = zeros(1, numLanes);  % 각 차선의 available gap
+        for l = 1:numLanes
+            valid_rows = List.Vehicle.Active(:,3) == l;
+            vehicle_ids = List.Vehicle.Active(valid_rows, 1);
+
+            if isempty(vehicle_ids)
+                lane_gaps(l) = Parameter.Map.Road;  % 아무 차량 없으면 전체 도로 길이
+            else
+                min_loc = inf;
+                for id = vehicle_ids'
+                    if ~isempty(List.Vehicle.Object{id})
+                        loc = List.Vehicle.Object{id}.Location;
+                        if loc < min_loc
+                            min_loc = loc;
+                        end
+                    end
+                end
+                lane_gaps(l) = min_loc * Parameter.Map.Scale;  % 실제 거리 기준
+            end
+        end
+
+        % 가장 여유 공간이 큰 차선 선택
+        [~, lane] = max(lane_gaps);
+
+
+        exit_weights = [0.2, 0.8];  % 예: Exit1 20%, Through 80%
+        exit = randsample(Parameter.Map.Exit, 1, true, exit_weights);
         politeness = 1;
         spawnPos = 1;
         newVeh = [vehID; lane; exit; politeness; spawnPos; Time];
 
-        List.Vehicle.Object{vehID} = Vehicle(newVeh(1:6), Time, Parameter);
-
-        if firstCount == 0
+        if vehID > length(List.Vehicle.Object)
             List.Vehicle.Object = cat(1, List.Vehicle.Object, cell(100, 1));
-            firstCount = 1;
         end
+
+        List.Vehicle.Object{vehID} = Vehicle(newVeh(1:6), Time, Parameter);
 
         TotalVehicles = TotalVehicles + 1;
         InVehBuffer = InVehBuffer - 1;

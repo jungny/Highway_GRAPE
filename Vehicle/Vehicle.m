@@ -5,6 +5,7 @@ classdef Vehicle < handle
         Lane
         Agent
         Exit
+        SpawnTime
     end
 
     properties % Data
@@ -76,7 +77,7 @@ classdef Vehicle < handle
             obj.ExitState = -1;
             obj.PolitenessFactor = Seed(4);
             SpawnPosition = Seed(5);
-            %obj.SpawnTime = Seed(6);
+            obj.SpawnTime = Seed(6);
             obj.ColorCount = 0;
             obj.IsChangingLane = false;
             obj.trajectory_plot = [];

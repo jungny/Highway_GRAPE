@@ -221,6 +221,12 @@ function [front_vehicle, front_distance] = GetFrontVehicle(obj, targetLane, List
     % 현재 차선의 선행 차량 찾기
     current_x = double(obj.Location * Parameter.Map.Scale);
 
+    if isnan(Setting.BubbleRadius) || Setting.BubbleRadius > 200
+        considerationRange = 200;
+    else
+        considerationRange = Setting.BubbleRadius;
+    end
+
     % 목표 차선의 차량 필터링
     vehicle_ids = List.Vehicle.Active(:,1);  % 모든 vehicle id 추출
     is_target = false(size(vehicle_ids));   % 논리 인덱싱 초기화
@@ -266,7 +272,7 @@ function [front_vehicle, front_distance] = GetFrontVehicle(obj, targetLane, List
     distances = lane_vehicles(:,4) * Parameter.Map.Scale - current_x;
 
     % 선행 차량 거리 필터링
-    front_distances = distances(distances > 0 & distances <= 200);
+    front_distances = distances(distances > 0 & distances <= considerationRange);
 
     % 초기화
     front_vehicle = [];
@@ -288,6 +294,12 @@ end
 function [rear_vehicle, rear_distance] = GetRearVehicle(obj, targetLane, List, Parameter, Setting)
     % 현재 차선의 후행 차량 찾기
     current_x = double(obj.Location * Parameter.Map.Scale);
+
+    if isnan(Setting.BubbleRadius) || Setting.BubbleRadius > 200
+        considerationRange = 200;
+    else
+        considerationRange = Setting.BubbleRadius;
+    end
 
     % 목표 차선의 차량 필터링
     vehicle_ids = List.Vehicle.Active(:,1);  % 모든 vehicle id 추출
@@ -332,7 +344,7 @@ function [rear_vehicle, rear_distance] = GetRearVehicle(obj, targetLane, List, P
     distances = lane_vehicles(:,4) * Parameter.Map.Scale - current_x;
 
     % 후행 차량 거리 필터링
-    rear_distances = distances(distances < 0 & distances >= -200);
+    rear_distances = distances(distances < 0 & distances >= -considerationRange);
 
     % 초기화
     rear_vehicle = [];

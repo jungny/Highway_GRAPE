@@ -12,8 +12,8 @@ Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250430_0514';
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
 Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
 %Simulation.Setting.ExitPercent = 20;
-memo = 'D_예외적급감_';
-videomemo = 'D_예외적급감_';
+memo = 'flow3000_B200_contik_';
+videomemo = 'flow3000_B200_contik_';
 %exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
 
 Simulation.Setting.GRAPEmode = 0;
@@ -29,11 +29,25 @@ else % Simulation.Setting.GRAPEmode == 2
     videomemo = [videomemo '_CycleGreedy'];
 end
 
+exitpercent = 20;
+if exitpercent == 0
+    memo = [memo ' | Exit : Through = 0 : 10'];
+    videomemo = [videomemo '_0%_'];
+elseif exitpercent == 20
+    memo = [memo ' | Exit : Through = 2 : 8'];
+    videomemo = [videomemo '_20%_'];
+elseif exitpercent == 50
+    memo = [memo ' | Exit : Through = 5 : 5'];
+    videomemo = [videomemo '_50%_'];
+elseif exitpercent == 80
+    memo = [memo ' | Exit : Through = 8 : 2'];
+    videomemo = [videomemo '_80%_'];
+end
 
 
 
 
-Simulation.Setting.RecordExcel = 0;  % 1: Record Excel file, 0: Do not record
+Simulation.Setting.RecordExcel = 1;  % 1: Record Excel file, 0: Do not record
 
 Simulation.Setting.VideoPath = @(mode, randomSeed, timestamp) ...
     fullfile(Simulation.Setting.SaveFolder, 'Simulations', ...
@@ -43,13 +57,21 @@ Simulation.Setting.LogPath = @(finalRandomSeed) ...
     fullfile(Simulation.Setting.SaveFolder, 'Simulations', ...
     ['log_' num2str(finalRandomSeed) '.txt']);
 
-cycle_GRAPE = 500; % GRAPE instance per 5 seconds
+cycle_GRAPE = 5; % GRAPE instance per 5 seconds
 
-Simulation.Setting.InitialRandomSeed = 3;
-Simulation.Setting.Iterations = 300; % number of iterations
-Simulation.Setting.Time = 10000;
+Simulation.Setting.InitialRandomSeed = 4;
+Simulation.Setting.Iterations = 7; % number of iterations
 
 Simulation.Setting.SpawnMode = 'auto'; %'fixed', 'auto' 
+switch Simulation.Setting.SpawnMode 
+    case 'fixed'
+        Simulation.Setting.Time = 10000;
+    case 'auto'
+        Simulation.Setting.WarmupTime = 45;
+        Simulation.Setting.SimulationTime = 120;
+        Simulation.Setting.Time = Simulation.Setting.WarmupTime + Simulation.Setting.SimulationTime;
+end
+
 Simulation.Setting.FixedSpawnType = 1; 
 Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
@@ -76,10 +98,6 @@ if Simulation.Setting.RecordLog
     fclose(fileID);
 end
 
-if Simulation.Setting.SpawnMode ~= "fixed" % If vehicles are spawned manually based on predefined times
-    Simulation.Setting.Time = 10000; % Set a very high simulation time to allow all vehicles to spawn
-end
-
 % GreedyAlloc 여부를 아이콘으로 변환
 % if Simulation.Setting.GreedyAlloc == 1
 %     greedy_status = 'GRAPE ❌';
@@ -91,10 +109,8 @@ end
 
 % 🔹 엑셀 파일 경로 설정
 timestamp = datestr(now, 'HH-MM');  % 현재 시간 가져오기 (시-분-초 형식)
-%filename = fullfile(Simulation.Setting.SaveFolder, ['noDLC_' greedy_status2 '_' Simulation.Setting.Util_type '_' timestamp '.xlsx']);
-SaveFolder = 'C:\Users\user\Desktop\250423_0430';
+SaveFolder = 'C:\Users\user\Desktop\250430_0514';
 filename = fullfile(SaveFolder, [videomemo '.xlsx']);
-sheet = 'Results';
 
 % 🔹 실험할 참가자 모드 설정
 %participantModes = {'Default', 'Ahead'};  % 기본 모드
@@ -106,52 +122,20 @@ for r = Simulation.Setting.BubbleRadiusList
 end
 num_modes = length(participantModes);
 
-% 🔹 엑셀 파일이 존재하지 않으면 헤더만 추가하여 생성
-if Simulation.Setting.RecordExcel && ~isfile(filename)
-    if isstring(participantModes)
-        participantModes = cellstr(participantModes);
-    end
-    header = [{'Random Seed'}, {'Total Vehicles'}, participantModes, strcat("ExitFail_", participantModes)];
-    writematrix(header, filename, 'Sheet', sheet, 'WriteMode', 'overwrite')
-    disp(['New Excel file created: ', filename]);
-end
-
 % 🔹 결과 저장을 위한 배열 초기화
 if Simulation.Setting.RecordExcel
     num_simulations = Simulation.Setting.Iterations;
-    results = cell(num_simulations, (num_modes * 2) + 2); % random seed, total vehicles, <avg travel time, fail rate> each mode
+    % 각 mode별로 결과를 저장할 셀 배열 초기화
+    results = cell(num_simulations, 5); % random seed, avg speed, std speed, road capacity, exit fail rate
 end
 
 for Iteration = 1:Simulation.Setting.Iterations
     randomSeed = Simulation.Setting.InitialRandomSeed + Iteration - 1;
     rng(randomSeed)
-    %Simulation.Setting.RandomSeed = randomSeed;
-
-    %Simulation.Setting.ExitPercent = 20;
-    candidates = [0, 20, 50, 80];
-    Simulation.Setting.ExitPercent = candidates(randi(length(candidates)));
-    exitpercent = Simulation.Setting.ExitPercent;
-    candidates2 = [0.1, 0.2, 0.3, 0.4, 0.5];
-    Simulation.Setting.SpawnStdDev = candidates2(randi(length(candidates2)));
-
-    if exitpercent == 0
-        memo = [memo ' | Exit : Through = 0 : 10'];
-        videomemo = [videomemo '_0%_'];
-    elseif exitpercent == 20
-        memo = [memo ' | Exit : Through = 2 : 8'];
-        videomemo = [videomemo '_20%_'];
-    elseif exitpercent == 50
-        memo = [memo ' | Exit : Through = 5 : 5'];
-        videomemo = [videomemo '_50%_'];
-    elseif exitpercent == 80
-        memo = [memo ' | Exit : Through = 8 : 2'];
-        videomemo = [videomemo '_80%_'];
-    end
 
     % 현재 random seed에 대한 결과 저장할 행 초기화
-    result_row = cell(1, (num_modes * 2) + 2);
+    result_row = cell(1, 5);
     result_row{1} = randomSeed;  % 첫 번째 칸에 random seed 저장
-
 
     for mode_idx = 1:num_modes
         close all
@@ -179,10 +163,19 @@ for Iteration = 1:Simulation.Setting.Iterations
         exit_fail_count = 0;
         exit_success_count = 0;
         TotalVehicles = 0;
+        
 
         Parameter = GetParameters(Simulation.Setting);
         GetWindow(Parameter.Map,Simulation.Setting)
         Parameter.Trajectory = GetTrajectory(Parameter.Map,Simulation.Setting);
+
+        % 차량별 속도를 기록하기 위한 배열 추가
+        vehicle_speeds = [];
+        vehicles_passed = 0;  % 도로 용량 계산을 위한 변수
+        % 첫 번째 exit의 50m 이전 지점을 capacity check point로 설정
+        first_exit_point = min(Parameter.Map.Exit);  % 첫 번째 exit 위치
+        capacity_check_point = first_exit_point - 50;  % 첫 번째 exit의 50m 이전 지점
+        counted_vehicles = [];  % capacity check point를 통과한 차량 ID를 저장할 배열
 
         if Simulation.Setting.RecordVideo
             timestamp = datestr(now, 'HH-MM');
@@ -225,7 +218,7 @@ for Iteration = 1:Simulation.Setting.Iterations
             % 제목 출력
             % title(sprintf('Random Seed: %d   |   %s   |   Participants Mode: %s   |   Time: %.2f s', ...
             %     randomSeed, greedy_status, strrep(participantModes{mode_idx}, '_', ' '), Time));
-            title(sprintf('%s   |   Time: %.2f s', memo, Time));
+            title(sprintf('%s | Participants Mode: %s  |   Time: %.2f s', memo, strrep(participantModes{mode_idx}, '_', ' '), Time));
 
 
             if Simulation.Setting.SpawnMode == "fixed"
@@ -235,8 +228,8 @@ for Iteration = 1:Simulation.Setting.Iterations
                     TotalVehicles = TotalVehicles_;
                 end
             elseif Simulation.Setting.SpawnMode == "auto"
-                [List, TotalVehicles, firstCount, InVehBuffer, RandomValBCup, vehIDCounter] = ...
-                    SpawnAuto(List, Parameter, Time, TotalVehicles, firstCount, InVehBuffer, RandomValBCup, vehIDCounter);
+                [List, TotalVehicles, InVehBuffer, RandomValBCup, vehIDCounter] = ...
+                    SpawnAuto(List, Parameter, Time, TotalVehicles, InVehBuffer, RandomValBCup, vehIDCounter);
 
             end
 
@@ -252,37 +245,40 @@ for Iteration = 1:Simulation.Setting.Iterations
             %     GRAPE_done = 1;
 
             if Simulation.Setting.GRAPEmode == 1 % Greedy (no cycle, at any time step)
-                environment = GRAPE_Environment_Initialize(List,Parameter,Simulation.Setting);
-                lane_alloc = GRAPE_instance(environment).Alloc;
+                if strcmp(Simulation.Setting.SpawnMode, 'fixed') || Time >= Simulation.Setting.WarmupTime
+                    environment = GRAPE_Environment_Initialize(List,Parameter,Simulation.Setting);
+                    lane_alloc = GRAPE_instance(environment).Alloc;
+                end
 
             elseif Simulation.Setting.GRAPEmode == 2 ... % CycleGreedy (yes cycle) 
                    && mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0
-                environment = GRAPE_Environment_Initialize(List,Parameter,Simulation.Setting);
-                lane_alloc = GRAPE_instance(environment).Alloc;
-                GRAPE_done = 1;
-
-            elseif mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0  %&& Time > 8
-                if Time > 28
-                    %disp("debug point");
-                end
-                % GRAPE (yes cycle)
-                disp("calling Grape Instance. . . | "+ Time);
-                environment = GRAPE_Environment_Initialize(List,Parameter,Simulation.Setting);
-                try
-                    GRAPE_output = GRAPE_instance(environment);
-                    % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
-                    lane_alloc = GRAPE_output.Alloc;
-                    if any(lane_alloc == 0)
-                        fileID = fopen(Simulation.Setting.LogFile, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
-                        fprintf(fileID, 'VOID TASK at %d \n', Iteration);
-                        fclose(fileID);
-                    end
+                if strcmp(Simulation.Setting.SpawnMode, 'fixed') || Time >= Simulation.Setting.WarmupTime
+                    environment = GRAPE_Environment_Initialize(List,Parameter,Simulation.Setting);
+                    lane_alloc = GRAPE_instance(environment).Alloc;
                     GRAPE_done = 1;
-                catch ME
-                    if Simulation.Setting.StopOnGrapeError
-                        rethrow(ME);
-                    else
-                        warning(ME.identifier, 'GRAPE error occurred, ignoring and continuing: %s', ME.message);
+                end
+
+            elseif mod(Time, cycle_GRAPE) == cycle_GRAPE-1 && size(List.Vehicle.Active,1)>0
+                if strcmp(Simulation.Setting.SpawnMode, 'fixed') || Time >= Simulation.Setting.WarmupTime
+                    % GRAPE (yes cycle)
+                    disp("calling Grape Instance. . . | "+ Time);
+                    environment = GRAPE_Environment_Initialize(List,Parameter,Simulation.Setting);
+                    try
+                        GRAPE_output = GRAPE_instance(environment);
+                        % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
+                        lane_alloc = GRAPE_output.Alloc;
+                        if any(lane_alloc == 0)
+                            fileID = fopen(Simulation.Setting.LogFile, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
+                            fprintf(fileID, 'VOID TASK at %d \n', Iteration);
+                            fclose(fileID);
+                        end
+                        GRAPE_done = 1;
+                    catch ME
+                        if Simulation.Setting.StopOnGrapeError
+                            rethrow(ME);
+                        else
+                            warning(ME.identifier, 'GRAPE error occurred, ignoring and continuing: %s', ME.message);
+                        end
                     end
                 end
             end
@@ -318,11 +314,6 @@ for Iteration = 1:Simulation.Setting.Iterations
                         %     end
                         % end
                         feasible = true;
-                        
-                        % warm up 구간 동안은 차선 변경 안 되게 설정
-                        % if current_vehicle.Location * Parameter.Map.Scale < 20
-                        %     feasible = false;
-                        % end
 
                         if feasible %&& Simulation.Setting.GreedyAlloc
                             if current_vehicle.IsChangingLane 
@@ -368,10 +359,16 @@ for Iteration = 1:Simulation.Setting.Iterations
 
 
                 if List.Vehicle.Active(i,4) * Parameter.Map.Scale > Parameter.Map.Road % through vehicles
-                    spawn_time = List.Vehicle.Object{List.Vehicle.Active(i,1)}.EntryTime;
+                    spawn_time = List.Vehicle.Object{List.Vehicle.Active(i,1)}.SpawnTime;
                     exit_time = Time;
                     travel_time = exit_time - spawn_time;
                     exit_location = List.Vehicle.Active(i,4) * Parameter.Map.Scale;
+                    
+                    % 차량의 평균 속도 계산 및 기록 (45초 이후에 생성된 차량만)
+                    if strcmp(Simulation.Setting.SpawnMode, 'fixed') || spawn_time >= Simulation.Setting.WarmupTime
+                        avg_speed = exit_location / travel_time;
+                        vehicle_speeds = [vehicle_speeds, avg_speed];
+                    end
 
                     travel_times = [travel_times, travel_time];
                     
@@ -392,21 +389,26 @@ for Iteration = 1:Simulation.Setting.Iterations
 
                 elseif List.Vehicle.Object{List.Vehicle.Active(i,1)}.ExitState >= 0 && List.Vehicle.Active(i,4) * Parameter.Map.Scale >= List.Vehicle.Object{List.Vehicle.Active(i,1)}.Exit - 1 
                     % record travel time, avg speed
-                    spawn_time = List.Vehicle.Object{List.Vehicle.Active(i,1)}.EntryTime;
+                    spawn_time = List.Vehicle.Object{List.Vehicle.Active(i,1)}.SpawnTime;
                     exit_time = Time;
                     travel_time = exit_time - spawn_time;
                     exit_location = List.Vehicle.Active(i,4) * Parameter.Map.Scale;
 
-                    %travel_times = [travel_times, travel_time];
+                    % 차량의 평균 속도 계산 및 기록 (45초 이후에 생성된 차량만)
+                    if strcmp(Simulation.Setting.SpawnMode, 'fixed') || spawn_time >= Simulation.Setting.WarmupTime
+                        avg_speed = exit_location / travel_time;
+                        vehicle_speeds = [vehicle_speeds, avg_speed];
 
-                    % 🔹 Exit 성공 차량인지 확인
-                    if List.Vehicle.Object{List.Vehicle.Active(i,1)}.Lane == Parameter.Map.Lane
-                        exit_success_count = exit_success_count + 1;
-                    else
-                        exit_fail_count = exit_fail_count + 1;  % 🔹 최우측 차선이 아니면 exit fail로 기록
+                        % 🔹 Exit 성공 차량인지 확인 (45초 이후에 생성된 차량만)
+                        if List.Vehicle.Object{List.Vehicle.Active(i,1)}.Lane == Parameter.Map.Lane
+                            exit_success_count = exit_success_count + 1;
+                        else
+                            exit_fail_count = exit_fail_count + 1;  % 🔹 최우측 차선이 아니면 exit fail로 기록
+                        end
                     end
+
                     if Simulation.Setting.RecordLog 
-                        SaveFolder = 'C:\Users\user\Desktop\250423_0430';
+                        SaveFolder = 'C:\Users\user\Desktop\250430_0514';
                         logFileName = fullfile(SaveFolder, ...
                             [videomemo '_log.txt']);
                         fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
@@ -472,9 +474,78 @@ for Iteration = 1:Simulation.Setting.Iterations
             fclose(fileID);
         end
 
-        % 🔹 각 mode_idx마다 결과 저장 (Avg Travel Time + Exit Fail Rate)
-        result_row{2+mode_idx} = avg_travel_time;
-        result_row{2+num_modes+mode_idx} = exit_fail_rate;
+        % 차량이 capacity check point를 통과했는지 확인
+        if strcmp(Simulation.Setting.SpawnMode, 'fixed') || Time >= Simulation.Setting.WarmupTime
+            for i = 1:size(List.Vehicle.Active,1)
+                vehicle_id = List.Vehicle.Active(i, 1);
+                current_vehicle = List.Vehicle.Object{vehicle_id};
+                % 45초 이후에 생성된 차량만 카운트
+                if (strcmp(Simulation.Setting.SpawnMode, 'fixed') || ~isempty(current_vehicle) && ...
+                   current_vehicle.SpawnTime >= Simulation.Setting.WarmupTime) && ...
+                   current_vehicle.Location * Parameter.Map.Scale >= capacity_check_point && ...
+                   ~ismember(vehicle_id, counted_vehicles)
+                    vehicles_passed = vehicles_passed + 1;
+                    counted_vehicles = [counted_vehicles, vehicle_id];
+                end
+            end
+        end
+
+        % 각 mode별 결과 계산
+        % 현재 도로 위에 있는 모든 차량의 속도도 포함
+        for i = 1:size(List.Vehicle.Active,1)
+            vehicle_id = List.Vehicle.Active(i, 1);
+            current_vehicle = List.Vehicle.Object{vehicle_id};
+            if ~isempty(current_vehicle)
+                % 차량의 이동 거리와 시간으로 평균 속도 계산
+                travel_time = Time - current_vehicle.SpawnTime;
+                distance = current_vehicle.Location * Parameter.Map.Scale;
+                avg_speed = distance / travel_time;
+                vehicle_speeds = [vehicle_speeds, avg_speed];
+            end
+        end
+        
+        % 평균 속도와 표준편차 계산 (모든 차량 포함)
+        avg_speed = mean(vehicle_speeds);
+        std_speed = std(vehicle_speeds);
+        
+        % 도로 용량 계산 (capacity check point를 통과한 총 차량 수 / 시뮬레이션 시간)
+        if strcmp(Simulation.Setting.SpawnMode, 'auto')
+            effective_time = Time - Simulation.Setting.WarmupTime;  % WarmupTime 이후의 시간만 고려
+            road_capacity = vehicles_passed / effective_time;  % 차량/초 단위
+        else
+            road_capacity = vehicles_passed / Time;  % 차량/초 단위
+        end
+        
+        % 출구 실패율 계산
+        exit_fail_rate = exit_fail_count / (exit_success_count + exit_fail_count);
+        
+        % 결과 행에 저장
+        result_row{2} = avg_speed;
+        result_row{3} = std_speed;
+        result_row{4} = road_capacity;
+        result_row{5} = exit_fail_rate;
+        
+        % 현재 mode의 결과를 해당 시트에 저장
+        if Simulation.Setting.RecordExcel
+            % 시트 이름에서 특수문자 제거 및 공백을 언더스코어로 변경
+            sheet_name = strrep(participantModes{mode_idx}, ' ', '_');
+            sheet_name = regexprep(sheet_name, '[^a-zA-Z0-9_]', '');
+            headers = {'Random Seed', 'Average Speed (m/s)', 'Speed STD (m/s)', 'Road Capacity (veh/s)', 'Exit Fail Rate'};
+
+            if ~isfile(filename)
+                % 파일이 없으면 먼저 헤더를 써서 파일 생성
+                writecell(headers, filename, 'Sheet', sheet_name, 'WriteMode', 'overwrite');
+                disp(['Created new file and sheet: ', sheet_name]);
+            elseif ~ismember(sheet_name, sheetnames(filename))
+                % 파일이 있으면 시트가 없을 때만 헤더 작성
+                writecell(headers, filename, 'Sheet', sheet_name, 'WriteMode', 'overwrite');
+                disp(['Created new sheet: ', sheet_name]);
+            end
+
+            % 결과 추가
+            writecell(result_row, filename, 'Sheet', sheet_name, 'WriteMode', 'append');
+            disp(['Added results to sheet: ', sheet_name]);
+        end
 
         disp("Iteration: " + Iteration)
         if Time > Parameter.Sim.Time - Parameter.Physics
@@ -492,9 +563,4 @@ for Iteration = 1:Simulation.Setting.Iterations
     end
     result_row{2} = TotalVehicles;
     results(Iteration, :) = result_row;
-end
-% 🔹 모든 Iteration이 끝난 후, 엑셀 파일에 한 번에 결과 저장
-if Simulation.Setting.RecordExcel
-    writecell(results, filename, 'Sheet', sheet, 'WriteMode', 'append');
-    disp(['✅ Simulation results saved to: ', filename]);
 end

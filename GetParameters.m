@@ -6,7 +6,7 @@ function P = GetParameters(Setting)
     P.Label = 1; % 1: label 보임, 0: 안보임
     P.ShowTraj = true;
     P.RemoveTraj = true;  % 궤적 유지 여부 설정 (기본값: false)
-    P.Flow = 5400; % veh/hour/lane, only used in spawntype = 1.
+    P.Flow = 2500; % veh/hour/lane, only used in spawntype = 1.
     
     % Sim
     P.Sim.Time = Setting.Time;
