@@ -12,8 +12,8 @@ Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250430_0514';
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
 Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
 %Simulation.Setting.ExitPercent = 20;
-memo = 'flow3000_B200_contik_';
-videomemo = 'flow3000_B200_contik_';
+memo = 'kList_flow4000_B200_1partctp_';
+videomemo = 'kList_flow4000_B200_1partctp_';
 %exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
 
 Simulation.Setting.GRAPEmode = 0;
@@ -29,7 +29,7 @@ else % Simulation.Setting.GRAPEmode == 2
     videomemo = [videomemo '_CycleGreedy'];
 end
 
-exitpercent = 20;
+exitpercent = 50;
 if exitpercent == 0
     memo = [memo ' | Exit : Through = 0 : 10'];
     videomemo = [videomemo '_0%_'];
@@ -47,7 +47,7 @@ end
 
 
 
-Simulation.Setting.RecordExcel = 1;  % 1: Record Excel file, 0: Do not record
+Simulation.Setting.RecordExcel = 0;  % 1: Record Excel file, 0: Do not record
 
 Simulation.Setting.VideoPath = @(mode, randomSeed, timestamp) ...
     fullfile(Simulation.Setting.SaveFolder, 'Simulations', ...
@@ -59,8 +59,8 @@ Simulation.Setting.LogPath = @(finalRandomSeed) ...
 
 cycle_GRAPE = 5; % GRAPE instance per 5 seconds
 
-Simulation.Setting.InitialRandomSeed = 4;
-Simulation.Setting.Iterations = 7; % number of iterations
+Simulation.Setting.InitialRandomSeed = 1;
+Simulation.Setting.Iterations = 10; % number of iterations
 
 Simulation.Setting.SpawnMode = 'auto'; %'fixed', 'auto' 
 switch Simulation.Setting.SpawnMode 
@@ -83,6 +83,9 @@ Simulation.Setting.Util_type = 'GS';
 %Simulation.Setting.Util_type = 'ES'; 
 Simulation.Setting.LaneChangeMode = 'SimpleLaneChange'; % 'MOBIL' or 'SimpleLaneChange'
 
+% Add kList and k settings
+Simulation.Setting.kList = [1, 1.2, 1.4, 1.6, 1.8, 2, 3, 5];  % List of k values to test
+Simulation.Setting.k = 1.5;  % Default k value
 
 %% Run Simulation
 % Initialize Log File
@@ -120,7 +123,22 @@ for r = Simulation.Setting.BubbleRadiusList
     participantModes{end+1} = sprintf('Bubble_%dm', r);
     %participantModes{end+1} = sprintf('BubbleAhead_%dm', r);
 end
-num_modes = length(participantModes);
+
+% 🔹 kList가 여러 개인 경우 participantModes는 하나만 사용
+if length(Simulation.Setting.kList) > 1
+    if length(participantModes) > 1
+        warning('Multiple k values detected. Using only first participant mode.');
+        participantModes = participantModes(1);
+    end
+    num_modes = length(Simulation.Setting.kList);
+    mode_names = cell(1, num_modes);
+    for i = 1:num_modes
+        mode_names{i} = sprintf('k_%.1f', Simulation.Setting.kList(i));
+    end
+else
+    num_modes = length(participantModes);
+    mode_names = participantModes;
+end
 
 % 🔹 결과 저장을 위한 배열 초기화
 if Simulation.Setting.RecordExcel
@@ -140,7 +158,14 @@ for Iteration = 1:Simulation.Setting.Iterations
     for mode_idx = 1:num_modes
         close all
         rng(randomSeed)
-        Simulation.Setting.NumberOfParticipants = participantModes{mode_idx};
+        
+        % Set mode based on whether we're using kList or participantModes
+        if length(Simulation.Setting.kList) > 1
+            Simulation.Setting.k = Simulation.Setting.kList(mode_idx);
+            Simulation.Setting.NumberOfParticipants = participantModes{1};
+        else
+            Simulation.Setting.NumberOfParticipants = participantModes{mode_idx};
+        end
 
         if startsWith(Simulation.Setting.NumberOfParticipants, 'Bubble')
             radius_str = regexp(Simulation.Setting.NumberOfParticipants, '\d+', 'match');  
@@ -153,7 +178,7 @@ for Iteration = 1:Simulation.Setting.Iterations
             Simulation.Setting.BubbleRadius = NaN;
         end
 
-        disp(['Running ', participantModes{mode_idx}, ' mode, Random Seed ', num2str(randomSeed)]);
+        disp(['Running ', mode_names{mode_idx}, ' mode, Random Seed ', num2str(randomSeed)]);
 
         environment = struct();
         GRAPE_output = [];
@@ -216,9 +241,12 @@ for Iteration = 1:Simulation.Setting.Iterations
         for Time = 0:Parameter.Physics:Parameter.Sim.Time
             GRAPE_done = 0;            
             % 제목 출력
-            % title(sprintf('Random Seed: %d   |   %s   |   Participants Mode: %s   |   Time: %.2f s', ...
-            %     randomSeed, greedy_status, strrep(participantModes{mode_idx}, '_', ' '), Time));
-            title(sprintf('%s | Participants Mode: %s  |   Time: %.2f s', memo, strrep(participantModes{mode_idx}, '_', ' '), Time));
+            title(sprintf('k: %.2f | Mode: %s | Inflow: %.1f | Seed: %d | Time: %.2f s', ...
+                Simulation.Setting.k, ...
+                strrep(Simulation.Setting.NumberOfParticipants, '_', ' '), ...
+                Parameter.Flow, ...
+                randomSeed, ...
+                Time));
 
 
             if Simulation.Setting.SpawnMode == "fixed"
@@ -528,7 +556,9 @@ for Iteration = 1:Simulation.Setting.Iterations
         % 현재 mode의 결과를 해당 시트에 저장
         if Simulation.Setting.RecordExcel
             % 시트 이름에서 특수문자 제거 및 공백을 언더스코어로 변경
-            sheet_name = strrep(participantModes{mode_idx}, ' ', '_');
+            sheet_name = strrep(mode_names{mode_idx}, ' ', '_');
+            % 소수점은 p로 대체
+            sheet_name = regexprep(sheet_name, '\.', 'p');
             sheet_name = regexprep(sheet_name, '[^a-zA-Z0-9_]', '');
             headers = {'Random Seed', 'Average Speed (m/s)', 'Speed STD (m/s)', 'Road Capacity (veh/s)', 'Exit Fail Rate'};
 

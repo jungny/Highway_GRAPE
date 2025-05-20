@@ -150,8 +150,8 @@ function G = GRAPE_instance(environment)
     dist_agents = zeros(n,n);
     for i=1:n
         for j=1:n
-            dist_agents(i,j) = norm(G.a_location(i,:)-G.a_location(j,:));
-            %dist_agents(i,j) = abs(G.a_location(i,1)-G.a_location(j,1));
+            %dist_agents(i,j) = norm(G.a_location(i,:)-G.a_location(j,:));
+            dist_agents(i,j) = abs(G.a_location(i,1)-G.a_location(j,1)); %0512업데이트:
             %disp(dist_agents(i,j));
         end
     end
