@@ -1,17 +1,18 @@
 function environment = GRAPE_Environment_Initialize(List, Parameter,Setting)
     % AllocationLaneDuringGRAPE 초기화
-    for i = 1:size(List.Vehicle.Active, 1)
-        vehicle_id = List.Vehicle.Active(i, 1); 
-        vehicle = List.Vehicle.Object{vehicle_id};
+    n = size(List.Vehicle.Active, 1);
+    for i = 1:n
+        vid = List.Vehicle.Active(i, 1); 
+        vehicle = List.Vehicle.Object{vid};
         vehicle.AllocLaneDuringGRAPE = [];
     end
     
     % a_location 생성
-    a_location = zeros(size(List.Vehicle.Active, 1), 2);
-    for i = 1:size(List.Vehicle.Active, 1)
-        vehicle_id = List.Vehicle.Active(i, 1);  % 현재 차량 ID
-        a_location(i, :) = [List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location, ...
-                            (Parameter.Map.Lane-List.Vehicle.Object{List.Vehicle.Active(i,1)}.Lane+0.5) * Parameter.Map.Tile];  % 차량의 현재 (x, y) 위치
+    a_location = zeros(n, 2);
+    for i = 1:n
+        vid = List.Vehicle.Active(i, 1);  % 현재 차량 ID
+        a_location(i, :) = [List.Vehicle.Object{vid}.Location, ...
+                            (Parameter.Map.Lane-List.Vehicle.Object{vid}.Lane+0.5) * Parameter.Map.Tile];  % 차량의 현재 (x, y) 위치
     end
 
     % t_location, t_demand 생성
@@ -20,11 +21,10 @@ function environment = GRAPE_Environment_Initialize(List, Parameter,Setting)
         t_location(i, :) = [0, (Parameter.Map.Lane-i+0.5) * Parameter.Map.Tile];  % (x, y) 좌표로 정의 (x는 0으로 고정)
     end
 
-    t_demand = zeros(Parameter.Map.Lane, size(List.Vehicle.Active,1));  
+    t_demand = zeros(Parameter.Map.Lane, n);  
     % t_demand(:) = 100*size(List.Vehicle.Active, 1);
     
     % transition_distance = 300 + 15*Parameter.Map.Lane^2;
-    raw_weights = zeros(Parameter.Map.Lane,1);
 
     Util_type = Setting.Util_type;
     switch Util_type
@@ -75,12 +75,12 @@ function environment = GRAPE_Environment_Initialize(List, Parameter,Setting)
                 
                     obj = List.Vehicle.Object{vehicle_id};
                     currentLane = obj.Lane;
-                    decelflag = false;
+                    % decelflag = false;
                     leftflag = false;
                     rightflag = false;
                     %cur_front_dist = NaN;
                     left_dist = -inf;
-                    right_dist = -inf;
+                    % right_dist = -inf;
 
                 
                     % (4) 내가 감속 중이면 decelflag
@@ -173,8 +173,7 @@ function environment = GRAPE_Environment_Initialize(List, Parameter,Setting)
                 
 
                 for lane = 1:Parameter.Map.Lane
-                    normalized_weights(lane) = floor(weights(lane)*100)/100;
-                    t_demand(lane, i) = normalized_weights(lane); 
+                    t_demand(lane, i) = weights(lane); 
                 end
 
             end
@@ -184,9 +183,10 @@ function environment = GRAPE_Environment_Initialize(List, Parameter,Setting)
     % t_demand = size(List.Vehicle.Active, 1) * 100 * ones(Parameter.Map.Lane, 1);
 
     % Alloc_current 생성
-    Alloc_current = [];
-    for i = 1:size(List.Vehicle.Active, 1)
-        Alloc_current = [Alloc_current; List.Vehicle.Object{List.Vehicle.Active(i, 1)}.Lane];
+    Alloc_current = zeros(n,1);
+    for i = 1:n
+        vid = List.Vehicle.Active(i,1);
+        Alloc_current(i) = List.Vehicle.Object{vid}.Lane;
     end
 
 

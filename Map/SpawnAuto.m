@@ -54,7 +54,7 @@ function [List, TotalVehicles, InVehBuffer, RandomValBCup, vehIDCounter] = ...
         [~, lane] = max(lane_gaps);
 
 
-        exit_weights = [0.5, 0.5];  % 예: Exit1 20%, Through 80%
+        exit_weights = [0.2, 0.8];  % 예: Exit1 20%, Through 80%
         exit = randsample(Parameter.Map.Exit, 1, true, exit_weights);
         politeness = 1;
         spawnPos = 1;

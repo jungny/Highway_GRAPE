@@ -166,7 +166,7 @@ classdef Vehicle < handle
         end
         
 
-        function MoveVehicle(obj,Time,Parameter,List)
+        function MoveVehicle(obj,Time,Parameter,~)
             if ~obj.IsChangingLane
                 set(obj.Patch, 'FaceColor', 'white');
                 % if obj.Location * Parameter.Map.Scale >= 20 
@@ -281,19 +281,17 @@ classdef Vehicle < handle
 
             % 4. 글로벌 좌표계로 변환
             globalCorners = rotation * localCorners + location;  % 2x4
-            LaneIfFullyInside = [];
+            obj.LaneIfFullyInside = [];
 
             for j = 1:Parameter.Map.Lane
                 y_min = (Parameter.Map.Lane - j) * Parameter.Map.Tile;
                 y_max = (Parameter.Map.Lane + 1 - j) * Parameter.Map.Tile;
                 
                 if all(globalCorners(2,:) >= y_min) && all(globalCorners(2,:) < y_max)
-                    LaneIfFullyInside = j;
+                    obj.LaneIfFullyInside = j;
                     break;
                 end
             end
-
-            obj.LaneIfFullyInside = LaneIfFullyInside;
            
             
 

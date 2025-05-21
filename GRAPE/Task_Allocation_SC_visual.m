@@ -34,11 +34,15 @@ List = environment.List;
 %% For visualisation
 Alloc_history = zeros(n,10);
 Satisfied_history = zeros(n,10);
-iteration_history = [];
+MAX_CASE = 10000;
+iteration_history = zeros(1, MAX_CASE);
 Case = 0;
 %% Initialisation
 
 a_satisfied = 0; % # Agents who satisfy the current partition
+
+agent(n) = struct('iteration', 0, 'time_stamp', 0, 'Alloc', [], 'satisfied_flag', 0, 'util', 0);
+agentsetting(n) = struct('ID', 0);
 
 for i=1:n
     v_id = List.Vehicle.Active(i, 1); 
@@ -58,6 +62,8 @@ if startsWith(Type, 'BubbleAhead')
 elseif startsWith(Type, 'Bubble')
     Type = 'Bubble';
 end
+
+agent_info(n) = struct('set_neighbour_agent_id', []);
 
 for i = 1:n
     switch Type
@@ -126,8 +132,9 @@ while a_satisfied~=n
                     % 현재 agent i가 선택한 task(차선)의 앞에 있는 차량 수, including
                     % oneself
                     x_relation = environment.x_relation;
-                    task_agents = find(Alloc_ == t);
-                    n_participants = sum(x_relation(i, task_agents)) + 1; 
+                    task_agents_mask = (Alloc_ == t);  % 논리형 인덱싱
+                    n_participants = sum(x_relation(i, task_agents_mask)) + 1;
+
                     
                     % fprintf('i = %d, t = %d, n_participants = %d\n', i, t, n_participants);
 
@@ -182,7 +189,9 @@ while a_satisfied~=n
     
     %% Distributed Mutex (Algorithm 2)  
 
-    
+    agent_ = struct('satisfied_flag', {}, 'Alloc', {}, 'time_stamp', {}, 'iteration', {}, 'util', {});
+    agent_(n) = struct('satisfied_flag', 0, 'Alloc', [], 'time_stamp', 0, 'iteration', 0, 'util', 0);
+
     for i=1:n
         set_neighbour_agent_id = agent_info(i).set_neighbour_agent_id;
         % Initially
@@ -227,7 +236,8 @@ while a_satisfied~=n
         % Time stamps amongst neighbour agent who have maximum iteraiton
         Timestamp_agent_maxiteration = Timestamp_agent_neighbour.*max_Iteration_agent_neighbour;
         
-        [max_Timestamp,agent_neighbour_index] = max(Timestamp_agent_maxiteration);
+        % [max_Timestamp,agent_neighbour_index] = max(Timestamp_agent_maxiteration);
+        [~,agent_neighbour_index] = max(Timestamp_agent_maxiteration);
         valid_agent_id = set_neighbour_agent_id_(agent_neighbour_index);  % Find out "deciding agent" 
         
         % Update local information from the deciding agent's local information
@@ -305,9 +315,9 @@ else
     output.flag_problem = 0;
 
     if n==1
-        Alloc = agent(1).Alloc;
+        Alloc_known_ = agent(1).Alloc;
         iteration = agent(1).iteration;
-        time_stamp = agent(1).time_stamp;
+        % time_stamp = agent(1).time_stamp;
         a_utility(1) = agent(1).util;
     else
         for i=1:n

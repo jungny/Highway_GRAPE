@@ -56,13 +56,6 @@ switch Util_type
         %util_value = t_demand(task_id)/n_participants;
         util_value = t_demand(task_id)/n_participants - cost;
 
-    case 'Max_velocity'
-        denominator = 4.4 * (environment.number_of_tasks)^2.2 + 6;
-        % Cost 
-        %cost = abs(t_location(task_id, 2)- a_location(agent_id, 2)) / denominator ; % y coordinate difference
-        cost=0;
-        %util_value = t_demand(task_id)/n_participants;
-        util_value = t_demand(task_id)/n_participants - cost;
 
     case 'Peaked_reward'
         % Cost
@@ -96,31 +89,6 @@ switch Util_type
     case 'Random'        
         % table_rand_util(#Participants, Task ID, Agent ID)
         util_value = t_demand(task_id)*prod(table_rand_util(1:n_participants,task_id,agent_id));
-        
-    case 'Else'
-        
-        % Setting : threshold for deciding to go void task
-        Void_task_threshold = 0;
-        
-        %% Utility Function for Testing GAP
-        
-        
-        bin_size_ = bin_size(bin_id);
-        %bin_size_ = bin_size(bin_id,item_id);
-        item_size_ = item_size(bin_id,:);
-        item_value_ = item_value(bin_id,:);
-        
-        % profit ratio
-        profit_ratio_ = item_value_./item_size_;
-        
-        if bin_size_ >= item_size_(item_id)
-            weight_ = profit_ratio_(item_id)/sum(profit_ratio_(current_members));
-            util_value = profit_ratio_(item_id)*(bin_size_*1.1 - item_size_(item_id))*weight_;    % Problem: if item size is just fit, then becomes 0
-            %util_value = profit_ratio_(item_id)*weight_;
-            
-        else
-            util_value = 0;
-        end
         
 end
 
