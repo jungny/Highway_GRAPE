@@ -4,7 +4,7 @@ clear
 clc
 addpath('Map\','Vehicle\','Signal\','Manager\','v2v\','GRAPE\')
 Simulation.Setting.Window = 1000;
-Simulation.Setting.Draw = 1;
+Simulation.Setting.Draw = 0;
 Simulation.Setting.StopOnGrapeError = 1;
 Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250514_0528';
@@ -371,7 +371,7 @@ for Iteration = 1:Simulation.Setting.Iterations
                     end
                 end
 
-                MoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)},Time,Parameter,List)
+                MoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)},Time,Parameter,Simulation.Setting)
             end
         
             for i = 1:size(List.Vehicle.Active,1)

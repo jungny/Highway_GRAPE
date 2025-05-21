@@ -166,8 +166,9 @@ classdef Vehicle < handle
         end
         
 
-        function MoveVehicle(obj,Time,Parameter,~)
-            if ~obj.IsChangingLane
+        function MoveVehicle(obj,Time,Parameter,Setting)
+            Draw = Setting.Draw;
+            if ~obj.IsChangingLane && Draw
                 % FaceColor가 이미 white가 아니면만 변경
                 if ~isequal(get(obj.Patch, 'FaceColor'), [1 1 1])
                     set(obj.Patch, 'FaceColor', 'white');
@@ -229,7 +230,7 @@ classdef Vehicle < handle
                 end
                 
                 % 차량 색상도 궤적 색상과 동일하게 설정
-                if ~isequal(get(obj.Patch, 'FaceColor'), trajectory_color)
+                if Draw && ~isequal(get(obj.Patch, 'FaceColor'), trajectory_color)
                     set(obj.Patch, 'FaceColor', trajectory_color);
                 end
 
@@ -314,7 +315,7 @@ classdef Vehicle < handle
                 exit_index = 'Th';
             end
 
-            if Parameter.Label
+            if Draw && Parameter.Label
                 % String이 실제로 바뀔 때만 set
                 if ~isempty(obj.temp_GRAPE_result)
                     new_str = sprintf('%d     %d   %s', obj.temp_GRAPE_result, obj.ID, exit_index);
@@ -359,7 +360,7 @@ classdef Vehicle < handle
                 end
             end
 
-            if ~isempty(obj.ExitState)
+            if Draw && ~isempty(obj.ExitState)
                 if obj.ExitState == 1
                     if ~isequal(get(obj.Patch, 'FaceColor'), [0 1 0])
                         set(obj.Patch, 'FaceColor', 'green');
