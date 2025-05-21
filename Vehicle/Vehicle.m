@@ -168,12 +168,10 @@ classdef Vehicle < handle
 
         function MoveVehicle(obj,Time,Parameter,~)
             if ~obj.IsChangingLane
-                set(obj.Patch, 'FaceColor', 'white');
-                % if obj.Location * Parameter.Map.Scale >= 20 
-                %     set(obj.Patch, 'FaceColor', 'white');
-                % else
-                %     set(obj.Patch, 'FaceColor', '#a9a9a9');
-                % end
+                % FaceColor가 이미 white가 아니면만 변경
+                if ~isequal(get(obj.Patch, 'FaceColor'), [1 1 1])
+                    set(obj.Patch, 'FaceColor', 'white');
+                end
             end
 
             % if obj.ColorCount > 0
@@ -231,7 +229,9 @@ classdef Vehicle < handle
                 end
                 
                 % 차량 색상도 궤적 색상과 동일하게 설정
-                set(obj.Patch, 'FaceColor', trajectory_color);
+                if ~isequal(get(obj.Patch, 'FaceColor'), trajectory_color)
+                    set(obj.Patch, 'FaceColor', trajectory_color);
+                end
 
                 % 이후 구간 고정
                 if end_idx < size(obj.Trajectory, 2)
@@ -315,17 +315,24 @@ classdef Vehicle < handle
             end
 
             if Parameter.Label
+                % String이 실제로 바뀔 때만 set
                 if ~isempty(obj.temp_GRAPE_result)
-                    set(obj.Text, 'String', sprintf('%d     %d   %s', obj.temp_GRAPE_result, obj.ID, exit_index));
+                    new_str = sprintf('%d     %d   %s', obj.temp_GRAPE_result, obj.ID, exit_index);
                 else
-                    set(obj.Text, 'String', sprintf('%d     %d   %s', obj.Lane, obj.ID, exit_index));
+                    new_str = sprintf('%d     %d   %s', obj.Lane, obj.ID, exit_index);
+                end
+                if ~strcmp(get(obj.Text, 'String'), new_str)
+                    set(obj.Text, 'String', new_str);
                 end
                 set(obj.Text, 'Position', [x_center, y_center+0.1]);
             else
                 if ~isempty(obj.temp_GRAPE_result)
-                    set(obj.Text, 'String', sprintf('%d        %s', obj.temp_GRAPE_result, exit_index));
+                    new_str = sprintf('%d        %s', obj.temp_GRAPE_result, exit_index);
                 else
-                    set(obj.Text, 'String', sprintf('%d     %d   %s', obj.Lane, obj.ID, exit_index));
+                    new_str = sprintf('%d     %d   %s', obj.Lane, obj.ID, exit_index);
+                end
+                if ~strcmp(get(obj.Text, 'String'), new_str)
+                    set(obj.Text, 'String', new_str);
                 end
             end
 
@@ -338,7 +345,9 @@ classdef Vehicle < handle
                     obj.TargetLane = [];
                     obj.LaneChangeFlag = [];
                     obj.IsChangingLane = false;
-                    set(obj.Patch, 'FaceColor', 'white');
+                    if ~isequal(get(obj.Patch, 'FaceColor'), [1 1 1])
+                        set(obj.Patch, 'FaceColor', 'white');
+                    end
                     
                     % NoRemoveTraj 설정에 따라 궤적 삭제 여부 결정
                     if Parameter.RemoveTraj
@@ -352,9 +361,13 @@ classdef Vehicle < handle
 
             if ~isempty(obj.ExitState)
                 if obj.ExitState == 1
-                    set(obj.Patch, 'FaceColor', 'green');
+                    if ~isequal(get(obj.Patch, 'FaceColor'), [0 1 0])
+                        set(obj.Patch, 'FaceColor', 'green');
+                    end
                 elseif obj.ExitState == 0
-                    set(obj.Patch, 'FaceColor', 'black');
+                    if ~isequal(get(obj.Patch, 'FaceColor'), [0 0 0])
+                        set(obj.Patch, 'FaceColor', 'black');
+                    end
                 end
             end
 
