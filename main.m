@@ -10,10 +10,11 @@ Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250514_0528';
 
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
-Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
+Simulation.Setting.RecordVideo = 1;  % 1: Record video file, 0: Do not record
+Simulation.Setting.VideoSpeedMultiplier =  5;  % Video playback speed multiplier (e.g., 2 for 2x speed)
 %Simulation.Setting.ExitPercent = 20;
-memo = 'nolabel_';
-videomemo = 'nolabel_';
+memo = 'CrowdedPenalty수정후_';
+videomemo = 'CrowdedPenalty수정후_';
 %exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
 
 Simulation.Setting.GRAPEmode = 0;
@@ -68,7 +69,7 @@ switch Simulation.Setting.SpawnMode
         Simulation.Setting.Time = 10000;
     case 'auto'
         Simulation.Setting.WarmupTime = 45;
-        Simulation.Setting.SimulationTime = 700; 
+        Simulation.Setting.SimulationTime = 250; 
         Simulation.Setting.Time = Simulation.Setting.WarmupTime + Simulation.Setting.SimulationTime;
 end
 
@@ -219,7 +220,7 @@ for Iteration = 1:Simulation.Setting.Iterations
             % videoFilename = filename;
             videoFilename = fullfile(Simulation.Setting.SaveFolder, 'video', [videomemo '_' char(timestamp) '.mp4']);
             videoWriter = VideoWriter(videoFilename, 'MPEG-4'); %#ok<TNMLP>
-            videoWriter.FrameRate = 15; 
+            videoWriter.FrameRate = 15 * Simulation.Setting.VideoSpeedMultiplier; 
             open(videoWriter);
         end
 

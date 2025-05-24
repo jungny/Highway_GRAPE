@@ -63,6 +63,11 @@ function P = GetParameters(Setting)
     P.Veh.SafeDistance = 4; % Lane Change feasibility 판별/ GetAccel.m에 추가
     P.Veh.AccelThreshold = -20; % MOBIL에서만 사용
 
+
+    % Task Demand 관련 파라미터
+    P.TaskDemandCrowdedRange = 4; % Task demand 계산 시 혼잡하다고 판단하는 범위 (m)
+    P.TaskDemandCrowdedPenalty = 0.001; % 혼잡한 차선에 대한 패널티 (0에 가까울수록 더 큰 패널티)
+
     % Signal
     P.Sig = 0;
 

@@ -169,11 +169,9 @@ function environment = GRAPE_Environment_Update(List, Parameter, Setting, past_e
                         end
                     end
                 
-                    % 각 차선의 선행차량과의 거리를 한 줄로 출력
-                    % fprintf('V%d(L%d) - Cur:%.1f, L:%.1f, R:%.1f\n', vehicle_id, currentLane, cur_front_dist, left_front_dist, right_front_dist);
-                
                     % (4)+(5): 감속 중이고, 양옆 차선 선행차가 더 멀면 → 해당 차선 weight 크게
                     weights = ones(Parameter.Map.Lane, 1);
+
                     if decelflag && leftflag && rightflag
                         weights(currentLane - 1) = Setting.k;
                         weights(currentLane + 1) = Setting.k;
@@ -185,14 +183,26 @@ function environment = GRAPE_Environment_Update(List, Parameter, Setting, past_e
                         weights(currentLane) = Setting.k;  % 조건 안 맞으면 원래 차선 유지
                     end
 
-                    % k = 10; % k값
-
-                    % rand_idx = rand(Parameter.Map.Lane, 1) > 0.5;  % 50% 확률로 뽑기 (원하면 확률 조정 가능)
-                    % weights(rand_idx) = k;
-                end
-
-                if vehicle_id == 17
-                    %disp(weights);
+                    % Through vehicle인 경우에만 task demand 억제 로직 적용
+                    % 현재 차선이 아닌 다른 차선들에 대해 억제 로직 적용
+                    for lane = 1:Parameter.Map.Lane
+                        if lane ~= currentLane
+                            % 이미 계산된 정보 재활용
+                            if lane == currentLane - 1  % 왼쪽 차선
+                                front_dist = left_front_dist;
+                                rear_dist = left_rear_dist;
+                            elseif lane == currentLane + 1  % 오른쪽 차선
+                                front_dist = right_front_dist;
+                                rear_dist = right_rear_dist;
+                            end
+                            
+                            % 혼잡한 차선에 대한 task demand 벌점 부여
+                            if (front_dist <= Parameter.TaskDemandCrowdedRange) || ...
+                                (rear_dist <= Parameter.TaskDemandCrowdedRange)
+                                weights(lane) = weights(lane) * Parameter.TaskDemandCrowdedPenalty;
+                            end
+                        end
+                    end
                 end
                 
 
