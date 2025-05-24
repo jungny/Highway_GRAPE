@@ -10,7 +10,7 @@ Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250514_0528';
 
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
-Simulation.Setting.RecordVideo = 1;  % 1: Record video file, 0: Do not record
+Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
 Simulation.Setting.VideoSpeedMultiplier =  5;  % Video playback speed multiplier (e.g., 2 for 2x speed)
 %Simulation.Setting.ExitPercent = 20;
 memo = 'CrowdedPenalty수정후_';
@@ -334,7 +334,7 @@ for Iteration = 1:Simulation.Setting.Iterations
                     lane_to_go = lane_alloc(i);
                 
                     if current_lane ~= lane_to_go
-                        current_vehicle.temp_GRAPE_result = lane_to_go;
+                        current_vehicle.LaneAlloc = lane_to_go;
                         %List.Vehicle.Object{vehicle_id}.TargetLane = desired_lane;
                         %List.Vehicle.Object{vehicle_id}.LaneChangeFlag = 1; 
                         if abs(current_lane - lane_to_go) > 1

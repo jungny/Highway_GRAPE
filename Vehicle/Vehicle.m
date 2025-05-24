@@ -16,7 +16,7 @@ classdef Vehicle < handle
         Data
         %Reward
         Destination
-        temp_GRAPE_result
+        LaneAlloc
         TargetLane
         LaneIfFullyInside
         LaneChangeFlag
@@ -317,8 +317,8 @@ classdef Vehicle < handle
 
             if Draw && Parameter.Label
                 % String이 실제로 바뀔 때만 set
-                if ~isempty(obj.temp_GRAPE_result)
-                    new_str = sprintf('%d     %d   %s', obj.temp_GRAPE_result, obj.ID, exit_index);
+                if ~isempty(obj.LaneAlloc)
+                    new_str = sprintf('%d     %d   %s', obj.LaneAlloc, obj.ID, exit_index);
                 else
                     new_str = sprintf('%d     %d   %s', obj.Lane, obj.ID, exit_index);
                 end
