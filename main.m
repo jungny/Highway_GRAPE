@@ -325,24 +325,25 @@ for Iteration = 1:Simulation.Setting.Iterations
         
             % Move Vehicle
             for i = 1:size(List.Vehicle.Active,1)
-                vehicle_id = List.Vehicle.Active(i, 1); 
-                current_vehicle = List.Vehicle.Object{vehicle_id};
-                current_lane = List.Vehicle.Object{vehicle_id}.Lane;
+                v_id = List.Vehicle.Active(i, 1); 
+                current_vehicle = List.Vehicle.Object{v_id};
+                current_lane = List.Vehicle.Object{v_id}.Lane;
                 
                 if GRAPE_done == 1 || Simulation.Setting.GRAPEmode == 1
-                    desired_lane = lane_alloc(i);
+                    lane_to_go = lane_alloc(i);
                 
-                    if current_lane ~= desired_lane 
-                        current_vehicle.temp_GRAPE_result = desired_lane;
+                    if current_lane ~= lane_to_go
+                        current_vehicle.temp_GRAPE_result = lane_to_go;
                         %List.Vehicle.Object{vehicle_id}.TargetLane = desired_lane;
                         %List.Vehicle.Object{vehicle_id}.LaneChangeFlag = 1; 
-                        if abs(current_lane - desired_lane) > 1
-                            disp("no jump");
+                        if abs(current_lane - lane_to_go) > 1
+                            fprintf('Warning: Vehicle %d attempted consecutive lane change from lane %d to %d at time %.2f\n', ...
+                                v_id, current_lane, lane_to_go, Time);
                         end
-                        if current_lane > desired_lane
-                            desired_lane = current_lane - 1;
-                        elseif current_lane < desired_lane
-                            desired_lane = current_lane + 1;
+                        if current_lane > lane_to_go
+                            lane_to_go = current_lane - 1;
+                        elseif current_lane < lane_to_go
+                            lane_to_go = current_lane + 1;
                         end
 
                         feasible = true;
@@ -351,7 +352,7 @@ for Iteration = 1:Simulation.Setting.Iterations
                             if current_vehicle.IsChangingLane 
                                 current_vehicle.LaneChangeFlag = 0;
                             else
-                                current_vehicle.TargetLane = desired_lane;
+                                current_vehicle.TargetLane = lane_to_go;
                                 current_vehicle.LaneChangeFlag = 1;
                             end
                         %elseif feasible
@@ -363,24 +364,25 @@ for Iteration = 1:Simulation.Setting.Iterations
                     end
                 end
                 
-                if List.Vehicle.Object{vehicle_id}.Exit - List.Vehicle.Active(i, 4) * Parameter.Map.Scale <= Parameter.ExitThreshold 
+                if List.Vehicle.Object{v_id}.Exit - List.Vehicle.Active(i, 4) * Parameter.Map.Scale <= Parameter.ExitThreshold 
                     if current_lane == Parameter.Map.Lane
-                        List.Vehicle.Object{vehicle_id}.ExitState = 1;
+                        List.Vehicle.Object{v_id}.ExitState = 1;
                     else
-                        List.Vehicle.Object{vehicle_id}.ExitState = 0;
+                        List.Vehicle.Object{v_id}.ExitState = 0;
                     end
                 end
 
-                MoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)},Time,Parameter,Simulation.Setting)
+                MoveVehicle(List.Vehicle.Object{v_id},Time,Parameter,Simulation.Setting)
             end
         
             for i = 1:size(List.Vehicle.Active,1)
-                vehicle_id = List.Vehicle.Active(i, 1); 
-                % uistack(List.Vehicle.Object{vehicle_id}.Object, 'top');
+                v_id = List.Vehicle.Active(i, 1); 
+                % uistack(List.Vehicle.Object{v_id}.Object, 'top');
             end
         
             % Remove Processed Vehicles
             for i = 1:size(List.Vehicle.Active,1)
+                v_id = List.Vehicle.Active(i, 1); 
                 %if List.Vehicle.Object{List.Vehicle.Active(i,1)}.Location >= 300000 % exit으로 바꾸기
                 %    RemoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)})
                 %    List.Vehicle.Object{List.Vehicle.Active(i,1)} = [];
@@ -391,7 +393,7 @@ for Iteration = 1:Simulation.Setting.Iterations
 
 
                 if List.Vehicle.Active(i,4) * Parameter.Map.Scale > Parameter.Map.Road % through vehicles
-                    spawn_time = List.Vehicle.Object{List.Vehicle.Active(i,1)}.SpawnTime;
+                    spawn_time = List.Vehicle.Object{v_id}.SpawnTime;
                     exit_time = Time;
                     travel_time = exit_time - spawn_time;
                     exit_location = List.Vehicle.Active(i,4) * Parameter.Map.Scale;
@@ -410,18 +412,18 @@ for Iteration = 1:Simulation.Setting.Iterations
                             [videomemo '_log.txt']);
                         fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
                         fprintf(fileID,'Through Vehicle %d exited at location %.2f m with travel time %.2f s\n', ...
-                                List.Vehicle.Object{List.Vehicle.Active(i,1)}.ID, exit_location, travel_time);
+                                List.Vehicle.Object{v_id}.ID, exit_location, travel_time);
                         fclose(fileID);
                     end
 
-                    RemoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)})
-                    List.Vehicle.Object{List.Vehicle.Active(i,1)} = [];
+                    RemoveVehicle(List.Vehicle.Object{v_id})
+                    List.Vehicle.Object{v_id} = [];
                     TotalVehicles = TotalVehicles - 1;
                 
 
-                elseif List.Vehicle.Object{List.Vehicle.Active(i,1)}.ExitState >= 0 && List.Vehicle.Active(i,4) * Parameter.Map.Scale >= List.Vehicle.Object{List.Vehicle.Active(i,1)}.Exit - 1 
+                elseif List.Vehicle.Object{v_id}.ExitState >= 0 && List.Vehicle.Active(i,4) * Parameter.Map.Scale >= List.Vehicle.Object{v_id}.Exit - 1 
                     % record travel time, avg speed
-                    spawn_time = List.Vehicle.Object{List.Vehicle.Active(i,1)}.SpawnTime;
+                    spawn_time = List.Vehicle.Object{v_id}.SpawnTime;
                     exit_time = Time;
                     travel_time = exit_time - spawn_time;
                     exit_location = List.Vehicle.Active(i,4) * Parameter.Map.Scale;
@@ -432,7 +434,7 @@ for Iteration = 1:Simulation.Setting.Iterations
                         vehicle_speeds = [vehicle_speeds, avg_speed]; %#ok<AGROW>
 
                         % 🔹 Exit 성공 차량인지 확인 (45초 이후에 생성된 차량만)
-                        if List.Vehicle.Object{List.Vehicle.Active(i,1)}.Lane == Parameter.Map.Lane
+                        if List.Vehicle.Object{v_id}.Lane == Parameter.Map.Lane
                             exit_success_count = exit_success_count + 1;
                         else
                             exit_fail_count = exit_fail_count + 1;  % 🔹 최우측 차선이 아니면 exit fail로 기록
@@ -445,14 +447,14 @@ for Iteration = 1:Simulation.Setting.Iterations
                             [videomemo '_log.txt']);
                         fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
                         fprintf(fileID,'Exit Vehicle %d exited at location %.2f m with travel time %.2f s\n', ...
-                                List.Vehicle.Object{List.Vehicle.Active(i,1)}.ID, exit_location, travel_time);
+                                List.Vehicle.Object{v_id}.ID, exit_location, travel_time);
                         fclose(fileID);
                     end
                     
                     
                     % remove vehicle
-                    RemoveVehicle(List.Vehicle.Object{List.Vehicle.Active(i,1)})
-                    List.Vehicle.Object{List.Vehicle.Active(i,1)} = [];
+                    RemoveVehicle(List.Vehicle.Object{v_id})
+                    List.Vehicle.Object{v_id} = [];
                 end
                 
                 
@@ -504,15 +506,15 @@ for Iteration = 1:Simulation.Setting.Iterations
         % 차량이 capacity check point를 통과했는지 확인
         if strcmp(Simulation.Setting.SpawnMode, 'fixed') || Time >= Simulation.Setting.WarmupTime
             for i = 1:size(List.Vehicle.Active,1)
-                vehicle_id = List.Vehicle.Active(i, 1);
-                current_vehicle = List.Vehicle.Object{vehicle_id};
+                v_id = List.Vehicle.Active(i, 1);
+                current_vehicle = List.Vehicle.Object{v_id};
                 % 45초 이후에 생성된 차량만 카운트
                 if (strcmp(Simulation.Setting.SpawnMode, 'fixed') || ~isempty(current_vehicle) && ...
                    current_vehicle.SpawnTime >= Simulation.Setting.WarmupTime) && ...
                    current_vehicle.Location * Parameter.Map.Scale >= capacity_check_point && ...
-                   ~ismember(vehicle_id, counted_vehicles)
+                   ~ismember(v_id, counted_vehicles)
                     vehicles_passed = vehicles_passed + 1;
-                    counted_vehicles = [counted_vehicles, vehicle_id]; %#ok<AGROW>
+                    counted_vehicles = [counted_vehicles, v_id]; %#ok<AGROW>
                 end
             end
         end
@@ -520,8 +522,8 @@ for Iteration = 1:Simulation.Setting.Iterations
         % 각 mode별 결과 계산
         % 현재 도로 위에 있는 모든 차량의 속도도 포함
         for i = 1:size(List.Vehicle.Active,1)
-            vehicle_id = List.Vehicle.Active(i, 1);
-            current_vehicle = List.Vehicle.Object{vehicle_id};
+            v_id = List.Vehicle.Active(i, 1);
+            current_vehicle = List.Vehicle.Object{v_id};
             if ~isempty(current_vehicle)
                 % 차량의 이동 거리와 시간으로 평균 속도 계산
                 travel_time = Time - current_vehicle.SpawnTime;
