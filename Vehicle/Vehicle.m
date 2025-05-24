@@ -48,6 +48,13 @@ classdef Vehicle < handle
         ExitState
         TempGreedyWait
         DistanceToExit
+        LaneChangeStartTime    % 차선변경 시작 시간
+        LaneChangeDuration     % 차선변경 소요 시간 (기본값 4초)
+        LaneChangeStartY       % 차선변경 시작 y좌표
+        LaneChangeTargetY      % 차선변경 목표 y좌표
+        LaneChangeProgress     % 차선변경 진행도 (0~1)
+        LaneChangeVelocity     % 차선변경 속도
+        LaneChangeAcceleration % 차선변경 가속도
     end
 
     properties(Hidden = true) % Control
@@ -162,6 +169,15 @@ classdef Vehicle < handle
             obj.MaxVel = obj.Parameter.MaxVel;
             obj.Margin = Parameter.Map.Margin*obj.DistanceStep;
 
+            % 차선변경 관련 속성 초기화
+            obj.LaneChangeStartTime = [];
+            obj.LaneChangeDuration = 4; % 기본값 설정
+            obj.LaneChangeStartY = [];
+            obj.LaneChangeTargetY = [];
+            obj.LaneChangeProgress = [];
+            obj.LaneChangeVelocity = [];
+            obj.LaneChangeAcceleration = [];
+
             obj.Data = GetObservation(obj);
         end
         
@@ -175,36 +191,19 @@ classdef Vehicle < handle
                 end
             end
 
-            % if obj.ColorCount > 0
-            %     set(obj.Patch, 'FaceColor', '#f589e6');
-            %     obj.ColorCount = obj.ColorCount-1;
-            % end
-
-
-
-            % if obj.TempGreedyWait > 0
-            %     obj.TempGreedyWait = obj.TempGreedyWait - Parameter.Physics;
-            % end
-
-
             if ~isempty(obj.LaneChangeFlag) && obj.LaneChangeFlag == 1 && ~obj.IsChangingLane
-                % obj.ColorCount = 10;
-
-                targetLane = obj.TargetLane;
                 obj.IsChangingLane = true;
-                % change lane to obj.TargetLane
-                new_y = (Parameter.Map.Lane-targetLane+0.5)*Parameter.Map.Tile;
+                obj.LaneChangeStartTime = Time;
+                obj.LaneChangeDuration = 4; % 파라미터로 설정 가능
                 
-                change_steps = 3000; 
-                start_idx = obj.Location; 
-                end_idx = min(obj.Location + change_steps - 1, size(obj.Trajectory, 2)); 
+                % 현재 차선과 목표 차선의 y좌표 계산
+                obj.LaneChangeStartY = obj.Trajectory(2, obj.Location);
+                obj.LaneChangeTargetY = (Parameter.Map.Lane - obj.TargetLane + 0.5) * Parameter.Map.Tile;
                 
-                % change_steps 동안 new_y에 도달
-                obj.Trajectory(2, start_idx:end_idx) = linspace(obj.Trajectory(2, start_idx), new_y, end_idx - start_idx + 1);
-
-                % 예상 궤적의 x, y 좌표 계산
-                x_traj = obj.Trajectory(1, start_idx:end_idx);
-                y_traj = linspace(obj.Trajectory(2, start_idx), new_y, end_idx - start_idx + 1);
+                % 차선변경 초기화
+                obj.LaneChangeProgress = 0;
+                obj.LaneChangeVelocity = 0;
+                obj.LaneChangeAcceleration = 4 / (obj.LaneChangeDuration * obj.LaneChangeDuration); % [lanes/s^2]
                 
                 % 현재 차선과 목표 차선에 따라 색상 결정
                 current_lane = obj.Lane;
@@ -224,28 +223,23 @@ classdef Vehicle < handle
                     end
                 end
                 
-                % 궤적 그리기와 핸들 저장
-                if Parameter.ShowTraj
-                    obj.trajectory_plot = plot(x_traj, y_traj, '-', 'Color', trajectory_color, 'LineWidth', 2);
-                end
-                
-                % 차량 색상도 궤적 색상과 동일하게 설정
-                if Draw && ~isequal(get(obj.Patch, 'FaceColor'), trajectory_color)
+                % 차량 색상 변경
+                if Draw
                     set(obj.Patch, 'FaceColor', trajectory_color);
                 end
-
-                % 이후 구간 고정
-                if end_idx < size(obj.Trajectory, 2)
-                    obj.Trajectory(2, end_idx+1:end) = new_y;
-                end
-
-            end
                 
+                % 궤적 시각화
+                if Parameter.ShowTraj
+                    x_traj = obj.Trajectory(1, obj.Location:min(obj.Location + 100, size(obj.Trajectory, 2)));
+                    y_traj = linspace(obj.LaneChangeStartY, obj.LaneChangeTargetY, length(x_traj));
+                    obj.trajectory_plot = plot(x_traj, y_traj, '-', 'Color', trajectory_color, 'LineWidth', 2);
+                end
+            end
 
-            
-
+            % 기본 동역학 계산
             [nextVelocity,nextLocation] = GetDynamics(obj);
             obj.Data = GetObservation(obj);
+            
             if nextLocation > size(obj.Trajectory,2)
                 obj.State = 0;
                 obj.Object.Matrix(1:2,4) = obj.Trajectory(:,end);
@@ -256,16 +250,68 @@ classdef Vehicle < handle
                 end
             else
                 obj.Location = nextLocation;
-
-                % SaveFolder = 'C:\Users\user\Desktop\250326_0409';
-                % logFileName = fullfile(SaveFolder, ...
-                %        ['log_2.txt']);
-                % fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
-                % fprintf(fileID, '\n nextLocation  %d \n', nextLocation);
-                % fclose(fileID);
                 obj.Velocity = nextVelocity;
-                obj.Object.Matrix(1:2,4) = obj.Trajectory(:,obj.Location);
-                obj.Object.Matrix(1:2,1:2) = GetRotation(obj);
+                
+                % 차선변경 중인 경우 횡방향 이동 적용
+                if obj.IsChangingLane
+                    % 차선변경 진행도 계산 (0~1)
+                    elapsedTime = Time - obj.LaneChangeStartTime;
+                    progress = min(elapsedTime / obj.LaneChangeDuration, 1);
+                    
+                    % 차선변경 동역학 업데이트
+                    dt = obj.TimeStep;  % 시간 간격
+                    if progress < 0.5
+                        % 첫 번째 구간: 가속
+                        obj.LaneChangeVelocity = obj.LaneChangeVelocity + obj.LaneChangeAcceleration * dt;
+                    else
+                        % 두 번째 구간: 감속
+                        obj.LaneChangeVelocity = obj.LaneChangeVelocity - obj.LaneChangeAcceleration * dt;
+                    end
+                    
+                    % 횡방향 이동량 계산 (velocity 기반)
+                    lateralOffset = obj.LaneChangeVelocity * dt * (obj.LaneChangeTargetY - obj.LaneChangeStartY);
+                    
+                    % Trajectory 업데이트
+                    currentY = obj.Trajectory(2, obj.Location);
+                    newY = currentY + lateralOffset;
+                    obj.Trajectory(2, obj.Location:end) = newY;
+                    
+                    % 위치 업데이트
+                    obj.Object.Matrix(1:2,4) = obj.Trajectory(:,obj.Location);
+                    obj.Object.Matrix(1:2,1:2) = GetRotation(obj);
+                    
+                    % 차선변경 완료 체크
+                    if progress >= 1
+                        % 상태 초기화
+                        obj.Lane = obj.TargetLane;
+                        obj.TargetLane = [];
+                        obj.LaneChangeFlag = [];
+                        obj.IsChangingLane = false;
+                        obj.LaneChangeStartTime = [];
+                        obj.LaneChangeStartY = [];
+                        obj.LaneChangeTargetY = [];
+                        obj.LaneChangeProgress = [];
+                        obj.LaneChangeVelocity = [];
+                        obj.LaneChangeAcceleration = [];
+                        
+                        % 차량 색상 복원
+                        if Draw && ~isequal(get(obj.Patch, 'FaceColor'), [1 1 1])
+                            set(obj.Patch, 'FaceColor', 'white');
+                        end
+                        
+                        % 궤적 제거
+                        if Parameter.RemoveTraj
+                            if ~isempty(obj.trajectory_plot) && ishandle(obj.trajectory_plot)
+                                delete(obj.trajectory_plot);
+                                obj.trajectory_plot = [];
+                            end
+                        end
+                    end
+                else
+                    % 차선변경 중이 아닌 경우 기본 위치만 업데이트
+                    obj.Object.Matrix(1:2,4) = obj.Trajectory(:,obj.Location);
+                    obj.Object.Matrix(1:2,1:2) = GetRotation(obj);
+                end
             end
 
             x_center = mean(obj.Size(1,:));
@@ -331,29 +377,6 @@ classdef Vehicle < handle
 
                 if ~strcmp(get(obj.Text, 'String'), new_str)
                     set(obj.Text, 'String', new_str);
-                end
-            end
-
-            % 차선 변경 완료 시
-            if obj.IsChangingLane
-                target_y = (Parameter.Map.Lane - obj.TargetLane + 0.5) * Parameter.Map.Tile;
-                current_y = obj.Object.Matrix(2, 4);
-                if abs(current_y - target_y) < 1e-2
-                    obj.Lane = obj.TargetLane;
-                    obj.TargetLane = [];
-                    obj.LaneChangeFlag = [];
-                    obj.IsChangingLane = false;
-                    if ~isequal(get(obj.Patch, 'FaceColor'), [1 1 1])
-                        set(obj.Patch, 'FaceColor', 'white');
-                    end
-                    
-                    % NoRemoveTraj 설정에 따라 궤적 삭제 여부 결정
-                    if Parameter.RemoveTraj
-                        if ~isempty(obj.trajectory_plot) && ishandle(obj.trajectory_plot)
-                            delete(obj.trajectory_plot);
-                            obj.trajectory_plot = [];
-                        end
-                    end
                 end
             end
 

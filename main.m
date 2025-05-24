@@ -6,7 +6,7 @@ addpath('Map\','Vehicle\','Signal\','Manager\','v2v\','GRAPE\')
 Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
 Simulation.Setting.StopOnGrapeError = 1;
-Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
+Simulation.Setting.PauseTime = 0.01; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250514_0528';
 
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
@@ -68,7 +68,7 @@ switch Simulation.Setting.SpawnMode
     case 'fixed'
         Simulation.Setting.Time = 10000;
     case 'auto'
-        Simulation.Setting.WarmupTime = 45;
+        Simulation.Setting.WarmupTime = 0;
         Simulation.Setting.SimulationTime = 250; 
         Simulation.Setting.Time = Simulation.Setting.WarmupTime + Simulation.Setting.SimulationTime;
 end
