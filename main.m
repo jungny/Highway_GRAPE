@@ -4,7 +4,7 @@ clear
 clc
 addpath('Map\','Vehicle\','Signal\','Manager\','v2v\','GRAPE\')
 Simulation.Setting.Window = 1000;
-Simulation.Setting.Draw = 0;
+Simulation.Setting.Draw = 1;
 Simulation.Setting.StopOnGrapeError = 1;
 Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250514_0528';
@@ -12,8 +12,8 @@ Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250514_0528';
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
 Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
 %Simulation.Setting.ExitPercent = 20;
-memo = 'uistack_';
-videomemo = 'uistack_';
+memo = 'nolabel_';
+videomemo = 'nolabel_';
 %exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
 
 Simulation.Setting.GRAPEmode = 0;
@@ -68,7 +68,7 @@ switch Simulation.Setting.SpawnMode
         Simulation.Setting.Time = 10000;
     case 'auto'
         Simulation.Setting.WarmupTime = 45;
-        Simulation.Setting.SimulationTime = 120;
+        Simulation.Setting.SimulationTime = 700; 
         Simulation.Setting.Time = Simulation.Setting.WarmupTime + Simulation.Setting.SimulationTime;
 end
 
@@ -217,7 +217,7 @@ for Iteration = 1:Simulation.Setting.Iterations
             timestamp = string(datetime('now', 'Format', 'HH-mm'));
             % videoFilename = Simulation.Setting.VideoPath(participantModes{mode_idx}, randomSeed, timestamp);
             % videoFilename = filename;
-            videoFilename = fullfile(Simulation.Setting.SaveFolder, ['video\' videomemo '_' timestamp]);
+            videoFilename = fullfile(Simulation.Setting.SaveFolder, 'video', [videomemo '_' char(timestamp) '.mp4']);
             videoWriter = VideoWriter(videoFilename, 'MPEG-4'); %#ok<TNMLP>
             videoWriter.FrameRate = 15; 
             open(videoWriter);
@@ -532,8 +532,14 @@ for Iteration = 1:Simulation.Setting.Iterations
         end
         
         % 평균 속도와 표준편차 계산 (모든 차량 포함)
-        avg_speed = mean(vehicle_speeds);
-        std_speed = std(vehicle_speeds);
+        vehicle_speeds = vehicle_speeds(~isnan(vehicle_speeds) & ~isinf(vehicle_speeds));  % 유효한 값만 필터링
+        if isempty(vehicle_speeds)
+            avg_speed = NaN;
+            std_speed = NaN;
+        else
+            avg_speed = mean(vehicle_speeds);
+            std_speed = std(vehicle_speeds);
+        end
         
         % 도로 용량 계산 (capacity check point를 통과한 총 차량 수 / 시뮬레이션 시간)
         if strcmp(Simulation.Setting.SpawnMode, 'auto')

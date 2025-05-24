@@ -327,11 +327,8 @@ classdef Vehicle < handle
                 end
                 set(obj.Text, 'Position', [x_center, y_center+0.1]);
             else
-                if ~isempty(obj.temp_GRAPE_result)
-                    new_str = sprintf('%d        %s', obj.temp_GRAPE_result, exit_index);
-                else
-                    new_str = sprintf('%d     %d   %s', obj.Lane, obj.ID, exit_index);
-                end
+                new_str = [];
+
                 if ~strcmp(get(obj.Text, 'String'), new_str)
                     set(obj.Text, 'String', new_str);
                 end

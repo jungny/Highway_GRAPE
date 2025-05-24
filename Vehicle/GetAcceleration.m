@@ -61,12 +61,11 @@ function ObjectList = GetAcceleration(ObjectList, VehicleList, Parameter)
 
                     Acceleration = max(min(Acceleration, Parameter.Accel(1)), -Parameter.Accel(2));
 
-                    if LocationDifference <= Parameter.SafeDistance
-                        Acceleration = -Parameter.Accel(2)*5;
-                    end
+                    % if LocationDifference <= Parameter.SafeDistance
+                    %     Acceleration = -inf;
+                    % end
 
-                    
-                    if ~isreal(Acceleration) || isnan(Acceleration) || isinf(Acceleration)
+                    if ~isreal(Acceleration) || isnan(Acceleration)
                         % warning('Invalid acceleration detected. Setting acceleration to 0.');
                         Acceleration = 0;
                     end
@@ -86,7 +85,7 @@ function ObjectList = GetAcceleration(ObjectList, VehicleList, Parameter)
                 Acceleration = max(min(Acceleration, Parameter.Accel(1)), -Parameter.Accel(2));
 
 
-                if ~isreal(Acceleration) || isnan(Acceleration) || isinf(Acceleration)
+                if ~isreal(Acceleration) || isnan(Acceleration)
                     % warning('Invalid acceleration detected. Setting acceleration to 0.');
                     Acceleration = 0;
                 end
@@ -103,7 +102,7 @@ function ObjectList = GetAcceleration(ObjectList, VehicleList, Parameter)
             Acceleration = Parameter.Accel(1) * (1 - (VelocitySelf / Parameter.MaxVel)^Parameter.Exp);
             Acceleration = max(min(Acceleration, Parameter.Accel(1)), -Parameter.Accel(2));
 
-            if ~isreal(Acceleration) || isnan(Acceleration) || isinf(Acceleration)
+            if ~isreal(Acceleration) || isnan(Acceleration)
                 % warning('Invalid acceleration detected. Setting acceleration to 0.');
                 Acceleration = 0;
             end

@@ -3,10 +3,10 @@ function P = GetParameters(Setting)
     P.ExitThreshold = 20;
     P.Physics = 0.1; % 한 시뮬레이션 타임스텝이 0.1초초
     P.Control = 0.1;
-    P.Label = 1; % 1: label 보임, 0: 안보임
-    P.ShowTraj = true;
+    P.Label = 0; % 1: label 보임, 0: 안보임
+    P.ShowTraj = false;
     P.RemoveTraj = true;  % 궤적 유지 여부 설정 (기본값: false)
-    P.Flow = 6000; % veh/hour, only used in spawntype = 1.
+    P.Flow = 4000; % veh/hour, only used in spawntype = 1.
     
     % Sim
     P.Sim.Time = Setting.Time;
@@ -50,7 +50,7 @@ function P = GetParameters(Setting)
     P.Veh.MaxVel = 33; % Original: 10
     P.Veh.DecVel = 1; % 교차로에서만 쓰이는 값
     P.Veh.MinVel = 0; % 8
-    P.Veh.Accel = [3 3]; % [1.5 3]은 -3부터 1.5까지를 의미함.[a b]-a: max accel. b: max decel.
+    P.Veh.Accel = [3 7]; % [1.5 3]은 -3부터 1.5까지를 의미함.[a b]-a: max accel. b: max decel.
     P.Veh.Size = [4.5 1.9 1.2];
     P.Veh.Buffer = [2.5 0.5];
         P.Veh.State.Out = 0;

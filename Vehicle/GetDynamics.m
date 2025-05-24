@@ -14,6 +14,15 @@ function [nextVelocity,nextLocation] = GetDynamics(obj,ghostAcceleration,ghostVe
         Acceleration = 0; % 빈 값이면 가속도를 0으로 설정
     end
 
+
+    % 매우 큰 음수 가속도 처리
+    if Acceleration < -1e6  % 매우 큰 음수 가속도
+        nextVelocity = 0;
+        nextLocation = Location;
+        return;
+    end
+
+
     if obj.IsChangingLane
         correction = sqrt(1 + (obj.ParameterMap.Tile / (3000*obj.ParameterMap.Scale))^2);  % ≈ sqrt(1.010)
     else
