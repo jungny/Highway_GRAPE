@@ -185,6 +185,7 @@ function environment = GRAPE_Environment_Update(List, Parameter, Setting, past_e
 
                     % Through vehicle인 경우에만 task demand 억제 로직 적용
                     % 현재 차선이 아닌 다른 차선들에 대해 억제 로직 적용
+                    all_lanes_congested = true;  % 모든 차선이 혼잡한지 확인하는 플래그
                     for lane = 1:Parameter.Map.Lane
                         if lane ~= currentLane
                             % 이미 계산된 정보 재활용
@@ -196,12 +197,19 @@ function environment = GRAPE_Environment_Update(List, Parameter, Setting, past_e
                                 rear_dist = right_rear_dist;
                             end
                             
-                            % 혼잡한 차선에 대한 task demand 벌점 부여
+                            % 해당 차선이 혼잡한지 확인
                             if (front_dist <= Parameter.TaskDemandCrowdedRange) || ...
                                 (rear_dist <= Parameter.TaskDemandCrowdedRange)
-                                weights(lane) = weights(lane) * Parameter.TaskDemandCrowdedPenalty;
+                                weights(lane) = 0;  % 혼잡한 차선의 weight을 0으로 설정
+                            else
+                                all_lanes_congested = false;  % 하나라도 혼잡하지 않은 차선이 있으면 false
                             end
                         end
+                    end
+                    
+                    % 모든 차선이 혼잡한 경우 현재 차선의 weight을 1로 설정
+                    if all_lanes_congested
+                        weights(currentLane) = 1;
                     end
                 end
                 

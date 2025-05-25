@@ -3,10 +3,10 @@ function P = GetParameters(Setting)
     P.ExitThreshold = 20;
     P.Physics = 0.1; % 한 시뮬레이션 타임스텝이 0.1초초
     P.Control = 0.1;
-    P.Label = 1; % 1: label 보임, 0: 안보임
-    P.ShowTraj = true;
+    P.Label = 0; % 1: label 보임, 0: 안보임
+    P.ShowTraj = false;
     P.RemoveTraj = true;  % 궤적 유지 여부 설정 (기본값: false)
-    P.Flow = 6000; % veh/hour, only used in spawntype = 1.
+    P.Flow = 2000 * 3; % veh/hour/lane * lane (=3), only used in spawntype = 1.
     
     % Sim
     P.Sim.Time = Setting.Time;
@@ -50,7 +50,7 @@ function P = GetParameters(Setting)
     P.Veh.MaxVel = 33; % Original: 10
     P.Veh.DecVel = 1; % 교차로에서만 쓰이는 값
     P.Veh.MinVel = 0; % 8
-    P.Veh.Accel = [3 7]; % [1.5 3]은 -3부터 1.5까지를 의미함.[a b]-a: max accel. b: max decel.
+    P.Veh.Accel = [3 7]; % [1.5 3]은 -3부터 1.5까지를 의미함.[a b] -b: min accel. a: max decel.
     P.Veh.Size = [4.5 1.9 1.2];
     P.Veh.Buffer = [2.5 0.5];
         P.Veh.State.Out = 0;
@@ -59,14 +59,13 @@ function P = GetParameters(Setting)
         P.Veh.State.Signal = 3;
     P.Veh.Safety = 2; % Original: 2 , 정적 안전 거리: 속도와 무관하게 항상 유지할 기본 간격
     P.Veh.Headway = 1.5; % Original: 1.6, 동적 반응 거리: 시간 기반 간격 (속도가 높을수록 더 멀리 떨어지도록 유도)
-    P.Veh.Exp = 4; %4
+    P.Veh.Exp = 4; % 4
     P.Veh.SafeDistance = 4; % Lane Change feasibility 판별/ GetAccel.m에 추가
     P.Veh.AccelThreshold = -20; % MOBIL에서만 사용
 
 
     % Task Demand 관련 파라미터
-    P.TaskDemandCrowdedRange = 4; % Task demand 계산 시 혼잡하다고 판단하는 범위 (m)
-    P.TaskDemandCrowdedPenalty = 0.001; % 혼잡한 차선에 대한 패널티 (0에 가까울수록 더 큰 패널티)
+    P.TaskDemandCrowdedRange = P.Veh.Size(1); % Task demand 계산 시 혼잡하다고 판단하는 범위 (m)
 
     % Signal
     P.Sig = 0;
