@@ -13,10 +13,11 @@ Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
 Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
 Simulation.Setting.VideoSpeedMultiplier =  5;  % Video playback speed multiplier (e.g., 2 for 2x speed)
 %Simulation.Setting.ExitPercent = 20;
-memo = '5_';
-videomemo = '5_';
+memo = '9_';
+videomemo = '9_';
 %exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
 
+ExitRatio = 80;
 Simulation.Setting.GRAPEmode = 2;
 % 0: GRAPE, 1: Greedy, 2: CycleGreedy
 if Simulation.Setting.GRAPEmode == 0
@@ -30,12 +31,11 @@ else % Simulation.Setting.GRAPEmode == 2
     videomemo = [videomemo '_CycleGreedy'];
 end
 
-ExitRatio = 50;
 % 동적으로 Exit : Through 비율 계산
 exit_ratio = ExitRatio / 10;  % 10개 중 몇 개가 Exit인지
 through_ratio = 10 - exit_ratio;  % 나머지는 Through
 memo = [memo sprintf(' | Exit : Through = %d : %d', exit_ratio, through_ratio)];
-videomemo = [videomemo sprintf('_%d%%_', exitpercent)];
+videomemo = [videomemo sprintf('_%d%%_', ExitRatio)];
 %exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
 
 Simulation.Setting.RecordExcel = 1;  % 1: Record Excel file, 0: Do not record
@@ -75,8 +75,8 @@ Simulation.Setting.Util_type = 'GS';
 Simulation.Setting.LaneChangeMode = 'SimpleLaneChange'; % 'MOBIL' or 'SimpleLaneChange'
 
 % Add kList and k settings
-Simulation.Setting.kList = 1; %[1, 1.2, 1.4, 1.6, 1.8, 2, 3, 5];  % List of k values to test
-Simulation.Setting.k = 1;  % Default k value
+Simulation.Setting.kList = 1.2; %[1, 1.2, 1.4, 1.6, 1.8, 2, 3, 5];  % List of k values to test
+Simulation.Setting.k = 1.2;  % Default k value
 
 %% Run Simulation
 % Initialize Log File
@@ -109,18 +109,13 @@ filename = fullfile(ExcelSaveFolder, [videomemo '.xlsx']);
 % 🔹 실험할 참가자 모드 설정
 
 %participantModes = {};
-% 🔹 Bubble Radius 값에 따라 Bubble 관련 모드 추가
-%for r = Simulation.Setting.BubbleRadiusList
-%    participantModes{end+1} = sprintf('Bubble_%dm', r);
-    %participantModes{end+1} = sprintf('BubbleAhead_%dm', r);
-%end
 bubbleList = Simulation.Setting.BubbleRadiusList;
 n = length(bubbleList);
 participantModes = cell(1, n);  % ← preallocation
 %participantModes = {'Ahead'};  % 기본 모드
 for i = 1:n
     r = bubbleList(i);
-    % participantModes{i} = sprintf('Bubble_%dm', r);
+    %participantModes{i} = sprintf('Bubble_%dm', r);
     participantModes{i} = sprintf('BubbleAhead_%dm', r);
 end
 % ^ preallocation을 위해 미리 크기를 정해놓았으므로

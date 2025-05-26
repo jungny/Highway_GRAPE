@@ -101,7 +101,13 @@ function environment = GRAPE_Environment_Initialize(List, Parameter,Setting)
                     if isempty(cur_rear_vehicle)
                         cur_rear_dist = 200;
                     end
-                    cur_dist = cur_front_dist + cur_rear_dist;
+                    
+                    % Ahead 또는 BubbleAhead 타입인 경우 rear_dist 무시
+                    if startsWith(Setting.NumberOfParticipants, 'Ahead') || startsWith(Setting.NumberOfParticipants, 'BubbleAhead')
+                        cur_dist = cur_front_dist;
+                    else
+                        cur_dist = cur_front_dist + cur_rear_dist;
+                    end
                 
                     % 왼쪽 차선 조건
                     if currentLane > 1
@@ -117,7 +123,12 @@ function environment = GRAPE_Environment_Initialize(List, Parameter,Setting)
                             left_rear_dist = 200;
                         end
                 
-                        left_dist = left_front_dist + left_rear_dist;
+                        % Ahead 또는 BubbleAhead 타입인 경우 rear_dist 무시
+                        if startsWith(Setting.NumberOfParticipants, 'Ahead') || startsWith(Setting.NumberOfParticipants, 'BubbleAhead')
+                            left_dist = left_front_dist;
+                        else
+                            left_dist = left_front_dist + left_rear_dist;
+                        end
                 
                         if left_dist > cur_dist  % (5)
                             leftflag = true;
@@ -137,7 +148,13 @@ function environment = GRAPE_Environment_Initialize(List, Parameter,Setting)
                         if isempty(right_rear_vehicle)
                             right_rear_dist = 200;
                         end
-                        right_dist = right_front_dist + right_rear_dist;
+                        
+                        % Ahead 또는 BubbleAhead 타입인 경우 rear_dist 무시
+                        if startsWith(Setting.NumberOfParticipants, 'Ahead') || startsWith(Setting.NumberOfParticipants, 'BubbleAhead')
+                            right_dist = right_front_dist;
+                        else
+                            right_dist = right_front_dist + right_rear_dist;
+                        end
                 
                         if right_dist > cur_dist  % (5)
                             if right_dist == left_dist
@@ -181,12 +198,22 @@ function environment = GRAPE_Environment_Initialize(List, Parameter,Setting)
                                 rear_dist = right_rear_dist;
                             end
                             
-                            % 해당 차선이 혼잡한지 확인
-                            if (front_dist <= Parameter.TaskDemandCrowdedRange) || ...
-                                (rear_dist <= Parameter.TaskDemandCrowdedRange)
-                                weights(lane) = 0;  % 혼잡한 차선의 weight을 0으로 설정
+                            % Ahead 또는 BubbleAhead 타입인 경우 rear_dist 무시
+                            if startsWith(Setting.NumberOfParticipants, 'Ahead') || startsWith(Setting.NumberOfParticipants, 'BubbleAhead')
+                                % 해당 차선이 혼잡한지 확인 (front_dist만 고려)
+                                if front_dist <= Parameter.TaskDemandCrowdedRange
+                                    weights(lane) = 0;  % 혼잡한 차선의 weight을 0으로 설정
+                                else
+                                    all_lanes_congested = false;  % 하나라도 혼잡하지 않은 차선이 있으면 false
+                                end
                             else
-                                all_lanes_congested = false;  % 하나라도 혼잡하지 않은 차선이 있으면 false
+                                % 기존 로직: front_dist와 rear_dist 모두 고려
+                                if (front_dist <= Parameter.TaskDemandCrowdedRange) || ...
+                                    (rear_dist <= Parameter.TaskDemandCrowdedRange)
+                                    weights(lane) = 0;  % 혼잡한 차선의 weight을 0으로 설정
+                                else
+                                    all_lanes_congested = false;  % 하나라도 혼잡하지 않은 차선이 있으면 false
+                                end
                             end
                         end
                     end
