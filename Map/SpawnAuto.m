@@ -54,7 +54,9 @@ function [List, TotalVehicles, InVehBuffer, RandomValBCup, vehIDCounter] = ...
         [~, lane] = max(lane_gaps);
 
 
-        exit_weights = [0.5, 0.5];  % 예: Exit1 20%, Through 80%
+        % ExitRatio를 기반으로 exit_weights 계산 (Exit : Through 비율)
+        exit_ratio = Parameter.ExitRatio / 100;  % 0.5 for 50%
+        exit_weights = [exit_ratio, 1-exit_ratio];  % [Exit 확률, Through 확률]
         exit = randsample(Parameter.Map.Exit, 1, true, exit_weights);
         politeness = 1;
         spawnPos = 1;

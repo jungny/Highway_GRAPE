@@ -1,8 +1,8 @@
 function GetWindow(Map, ~)
-    %viewType = 'Default';
+    viewType = 'Default';
     %viewType = 'FullHighway';
     %viewType = 'ScrollableHighway';
-    viewType = 'TwoWindow';
+    % viewType = 'TwoWindow';
     % viewType에 따라 창을 생성
     switch viewType
         case 'Default'
@@ -60,7 +60,7 @@ function TwoWindow(Map)
     ScreenWidth = ScreenSize(3);
     ScreenHeight = ScreenSize(4);
 
-    WindowWidth = ScreenWidth*1.8; % 창 너비를 스크린 너비로 설정
+    WindowWidth = ScreenWidth*2; % 창 너비를 스크린 너비로 설정
     AspectRatio = MapWidth / MapHeight;
     WindowHeight = WindowWidth / AspectRatio;
 

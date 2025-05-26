@@ -32,7 +32,7 @@ switch Util_type
     %     util_value = t_demand(task_id)/n_participants;
 
     case {'GS', 'HOS', 'FOS', 'ES'}
-        n_participants = 1;
+        % n_participants = 1;
         cost = abs(t_location(task_id, 2)- a_location(agent_id, 2));
         % cost는 environment.Parameter.Map.Tile의 정수배
         % 한 번의 차선 변경으로 닿을 수 없는 차선 <=> cost > 3.05

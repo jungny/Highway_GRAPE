@@ -13,11 +13,11 @@ Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
 Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
 Simulation.Setting.VideoSpeedMultiplier =  5;  % Video playback speed multiplier (e.g., 2 for 2x speed)
 %Simulation.Setting.ExitPercent = 20;
-memo = '2_';
-videomemo = '2_';
+memo = '5_';
+videomemo = '5_';
 %exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
 
-Simulation.Setting.GRAPEmode = 0;
+Simulation.Setting.GRAPEmode = 2;
 % 0: GRAPE, 1: Greedy, 2: CycleGreedy
 if Simulation.Setting.GRAPEmode == 0
     memo = [memo ' | GRAPE'];
@@ -30,23 +30,13 @@ else % Simulation.Setting.GRAPEmode == 2
     videomemo = [videomemo '_CycleGreedy'];
 end
 
-exitpercent = 50;
-if exitpercent == 0
-    memo = [memo ' | Exit : Through = 0 : 10'];
-    videomemo = [videomemo '_0%_'];
-elseif exitpercent == 20
-    memo = [memo ' | Exit : Through = 2 : 8'];
-    videomemo = [videomemo '_20%_'];
-elseif exitpercent == 50
-    memo = [memo ' | Exit : Through = 5 : 5'];
-    videomemo = [videomemo '_50%_'];
-elseif exitpercent == 80
-    memo = [memo ' | Exit : Through = 8 : 2'];
-    videomemo = [videomemo '_80%_'];
-end
-
-
-
+ExitRatio = 50;
+% 동적으로 Exit : Through 비율 계산
+exit_ratio = ExitRatio / 10;  % 10개 중 몇 개가 Exit인지
+through_ratio = 10 - exit_ratio;  % 나머지는 Through
+memo = [memo sprintf(' | Exit : Through = %d : %d', exit_ratio, through_ratio)];
+videomemo = [videomemo sprintf('_%d%%_', exitpercent)];
+%exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
 
 Simulation.Setting.RecordExcel = 1;  % 1: Record Excel file, 0: Do not record
 
@@ -117,7 +107,7 @@ ExcelSaveFolder = 'C:\Users\user\Desktop\ExcelRecord';
 filename = fullfile(ExcelSaveFolder, [videomemo '.xlsx']);
 
 % 🔹 실험할 참가자 모드 설정
-%participantModes = {'Default', 'Ahead'};  % 기본 모드
+
 %participantModes = {};
 % 🔹 Bubble Radius 값에 따라 Bubble 관련 모드 추가
 %for r = Simulation.Setting.BubbleRadiusList
@@ -127,14 +117,14 @@ filename = fullfile(ExcelSaveFolder, [videomemo '.xlsx']);
 bubbleList = Simulation.Setting.BubbleRadiusList;
 n = length(bubbleList);
 participantModes = cell(1, n);  % ← preallocation
-
+%participantModes = {'Ahead'};  % 기본 모드
 for i = 1:n
     r = bubbleList(i);
     % participantModes{i} = sprintf('Bubble_%dm', r);
     participantModes{i} = sprintf('BubbleAhead_%dm', r);
 end
 % ^ preallocation을 위해 미리 크기를 정해놓았으므로
-% 만일 BubbleAhead를 추가하고 싶다면 n -> 2*n으로 해야함
+% 만일 두개 다 싶다면 n -> 2*n으로 해야함
 
 
 % 🔹 kList가 여러 개인 경우 participantModes는 하나만 사용
@@ -206,6 +196,7 @@ for Iteration = 1:Simulation.Setting.Iterations
         Parameter = GetParameters(Simulation.Setting);
         GetWindow(Parameter.Map,Simulation.Setting)
         Parameter.Trajectory = GetTrajectory(Parameter.Map,Simulation.Setting);
+        Parameter.ExitRatio = ExitRatio;
 
         % 차량별 속도를 기록하기 위한 배열 추가
         vehicle_speeds = [];
@@ -344,7 +335,7 @@ for Iteration = 1:Simulation.Setting.Iterations
                     end
                 end
 
-                if GRAPE_done == 1 || Simulation.Setting.GRAPEmode == 1
+                if GRAPE_done == 1 || Simulation.Setting.GRAPEmode == 1 && Time >= Simulation.Setting.WarmupTime
                     lane_to_go = lane_alloc(i);
                 
                     if current_lane ~= lane_to_go
