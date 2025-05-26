@@ -13,8 +13,8 @@ Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
 Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
 Simulation.Setting.VideoSpeedMultiplier =  5;  % Video playback speed multiplier (e.g., 2 for 2x speed)
 %Simulation.Setting.ExitPercent = 20;
-memo = '7_matchtest_Draw0_';
-videomemo = '7_matchtest_Draw0_';
+memo = '7_matchtest_Draw0_Vehicle수정_';
+videomemo = '7_matchtest_Draw0_Vehicle수정_';
 %exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
 
 ExitRatio = 50;

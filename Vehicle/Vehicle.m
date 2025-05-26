@@ -37,6 +37,7 @@ classdef Vehicle < handle
         Margin
         ColorCount
         trajectory_plot
+        CachedRotationMatrix  % Add cached rotation matrix
     end
 
     properties(Hidden = false) % Dynamics
@@ -278,7 +279,12 @@ classdef Vehicle < handle
                     
                     % 위치 업데이트
                     obj.Object.Matrix(1:2,4) = obj.Trajectory(:,obj.Location);
-                    obj.Object.Matrix(1:2,1:2) = GetRotation(obj);
+                    
+                    % 방향이 변경된 경우에만 회전 행렬 업데이트
+                    if isempty(obj.CachedRotationMatrix) || ~isequal(obj.Object.Matrix(1:2,1:2), obj.CachedRotationMatrix)
+                        obj.CachedRotationMatrix = GetRotation(obj);
+                        obj.Object.Matrix(1:2,1:2) = obj.CachedRotationMatrix;
+                    end
                     
                     % 차선변경 완료 체크
                     if progress >= 1
@@ -309,8 +315,16 @@ classdef Vehicle < handle
                     end
                 else
                     % 차선변경 중이 아닌 경우 기본 위치만 업데이트
-                    obj.Object.Matrix(1:2,4) = obj.Trajectory(:,obj.Location);
-                    obj.Object.Matrix(1:2,1:2) = GetRotation(obj);
+                    newPosition = obj.Trajectory(:,obj.Location);
+                    rotation = GetRotation(obj);
+                    
+                    % 4x4 동차 변환 행렬 생성 (2D 회전 및 이동)
+                    transformMatrix = [rotation(1,1), rotation(1,2), 0, newPosition(1) ;
+                                       rotation(2,1), rotation(2,2), 0, newPosition(2) ;
+                                       0,             0,             1, 0              ;
+                                       0,             0,             0, 1              ];
+                                   
+                    obj.Object.Matrix = transformMatrix;
                 end
             end
 
