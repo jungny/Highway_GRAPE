@@ -4,7 +4,7 @@ clear
 clc
 addpath('Map\','Vehicle\','Signal\','Manager\','v2v\','GRAPE\')
 Simulation.Setting.Window = 1000;
-Simulation.Setting.Draw = 1;
+Simulation.Setting.Draw = 0;
 Simulation.Setting.StopOnGrapeError = 1;
 Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250514_0528';
@@ -13,12 +13,12 @@ Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
 Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
 Simulation.Setting.VideoSpeedMultiplier =  5;  % Video playback speed multiplier (e.g., 2 for 2x speed)
 %Simulation.Setting.ExitPercent = 20;
-memo = '9_';
-videomemo = '9_';
+memo = '7_matchtest_Draw0_';
+videomemo = '7_matchtest_Draw0_';
 %exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
 
-ExitRatio = 80;
-Simulation.Setting.GRAPEmode = 2;
+ExitRatio = 50;
+Simulation.Setting.GRAPEmode = 0;
 % 0: GRAPE, 1: Greedy, 2: CycleGreedy
 if Simulation.Setting.GRAPEmode == 0
     memo = [memo ' | GRAPE'];
@@ -51,7 +51,7 @@ Simulation.Setting.LogPath = @(finalRandomSeed) ...
 cycle_GRAPE = 5; % GRAPE instance per 5 seconds
 
 Simulation.Setting.InitialRandomSeed = 1;
-Simulation.Setting.Iterations = 5; % number of iterations
+Simulation.Setting.Iterations = 1; % number of iterations
 
 Simulation.Setting.SpawnMode = 'auto'; %'fixed', 'auto' 
 switch Simulation.Setting.SpawnMode 
@@ -66,7 +66,7 @@ end
 Simulation.Setting.FixedSpawnType = 1; 
 Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
-Simulation.Setting.BubbleRadiusList = 200; % 여러개를 사용해야 할 때는 []로 묶기
+Simulation.Setting.BubbleRadiusList = 300; % 여러개를 사용해야 할 때는 []로 묶기
 %Simulation.Setting.BubbleRadiusList = 0;
 Simulation.Setting.Util_type = 'GS'; 
 %Simulation.Setting.Util_type = 'HOS'; 
@@ -75,8 +75,8 @@ Simulation.Setting.Util_type = 'GS';
 Simulation.Setting.LaneChangeMode = 'SimpleLaneChange'; % 'MOBIL' or 'SimpleLaneChange'
 
 % Add kList and k settings
-Simulation.Setting.kList = 1.2; %[1, 1.2, 1.4, 1.6, 1.8, 2, 3, 5];  % List of k values to test
-Simulation.Setting.k = 1.2;  % Default k value
+Simulation.Setting.kList = 1; %[1, 1.2, 1.4, 1.6, 1.8, 2, 3, 5];  % List of k values to test
+Simulation.Setting.k = 1;  % Default k value
 
 %% Run Simulation
 % Initialize Log File
@@ -115,8 +115,8 @@ participantModes = cell(1, n);  % ← preallocation
 %participantModes = {'Ahead'};  % 기본 모드
 for i = 1:n
     r = bubbleList(i);
-    %participantModes{i} = sprintf('Bubble_%dm', r);
-    participantModes{i} = sprintf('BubbleAhead_%dm', r);
+    participantModes{i} = sprintf('Bubble_%dm', r);
+    %participantModes{i} = sprintf('BubbleAhead_%dm', r);
 end
 % ^ preallocation을 위해 미리 크기를 정해놓았으므로
 % 만일 두개 다 싶다면 n -> 2*n으로 해야함

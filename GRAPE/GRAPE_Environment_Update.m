@@ -272,7 +272,7 @@ end
 %%
 %%
 
-function [front_vehicle, front_distance] = GetFrontVehicle(obj, targetLane, List, Parameter, Setting, vehicle_ids, vehicle_lanes, vehicle_locations, vehicle_targetlanes, vehicle_alloclanes)
+function [front_vehicle, front_distance] = GetFrontVehicle(obj, checkLane, List, Parameter, Setting, vehicle_ids, vehicle_lanes, vehicle_locations, vehicle_targetlanes, vehicle_alloclanes)
     % 현재 차선의 선행 차량 찾기 (벡터화)
     current_x = double(obj.Location * Parameter.Map.Scale);
     if isnan(Setting.BubbleRadius) || Setting.BubbleRadius > 200
@@ -281,9 +281,9 @@ function [front_vehicle, front_distance] = GetFrontVehicle(obj, targetLane, List
         considerationRange = Setting.BubbleRadius;
     end
     % 타겟 차량 논리 인덱싱
-    is_target = (vehicle_alloclanes == targetLane) | ...
-                (isnan(vehicle_alloclanes) & (vehicle_targetlanes == targetLane)) | ...
-                (isnan(vehicle_alloclanes) & isnan(vehicle_targetlanes) & (vehicle_lanes == targetLane));
+    is_target = (vehicle_alloclanes == checkLane) | ...
+                (isnan(vehicle_alloclanes) & (vehicle_targetlanes == checkLane)) | ...
+                (isnan(vehicle_alloclanes) & isnan(vehicle_targetlanes) & (vehicle_lanes == checkLane));
     % 거리 계산
     target_locations = vehicle_locations(is_target);
     target_ids = vehicle_ids(is_target);
@@ -300,7 +300,7 @@ function [front_vehicle, front_distance] = GetFrontVehicle(obj, targetLane, List
     end
 end
 
-function [rear_vehicle, rear_distance] = GetRearVehicle(obj, targetLane, List, Parameter, Setting, vehicle_ids, vehicle_lanes, vehicle_locations, vehicle_targetlanes, vehicle_alloclanes)
+function [rear_vehicle, rear_distance] = GetRearVehicle(obj, checkLane, List, Parameter, Setting, vehicle_ids, vehicle_lanes, vehicle_locations, vehicle_targetlanes, vehicle_alloclanes)
     % 현재 차선의 후행 차량 찾기 (벡터화)
     current_x = double(obj.Location * Parameter.Map.Scale);
     if isnan(Setting.BubbleRadius) || Setting.BubbleRadius > 200
@@ -309,9 +309,9 @@ function [rear_vehicle, rear_distance] = GetRearVehicle(obj, targetLane, List, P
         considerationRange = Setting.BubbleRadius;
     end
     % 타겟 차량 논리 인덱싱
-    is_target = (vehicle_alloclanes == targetLane) | ...
-                (isnan(vehicle_alloclanes) & (vehicle_targetlanes == targetLane)) | ...
-                (isnan(vehicle_alloclanes) & isnan(vehicle_targetlanes) & (vehicle_lanes == targetLane));
+    is_target = (vehicle_alloclanes == checkLane) | ...
+                (isnan(vehicle_alloclanes) & (vehicle_targetlanes == checkLane)) | ...
+                (isnan(vehicle_alloclanes) & isnan(vehicle_targetlanes) & (vehicle_lanes == checkLane));
     % 거리 계산
     target_locations = vehicle_locations(is_target);
     target_ids = vehicle_ids(is_target);
