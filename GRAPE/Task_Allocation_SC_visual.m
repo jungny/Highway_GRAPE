@@ -305,7 +305,7 @@ while a_satisfied~=n
     iteration_history(Case) = iteration;
 
     if Case > 5000
-        %disp('check 5000 case');
+        disp('check 5000 case');
     end
 end
 

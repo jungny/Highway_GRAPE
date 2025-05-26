@@ -4,7 +4,7 @@ clear
 clc
 addpath('Map\','Vehicle\','Signal\','Manager\','v2v\','GRAPE\')
 Simulation.Setting.Window = 1000;
-Simulation.Setting.Draw = 1;
+Simulation.Setting.Draw = 0;
 Simulation.Setting.StopOnGrapeError = 1;
 Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250514_0528';
@@ -13,8 +13,8 @@ Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
 Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
 Simulation.Setting.VideoSpeedMultiplier =  5;  % Video playback speed multiplier (e.g., 2 for 2x speed)
 %Simulation.Setting.ExitPercent = 20;
-memo = '9_Draw1Test_3Refactor_Draw1_';
-videomemo = '9_Draw1Test_3Refactor_Draw1_';
+memo = '9_test_';
+videomemo = '9_test_';
 %exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
 
 Simulation.Setting.BubbleRadiusList = 10; % 여러개를 사용해야 할 때는 []로 묶기
