@@ -1,82 +1,74 @@
-%===
-close all
-clear
-clc
-addpath('Map\','Vehicle\','Signal\','Manager\','v2v\','GRAPE\')
-Simulation.Setting.Window = 1000;
-Simulation.Setting.Draw = 0;
-Simulation.Setting.StopOnGrapeError = 1;
-Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
+function run_single_simulation(config)
+% === 기본 설정 ===
+Simulation.Setting = struct();
+Simulation.Setting.GRAPEmode = config.GRAPEmode;
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250514_0528';
+Simulation.Setting.RecordExcel = 1;
+Simulation.Setting.RecordLog = 0;
+Simulation.Setting.RecordVideo = 0;
+Simulation.Setting.VideoSpeedMultiplier = 5;
 
-Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
-Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
-Simulation.Setting.VideoSpeedMultiplier =  5;  % Video playback speed multiplier (e.g., 2 for 2x speed)
-%Simulation.Setting.ExitPercent = 20;
-memo = '9_';
-videomemo = '9_';
-%exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
-
-Simulation.Setting.BubbleRadiusList = 10; % 여러개를 사용해야 할 때는 []로 묶기
-ExitRatio = 50;
-Simulation.Setting.GRAPEmode = 0;
-% 0: GRAPE, 1: Greedy, 2: CycleGreedy
-if Simulation.Setting.GRAPEmode == 0
+% === 메모/비디오이름 설정 ===
+memo = sprintf('%d_batch_', config.ID);
+videomemo = memo;
+if config.GRAPEmode == 0
     memo = [memo ' | GRAPE'];
     videomemo = [videomemo '_GRAPE'];
-elseif Simulation.Setting.GRAPEmode == 1
-    memo = [memo ' | Greedy'];
-    videomemo = [videomemo '_Greedy'];
-else % Simulation.Setting.GRAPEmode == 2
+elseif config.GRAPEmode == 2
     memo = [memo ' | CycleGreedy'];
     videomemo = [videomemo '_CycleGreedy'];
 end
 
-% 동적으로 Exit : Through 비율 계산
-exit_ratio = ExitRatio / 10;  % 10개 중 몇 개가 Exit인지
-through_ratio = 10 - exit_ratio;  % 나머지는 Through
-memo = [memo sprintf(' | Exit : Through = %d : %d', exit_ratio, through_ratio)];
+ExitRatio = config.ExitRate;
+memo = [memo sprintf(' | Exit : Through = %d : %d', ExitRatio/10, 10 - ExitRatio/10)];
 videomemo = [videomemo sprintf('_%d%%_', ExitRatio)];
-%exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
 
-Simulation.Setting.RecordExcel = 1;  % 1: Record Excel file, 0: Do not record
+Simulation.Setting.k = config.k;
+Simulation.Setting.kList = config.k;
+Simulation.Setting.BubbleRadiusList = [];
 
-Simulation.Setting.VideoPath = @(mode, randomSeed, timestamp) ...
-    fullfile(Simulation.Setting.SaveFolder, 'Simulations', ...
-    ['_' mode '_' num2str(randomSeed) '_' timestamp '.mp4']);
+if strcmpi(config.Strategy, "Bubble") || strcmpi(config.Strategy, "BubbleAhead")
+    Simulation.Setting.BubbleRadiusList = config.BubbleRadius;
+end
 
-Simulation.Setting.LogPath = @(finalRandomSeed) ...
-    fullfile(Simulation.Setting.SaveFolder, 'Simulations', ...
-    ['log_' num2str(finalRandomSeed) '.txt']);
-
-cycle_GRAPE = 5; % GRAPE instance per 5 seconds
-
+Simulation.Setting.Window = 1000;
+Simulation.Setting.Draw = 1;
+Simulation.Setting.StopOnGrapeError = 1;
+Simulation.Setting.PauseTime = 0;
 Simulation.Setting.InitialRandomSeed = 1;
-Simulation.Setting.Iterations = 5; % number of iterations
+Simulation.Setting.Iterations = 1;
+cycle_GRAPE = 5; % GRAPE instance per 5 seconds
+Simulation.Setting.SpawnMode = 'auto';
+Simulation.Setting.FixedSpawnType = 1;
+Simulation.Setting.GreedyAlloc = 0;
+Simulation.Setting.Util_type = 'GS';
+Simulation.Setting.LaneChangeMode = 'SimpleLaneChange';
 
-Simulation.Setting.SpawnMode = 'auto'; %'fixed', 'auto' 
-switch Simulation.Setting.SpawnMode 
+switch Simulation.Setting.SpawnMode
     case 'fixed'
         Simulation.Setting.Time = 10000;
     case 'auto'
         Simulation.Setting.WarmupTime = 45;
-        Simulation.Setting.SimulationTime = 300; 
+        Simulation.Setting.SimulationTime = 300;
         Simulation.Setting.Time = Simulation.Setting.WarmupTime + Simulation.Setting.SimulationTime;
 end
+
+% 이제 여기부터 너의 main.m 본문 붙이면 됨 (위 설정만 외부에서 받고 내부는 동일)
+% 단 memo, videomemo, ExitRatio, Simulation.Setting 전역처럼 쓸 수 있음
+
+% 예시:
+disp("🚀 Running config ID " + config.ID + " | GRAPEmode = " + config.GRAPEmode);
+
 
 Simulation.Setting.FixedSpawnType = 1; 
 Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
-%Simulation.Setting.BubbleRadiusList = 0;
 Simulation.Setting.Util_type = 'GS'; 
 %Simulation.Setting.Util_type = 'HOS'; 
 %Simulation.Setting.Util_type = 'FOS'; 
 %Simulation.Setting.Util_type = 'ES'; 
 Simulation.Setting.LaneChangeMode = 'SimpleLaneChange'; % 'MOBIL' or 'SimpleLaneChange'
 
-% Add kList and k settings
-Simulation.Setting.kList = 1; %[1, 1.2, 1.4, 1.6, 1.8, 2, 3, 5];  % List of k values to test
-Simulation.Setting.k = 1;  % Default k value
 
 %% Run Simulation
 % Initialize Log File
@@ -107,19 +99,11 @@ ExcelSaveFolder = 'C:\Users\user\Desktop\ExcelRecord';
 filename = fullfile(ExcelSaveFolder, [videomemo '.xlsx']);
 
 % 🔹 실험할 참가자 모드 설정
-
-%participantModes = {};
-bubbleList = Simulation.Setting.BubbleRadiusList;
-n = length(bubbleList);
-participantModes = cell(1, n);  % ← preallocation
-%participantModes = {'Default'};  % 기본 모드
-for i = 1:n
-    r = bubbleList(i);
-    participantModes{i} = sprintf('Bubble_%dm', r);
-    %participantModes{i} = sprintf('BubbleAhead_%dm', r);
+if ismember(config.Strategy, ["Default", "Ahead"])
+    participantModes = {"Default"};
+else
+    participantModes = {sprintf('Bubble_%dm', config.BubbleRadius)};
 end
-% ^ preallocation을 위해 미리 크기를 정해놓았으므로
-% 만일 두개 다 싶다면 n -> 2*n으로 해야함
 
 
 % 🔹 kList가 여러 개인 경우 participantModes는 하나만 사용
@@ -616,4 +600,5 @@ for Iteration = 1:Simulation.Setting.Iterations
     end
     result_row{2} = TotalVehicles;
     results(Iteration, :) = result_row;
+end
 end
