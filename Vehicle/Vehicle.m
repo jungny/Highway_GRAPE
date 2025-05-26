@@ -375,22 +375,24 @@ classdef Vehicle < handle
                 exit_index = 'Th';
             end
 
-            if Draw && Parameter.Label
-                % String이 실제로 바뀔 때만 set
-                if ~isempty(obj.LaneAlloc)
-                    new_str = sprintf('%d     %d   %s', obj.LaneAlloc, obj.ID, exit_index);
+            if Draw
+                if Parameter.Label
+                    % String이 실제로 바뀔 때만 set
+                    if ~isempty(obj.LaneAlloc)
+                        new_str = sprintf('%d     %d   %s', obj.LaneAlloc, obj.ID, exit_index);
+                    else
+                        new_str = sprintf('%d     %d   %s', obj.Lane, obj.ID, exit_index);
+                    end
+                    if ~strcmp(get(obj.Text, 'String'), new_str)
+                        set(obj.Text, 'String', new_str);
+                    end
+                    set(obj.Text, 'Position', [x_center, y_center+0.1]);
                 else
-                    new_str = sprintf('%d     %d   %s', obj.Lane, obj.ID, exit_index);
-                end
-                if ~strcmp(get(obj.Text, 'String'), new_str)
-                    set(obj.Text, 'String', new_str);
-                end
-                set(obj.Text, 'Position', [x_center, y_center+0.1]);
-            else
-                new_str = [];
+                    new_str = [];
 
-                if ~strcmp(get(obj.Text, 'String'), new_str)
-                    set(obj.Text, 'String', new_str);
+                    if ~strcmp(get(obj.Text, 'String'), new_str)
+                        set(obj.Text, 'String', new_str);
+                    end
                 end
             end
 

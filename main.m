@@ -13,8 +13,8 @@ Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
 Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
 Simulation.Setting.VideoSpeedMultiplier =  5;  % Video playback speed multiplier (e.g., 2 for 2x speed)
 %Simulation.Setting.ExitPercent = 20;
-memo = '7_matchtest_Draw0_Vehicle수정_';
-videomemo = '7_matchtest_Draw0_Vehicle수정_';
+memo = '9_matchtest_최근커밋_';
+videomemo = '9_matchtest_최근커밋_';
 %exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
 
 ExitRatio = 50;
@@ -38,7 +38,7 @@ memo = [memo sprintf(' | Exit : Through = %d : %d', exit_ratio, through_ratio)];
 videomemo = [videomemo sprintf('_%d%%_', ExitRatio)];
 %exitpercent = Simulation.Setting.ExitPercent;  % 혹은 그냥 exitpercent = 20;
 
-Simulation.Setting.RecordExcel = 1;  % 1: Record Excel file, 0: Do not record
+Simulation.Setting.RecordExcel = 0;  % 1: Record Excel file, 0: Do not record
 
 Simulation.Setting.VideoPath = @(mode, randomSeed, timestamp) ...
     fullfile(Simulation.Setting.SaveFolder, 'Simulations', ...
@@ -66,7 +66,7 @@ end
 Simulation.Setting.FixedSpawnType = 1; 
 Simulation.Setting.GreedyAlloc = 0; % 0: Distributed Mutex is applied (GRAPE), 1: Agents make fully greedy decisions (Baseline)
 
-Simulation.Setting.BubbleRadiusList = 300; % 여러개를 사용해야 할 때는 []로 묶기
+Simulation.Setting.BubbleRadiusList = 10; % 여러개를 사용해야 할 때는 []로 묶기
 %Simulation.Setting.BubbleRadiusList = 0;
 Simulation.Setting.Util_type = 'GS'; 
 %Simulation.Setting.Util_type = 'HOS'; 
