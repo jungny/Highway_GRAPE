@@ -8,6 +8,7 @@ function P = GetParameters(Setting)
     P.RemoveTraj = true;  % 궤적 유지 여부 설정 (기본값: false)
     P.Flow = 2000 * 3; % veh/hour/lane * lane (=3), only used in spawntype = 1.
     P.ExitRatio = []; % initialize to an empty value to avoid any confusion
+    P.Draw = Setting.Draw;
     
     % Sim
     P.Sim.Time = Setting.Time;

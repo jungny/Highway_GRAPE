@@ -7,6 +7,26 @@ function environment = GRAPE_Environment_Initialize(List, Parameter,Setting)
         vehicle.AllocLaneDuringGRAPE = [];
     end
     
+    % GRAPE_Environment_Update.m 방식처럼 차량 정보 배열화 (최적화)
+    vehicle_ids = List.Vehicle.Active(:,1);
+    num_vehicles = n; % size(List.Vehicle.Active, 1);
+    vehicle_lanes = zeros(num_vehicles,1);
+    vehicle_locations = zeros(num_vehicles,1);
+    vehicle_targetlanes = nan(num_vehicles,1);
+    vehicle_alloclanes = nan(num_vehicles,1);
+    for i = 1:num_vehicles
+        vid = vehicle_ids(i);
+        obj = List.Vehicle.Object{vid};
+        vehicle_lanes(i) = obj.Lane;
+        vehicle_locations(i) = obj.Location;
+        if ~isempty(obj.TargetLane)
+            vehicle_targetlanes(i) = obj.TargetLane;
+        end
+        if ~isempty(obj.AllocLaneDuringGRAPE)
+            vehicle_alloclanes(i) = obj.AllocLaneDuringGRAPE;
+        end
+    end
+
     % a_location 생성
     a_location = zeros(n, 2);
     for i = 1:n
@@ -90,18 +110,21 @@ function environment = GRAPE_Environment_Initialize(List, Parameter,Setting)
                     % ALDG의 효과가 나타나는지 확인하기 위해 조건 간소화
                     decelflag = true;
                 
-                    % 현재 차선의 선행 차량 거리
-                    [cur_front_vehicle, front_dist] = GetFrontVehicle(obj, currentLane, List, Parameter, Setting);
-                    [cur_rear_vehicle, rear_dist] = GetRearVehicle(obj, currentLane, List, Parameter, Setting);
-                    cur_front_dist = front_dist; 
-                    cur_rear_dist = rear_dist;
-                    if isempty(cur_front_vehicle)
+                    % 현재 차선의 선행 차량 거리 (최적화된 탐색 사용 -> GRAPE_Environment_Update.m 방식으로 변경)
+                    % [cur_front_vehicle, cur_front_dist] = GetFrontVehicleOptimized(obj, activeVehiclesByLane{currentLane}, Parameter, Setting);
+                    % [cur_rear_vehicle, cur_rear_dist] = GetRearVehicleOptimized(obj, activeVehiclesByLane{currentLane}, Parameter, Setting);
+                    
+                    [cur_front_vehicle, cur_front_dist] = GetFrontVehicle(obj, currentLane, List, Parameter, Setting, vehicle_ids, vehicle_lanes, vehicle_locations, vehicle_targetlanes, vehicle_alloclanes);
+                    [cur_rear_vehicle, cur_rear_dist] = GetRearVehicle(obj, currentLane, List, Parameter, Setting, vehicle_ids, vehicle_lanes, vehicle_locations, vehicle_targetlanes, vehicle_alloclanes);
+
+                    % GetFrontVehicle 및 GetRearVehicle 함수 내에서 빈 경우 200m로 설정하도록 수정 예정 (main 함수에 있는 GetVehicle 함수 참고)
+                    if isinf(cur_front_dist)
                         cur_front_dist = 200;
                     end
-                    if isempty(cur_rear_vehicle)
+                    if isinf(cur_rear_dist)
                         cur_rear_dist = 200;
                     end
-                    
+
                     % Ahead 또는 BubbleAhead 타입인 경우 rear_dist 무시
                     if startsWith(Setting.NumberOfParticipants, 'Ahead') || startsWith(Setting.NumberOfParticipants, 'BubbleAhead')
                         cur_dist = cur_front_dist;
@@ -109,20 +132,23 @@ function environment = GRAPE_Environment_Initialize(List, Parameter,Setting)
                         cur_dist = cur_front_dist + cur_rear_dist;
                     end
                 
-                    % 왼쪽 차선 조건
+                    % 왼쪽 차선 조건 (최적화된 탐색 사용 -> GRAPE_Environment_Update.m 방식으로 변경)
+                    % [left_front_vehicle, left_front_dist] = GetFrontVehicleOptimized(obj, activeVehiclesByLane{leftLane}, Parameter, Setting);
+                    % [left_rear_vehicle, left_rear_dist] = GetRearVehicleOptimized(obj, activeVehiclesByLane{leftLane}, Parameter, Setting);
+                    
                     if currentLane > 1
                         leftLane = currentLane - 1;
-                        [left_front_vehicle, front_dist] = GetFrontVehicle(obj, leftLane, List, Parameter, Setting);
-                        [left_rear_vehicle, rear_dist] = GetRearVehicle(obj, leftLane, List, Parameter, Setting);
-                        left_front_dist = front_dist;
-                        left_rear_dist = rear_dist;
-                        if isempty(left_front_vehicle)
+                        [left_front_vehicle, left_front_dist] = GetFrontVehicle(obj, leftLane, List, Parameter, Setting, vehicle_ids, vehicle_lanes, vehicle_locations, vehicle_targetlanes, vehicle_alloclanes);
+                        [left_rear_vehicle, left_rear_dist] = GetRearVehicle(obj, leftLane, List, Parameter, Setting, vehicle_ids, vehicle_lanes, vehicle_locations, vehicle_targetlanes, vehicle_alloclanes);
+
+                        % GetFrontVehicle 및 GetRearVehicle 함수 내에서 빈 경우 200m로 설정하도록 수정 예정
+                        if isinf(left_front_dist)
                             left_front_dist = 200;
                         end
-                        if isempty(left_rear_vehicle)
+                        if isinf(left_rear_dist)
                             left_rear_dist = 200;
                         end
-                
+                        
                         % Ahead 또는 BubbleAhead 타입인 경우 rear_dist 무시
                         if startsWith(Setting.NumberOfParticipants, 'Ahead') || startsWith(Setting.NumberOfParticipants, 'BubbleAhead')
                             left_dist = left_front_dist;
@@ -135,17 +161,20 @@ function environment = GRAPE_Environment_Initialize(List, Parameter,Setting)
                         end
                     end
                 
-                    % 오른쪽 차선 조건
+                    % 오른쪽 차선 조건 (최적화된 탐색 사용 -> GRAPE_Environment_Update.m 방식으로 변경)
+                    % [right_front_vehicle, right_front_dist] = GetFrontVehicleOptimized(obj, activeVehiclesByLane{rightLane}, Parameter, Setting);
+                    % [right_rear_vehicle, right_rear_dist] = GetRearVehicleOptimized(obj, activeVehiclesByLane{rightLane}, Parameter, Setting);
+                    
                     if currentLane < Parameter.Map.Lane
                         rightLane = currentLane + 1;
-                        [right_front_vehicle, front_dist] = GetFrontVehicle(obj, rightLane, List, Parameter, Setting);
-                        [right_rear_vehicle, rear_dist] = GetRearVehicle(obj, rightLane, List, Parameter, Setting);
-                        right_front_dist = front_dist;
-                        right_rear_dist = rear_dist;
-                        if isempty(right_front_vehicle)
+                        [right_front_vehicle, right_front_dist] = GetFrontVehicle(obj, rightLane, List, Parameter, Setting, vehicle_ids, vehicle_lanes, vehicle_locations, vehicle_targetlanes, vehicle_alloclanes);
+                        [right_rear_vehicle, right_rear_dist] = GetRearVehicle(obj, rightLane, List, Parameter, Setting, vehicle_ids, vehicle_lanes, vehicle_locations, vehicle_targetlanes, vehicle_alloclanes);
+                        
+                        % GetFrontVehicle 및 GetRearVehicle 함수 내에서 빈 경우 200m로 설정하도록 수정 예정
+                        if isinf(right_front_dist)
                             right_front_dist = 200;
                         end
-                        if isempty(right_rear_vehicle)
+                        if isinf(right_rear_dist)
                             right_rear_dist = 200;
                         end
                         
@@ -189,27 +218,53 @@ function environment = GRAPE_Environment_Initialize(List, Parameter,Setting)
                     all_lanes_congested = true;  % 모든 차선이 혼잡한지 확인하는 플래그
                     for lane = 1:Parameter.Map.Lane
                         if lane ~= currentLane
-                            % 이미 계산된 정보 재활용
-                            if lane == currentLane - 1  % 왼쪽 차선
-                                front_dist = left_front_dist;
-                                rear_dist = left_rear_dist;
-                            elseif lane == currentLane + 1  % 오른쪽 차선
-                                front_dist = right_front_dist;
-                                rear_dist = right_rear_dist;
-                            end
+                            % 이미 계산된 정보 재활용 (Optimized 함수 사용 시 불필요)
+                            % if lane == currentLane - 1  % 왼쪽 차선
+                            %     front_dist = left_front_dist;
+                            %     rear_dist = left_rear_dist;
+                            % elseif lane == currentLane + 1  % 오른쪽 차선
+                            %     front_dist = right_front_dist;
+                            %     rear_dist = right_rear_dist;
+                            % end
                             
+                            % 해당 차선의 차량 정보를 가져와서 혼잡도 판단 (최적화된 탐색 사용 -> GRAPE_Environment_Update.m 방식으로 변경)
+                            if lane == currentLane - 1  % 왼쪽 차선
+                                targetLaneCheck = leftLane;
+                                % targetVehicles = activeVehiclesByLane{leftLane}; % 이 부분 제거
+                            elseif lane == currentLane + 1  % 오른쪽 차선
+                                targetLaneCheck = rightLane;
+                                % targetVehicles = activeVehiclesByLane{rightLane}; % 이 부분 제거
+                            else
+                                % 현재 차선은 이미 위에서 계산했으므로 스킵
+                                continue;
+                            end
+
+                            % [~, front_dist_check] = GetFrontVehicleOptimized(obj, targetVehicles, Parameter, Setting);
+                            % [~, rear_dist_check] = GetRearVehicleOptimized(obj, targetVehicles, Parameter, Setting);
+                            
+                            [~, front_dist_check] = GetFrontVehicle(obj, targetLaneCheck, List, Parameter, Setting, vehicle_ids, vehicle_lanes, vehicle_locations, vehicle_targetlanes, vehicle_alloclanes);
+                            [~, rear_dist_check] = GetRearVehicle(obj, targetLaneCheck, List, Parameter, Setting, vehicle_ids, vehicle_lanes, vehicle_locations, vehicle_targetlanes, vehicle_alloclanes);
+
+                            % GetFrontVehicle 및 GetRearVehicle 함수 내에서 빈 경우 200m로 설정하도록 수정 예정
+                             if isinf(front_dist_check)
+                                front_dist_check = 200;
+                            end
+                            if isinf(rear_dist_check)
+                                rear_dist_check = 200;
+                            end
+
                             % Ahead 또는 BubbleAhead 타입인 경우 rear_dist 무시
                             if startsWith(Setting.NumberOfParticipants, 'Ahead') || startsWith(Setting.NumberOfParticipants, 'BubbleAhead')
                                 % 해당 차선이 혼잡한지 확인 (front_dist만 고려)
-                                if front_dist <= Parameter.TaskDemandCrowdedRange
+                                if front_dist_check <= Parameter.TaskDemandCrowdedRange
                                     weights(lane) = 0;  % 혼잡한 차선의 weight을 0으로 설정
                                 else
                                     all_lanes_congested = false;  % 하나라도 혼잡하지 않은 차선이 있으면 false
                                 end
                             else
                                 % 기존 로직: front_dist와 rear_dist 모두 고려
-                                if (front_dist <= Parameter.TaskDemandCrowdedRange) || ...
-                                    (rear_dist <= Parameter.TaskDemandCrowdedRange)
+                                if (front_dist_check <= Parameter.TaskDemandCrowdedRange) || ...
+                                    (rear_dist_check <= Parameter.TaskDemandCrowdedRange)
                                     weights(lane) = 0;  % 혼잡한 차선의 weight을 0으로 설정
                                 else
                                     all_lanes_congested = false;  % 하나라도 혼잡하지 않은 차선이 있으면 false
@@ -257,155 +312,4 @@ function environment = GRAPE_Environment_Initialize(List, Parameter,Setting)
 
 end
 
-%%
-%%
-
-% Initialize에서 ALDG를 쓸 일은 없지만, 이대로도 잘 기능하는 코드이므로 그대로 두기로 함
-function [front_vehicle, front_distance] = GetFrontVehicle(obj, targetLane, List, Parameter, Setting)
-    % 현재 차선의 선행 차량 찾기
-    current_x = double(obj.Location * Parameter.Map.Scale);
-
-    if isnan(Setting.BubbleRadius) || Setting.BubbleRadius > 200
-        considerationRange = 200;
-    else
-        considerationRange = Setting.BubbleRadius;
-    end
-
-    % 목표 차선의 차량 필터링
-    vehicle_ids = List.Vehicle.Active(:,1);  % 모든 vehicle id 추출
-    is_target = false(size(vehicle_ids));   % 논리 인덱싱 초기화
-    
-    for i = 1:length(vehicle_ids)
-        vid = vehicle_ids(i);
-        
-        if Setting.GRAPEmode == 0 % GRAPE
-            if ~isempty(List.Vehicle.Object{vid}.AllocLaneDuringGRAPE) 
-                if List.Vehicle.Object{vid}.AllocLaneDuringGRAPE == targetLane
-                    is_target(i) = true;
-                end
-            else % vehicle.AllocLaneDuringGRAPE is empty. 
-                 % not empty at very start of the GRAPE instance or the veh doesnot change lane during phase 2 
-                if ~isempty(List.Vehicle.Object{vid}.TargetLane) % this would not happen bc all vehs
-                                                                 % normally success their lc before another GRAPE
-                    if List.Vehicle.Object{vid}.TargetLane == targetLane
-                        is_target(i) = true;
-                    end
-                else % vehicle.TargetLane is empty
-                    if List.Vehicle.Object{vid}.Lane == targetLane
-                        is_target(i) = true;
-                    end
-                end
-            end
-        else % Greedy or CycleGreedy
-            if ~isempty(List.Vehicle.Object{vid}.TargetLane)
-                if List.Vehicle.Object{vid}.TargetLane == targetLane
-                    is_target(i) = true;
-                end
-            else % vehicle.TargetLane is empty
-                if List.Vehicle.Object{vid}.Lane == targetLane
-                    is_target(i) = true;
-                end
-            end
-        end
-    end
-    
-    % 필터링된 Active 정보
-    lane_vehicles = List.Vehicle.Active(is_target, :);
-
-    % 모든 차량의 거리 계산
-    distances = lane_vehicles(:,4) * Parameter.Map.Scale - current_x;
-
-    % 선행 차량 거리 필터링
-    front_distances = distances(distances > 0 & distances <= considerationRange);
-
-    % 초기화
-    front_vehicle = [];
-    front_distance = inf;
-
-    if ~isempty(front_distances)
-        % 가장 가까운 선행 차량 거리와 인덱스 찾기
-        [front_distance, ~] = min(front_distances);
-
-        % front_distances 값이 distances에서의 원래 인덱스 찾기
-        tolerance = 1e-6; % 부동소수점 오차 허용
-        original_idx = find(abs(distances - front_distance) < tolerance, 1, 'first');
-
-        % 해당 인덱스의 차량 정보 추출
-        front_vehicle = lane_vehicles(original_idx, :);
-    end
-end
-
-function [rear_vehicle, rear_distance] = GetRearVehicle(obj, targetLane, List, Parameter, Setting)
-    % 현재 차선의 후행 차량 찾기
-    current_x = double(obj.Location * Parameter.Map.Scale);
-
-    if isnan(Setting.BubbleRadius) || Setting.BubbleRadius > 200
-        considerationRange = 200;
-    else
-        considerationRange = Setting.BubbleRadius;
-    end
-
-    % 목표 차선의 차량 필터링
-    vehicle_ids = List.Vehicle.Active(:,1);  % 모든 vehicle id 추출
-    is_target = false(size(vehicle_ids));   % 논리 인덱싱 초기화
-
-    for i = 1:length(vehicle_ids)
-        vid = vehicle_ids(i);
-
-        if Setting.GRAPEmode == 0 % GRAPE
-            if ~isempty(List.Vehicle.Object{vid}.AllocLaneDuringGRAPE) 
-                if List.Vehicle.Object{vid}.AllocLaneDuringGRAPE == targetLane
-                    is_target(i) = true;
-                end
-            else
-                if ~isempty(List.Vehicle.Object{vid}.TargetLane)
-                    if List.Vehicle.Object{vid}.TargetLane == targetLane
-                        is_target(i) = true;
-                    end
-                else
-                    if List.Vehicle.Object{vid}.Lane == targetLane
-                        is_target(i) = true;
-                    end
-                end
-            end
-        else % Greedy or CycleGreedy
-            if ~isempty(List.Vehicle.Object{vid}.TargetLane)
-                if List.Vehicle.Object{vid}.TargetLane == targetLane
-                    is_target(i) = true;
-                end
-            else
-                if List.Vehicle.Object{vid}.Lane == targetLane
-                    is_target(i) = true;
-                end
-            end
-        end
-    end
-
-    % 필터링된 Active 정보
-    lane_vehicles = List.Vehicle.Active(is_target, :);
-
-    % 모든 차량의 거리 계산
-    distances = lane_vehicles(:,4) * Parameter.Map.Scale - current_x;
-
-    % 후행 차량 거리 필터링
-    rear_distances = distances(distances < 0 & distances >= -considerationRange);
-
-    % 초기화
-    rear_vehicle = [];
-    rear_distance = inf;
-
-    if ~isempty(rear_distances)
-        % 가장 가까운 후행 차량 거리와 인덱스 찾기
-        [rear_distance, ~] = max(rear_distances); % rear는 뒤니까 max를 써야 함
-
-        % rear_distances 값이 distances에서의 원래 인덱스 찾기
-        tolerance = 1e-6; % 부동소수점 오차 허용
-        original_idx = find(abs(distances - rear_distance) < tolerance, 1, 'first');
-
-        % 해당 인덱스의 차량 정보 추출
-        rear_vehicle = lane_vehicles(original_idx, :);
-
-        % rear_distance는 양수로 바꿔줄게 (필요하면)
-        rear_distance = abs(rear_distance);
-    end
-end
+% GetFrontVehicle and GetRearVehicle functions are now in Manager folder
