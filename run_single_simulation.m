@@ -9,7 +9,7 @@ Simulation.Setting.RecordVideo = 0;
 Simulation.Setting.VideoSpeedMultiplier = 5;
 
 % === 메모/비디오이름 설정 ===
-memo = sprintf('%d_batch_', config.ID);
+memo = sprintf('%d_', config.ID);
 videomemo = memo;
 if config.GRAPEmode == 0
     memo = [memo ' | GRAPE'];
@@ -36,7 +36,7 @@ Simulation.Setting.Draw = 1;
 Simulation.Setting.StopOnGrapeError = 1;
 Simulation.Setting.PauseTime = 0;
 Simulation.Setting.InitialRandomSeed = 1;
-Simulation.Setting.Iterations = 1;
+Simulation.Setting.Iterations = 5;
 cycle_GRAPE = 5; % GRAPE instance per 5 seconds
 Simulation.Setting.SpawnMode = 'auto';
 Simulation.Setting.FixedSpawnType = 1;

@@ -1,7 +1,7 @@
 clc; clear;
 
 T = readtable('param_combinations.csv');
-T = T(1:1, :);
+T = T(ismember(T.ID, 31:61), :);  % ID가 2~61인 것만
 
 for i = 1:height(T)
     ID = T.ID(i);
@@ -19,5 +19,7 @@ for i = 1:height(T)
         config.GRAPEmode = mode;
 
         run_single_simulation(config);
+        close all;
+        clearvars -except T i config
     end
 end
