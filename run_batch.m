@@ -1,7 +1,8 @@
 clc; clear;
 
 T = readtable('param_combinations.csv');
-T = T(ismember(T.ID, 31:61), :);  % ID가 2~61인 것만
+% T = T(ismember(T.ID, 77:90), :);  
+T = T(T.ID == 3, :);
 
 for i = 1:height(T)
     ID = T.ID(i);
@@ -10,16 +11,20 @@ for i = 1:height(T)
     k_val = T.k(i);
     exitRate = T.ExitRate(i);
 
-    for mode = [0, 2]
+    for mode = [0, 2] % [0, 2]. 0: GRAPE, 2: CycleGreedy
         config.ID = ID;
         config.Strategy = strategy;
         config.BubbleRadius = radius;
         config.k = k_val;
         config.ExitRate = exitRate;
         config.GRAPEmode = mode;
+        config.RecordExcel = 0;
+        config.RecordVideo = 1; % Excel 기록 시 0(false)로 설정
+        config.Iterations = 1; % Excel 기록 시 5로 설정
 
         run_single_simulation(config);
         close all;
-        clearvars -except T i config
+        %clearvars -except T i config
     end
+    clearvars -except T i
 end

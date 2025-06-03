@@ -3,9 +3,9 @@ function run_single_simulation(config)
 Simulation.Setting = struct();
 Simulation.Setting.GRAPEmode = config.GRAPEmode;
 Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250514_0528';
-Simulation.Setting.RecordExcel = 1;
+Simulation.Setting.RecordExcel = config.RecordExcel;
 Simulation.Setting.RecordLog = 0;
-Simulation.Setting.RecordVideo = 0;
+Simulation.Setting.RecordVideo = config.RecordVideo;
 Simulation.Setting.VideoSpeedMultiplier = 5;
 
 % === 메모/비디오이름 설정 ===
@@ -36,7 +36,7 @@ Simulation.Setting.Draw = 1;
 Simulation.Setting.StopOnGrapeError = 1;
 Simulation.Setting.PauseTime = 0;
 Simulation.Setting.InitialRandomSeed = 1;
-Simulation.Setting.Iterations = 5;
+Simulation.Setting.Iterations = config.Iterations;
 cycle_GRAPE = 5; % GRAPE instance per 5 seconds
 Simulation.Setting.SpawnMode = 'auto';
 Simulation.Setting.FixedSpawnType = 1;
@@ -99,10 +99,17 @@ ExcelSaveFolder = 'C:\Users\user\Desktop\ExcelRecord';
 filename = fullfile(ExcelSaveFolder, [videomemo '.xlsx']);
 
 % 🔹 실험할 참가자 모드 설정
-if ismember(config.Strategy, ["Default", "Ahead"])
-    participantModes = {"Default"};
-else
-    participantModes = {sprintf('Bubble_%dm', config.BubbleRadius)};
+switch config.Strategy
+    case "Default"
+        participantModes = {"Default"};
+    case "Ahead"
+        participantModes = {"Ahead"};
+    case "Bubble"
+        participantModes = {sprintf('Bubble_%dm', config.BubbleRadius)};
+    case "BubbleAhead"
+        participantModes = {sprintf('BubbleAhead_%dm', config.BubbleRadius)};
+    otherwise
+        error("Unknown Strategy: %s", config.Strategy);
 end
 
 
