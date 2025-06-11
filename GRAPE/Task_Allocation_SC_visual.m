@@ -108,63 +108,59 @@ while a_satisfied~=n
 
     for i=1:n % For Each Agent 
         
-        if Case == 496 && i == 49
-            disp('debug point');
-        end
+        % if Case == 496 && i == 49
+        %     disp('debug point');
+        % end
         %%%%% Line 5 of Algorithm 1
         Alloc_ = agent(i).Alloc;
         current_task = Alloc_(i); % Currently-selected task
         % disp(Alloc_);
         Candidate = ones(m,1)*(-inf);
         for t=1:m
+            if isfield(environment.Setting, 'k_Mode') && strcmp(environment.Setting.k_Mode, 'GapBased_test')
+                n_participants = 1;
+            else
+                switch Type
+                    case 'Default'
+                        % Check member agent ID in the selected task
+                        current_members = (Alloc_ == ones(n,1)*t);
+                        current_members(i) = 1; % including oneself
+                        % Cardinality of the coalition
+                        n_participants = sum(current_members);
+                    case 'Bubble'
+                        % Check member agent ID in the selected task
+                        current_members = (Alloc_ == ones(n,1)*t);
+                        % Only consider agents who are neighbours of agent i
+                        current_members = current_members & MST_bubble(:,i);
+                        current_members(i) = 1; % including oneself
+                        % Cardinality of the coalition
+                        n_participants = sum(current_members);
 
-            switch Type
-                case 'Default'
-                    % Check member agent ID in the selected task
-                    current_members = (Alloc_ == ones(n,1)*t);
-                    current_members(i) = 1; % including oneself
-                    % Cardinality of the coalition
-                    n_participants = sum(current_members);
-                case 'Bubble'
-                    % Check member agent ID in the selected task
-                    current_members = (Alloc_ == ones(n,1)*t);
-                    % Only consider agents who are neighbours of agent i
-                    current_members = current_members & MST_bubble(:,i);
-                    current_members(i) = 1; % including oneself
-                    % Cardinality of the coalition
-                    n_participants = sum(current_members);
+                    case 'BubbleAhead'
+                        % Check member agent ID in the selected task
+                        current_members = (Alloc_ == ones(n,1)*t);
 
-                case 'BubbleAhead'
-                    % Check member agent ID in the selected task
-                    current_members = (Alloc_ == ones(n,1)*t);
+                        x_relation = environment.x_relation;
 
-                    x_relation = environment.x_relation;
+                        % Only consider agents who are neighbours of agent i
+                        current_members = current_members & MST_bubble(:,i);
+                        current_members(i) = 1; % including oneself
 
-                    % Only consider agents who are neighbours of agent i
-                    current_members = current_members & MST_bubble(:,i);
-                    current_members(i) = 1; % including oneself
+                        n_participants = sum(x_relation(i, current_members)) + 1; 
 
-                    n_participants = sum(x_relation(i, current_members)) + 1; 
-
-                case 'Ahead'
-                    % 현재 agent i가 선택한 task(차선)의 앞에 있는 차량 수, including
-                    % oneself
-                    x_relation = environment.x_relation;
-                    task_agents_mask = (Alloc_ == t);  % 논리형 인덱싱
-                    n_participants = sum(x_relation(i, task_agents_mask)) + 1;
-
-                    
-                    % fprintf('i = %d, t = %d, n_participants = %d\n', i, t, n_participants);
-
+                    case 'Ahead'
+                        % 현재 agent i가 선택한 task(차선)의 앞에 있는 차량 수, including
+                        % oneself
+                        x_relation = environment.x_relation;
+                        task_agents_mask = (Alloc_ == t);  % 논리형 인덱싱
+                        n_participants = sum(x_relation(i, task_agents_mask)) + 1;
+                        % fprintf('i = %d, t = %d, n_participants = %d\n', i, t, n_participants);
+                end
             end
 
             % Obtain possible individual utility value
-            if environment.Setting.BubbleRadius == 0
-                n_participants = 1;
-                Candidate(t) = Get_Util(i, t, n_participants,environment);
-            else
-                Candidate(t) = Get_Util(i, t, n_participants,environment);
-            end
+            Candidate(t) = Get_Util(i, t, n_participants,environment);
+
         end
         
         % Select Best alternative
@@ -177,29 +173,29 @@ while a_satisfied~=n
             
             for t = 1:m
                 % Calculate n_participants for this specific task
-                switch Type
-                    case 'Default'
-                        current_members = (Alloc_ == ones(n,1)*t);
-                        current_members(i) = 1;
-                        n_participants = sum(current_members);
-                    case 'Bubble'
-                        current_members = (Alloc_ == ones(n,1)*t);
-                        current_members = current_members & MST_bubble(:,i);
-                        current_members(i) = 1;
-                        n_participants = sum(current_members);
-                    case 'BubbleAhead'
-                        current_members = (Alloc_ == ones(n,1)*t);
-                        current_members = current_members & MST_bubble(:,i);
-                        current_members(i) = 1;
-                        n_participants = sum(x_relation(i, current_members)) + 1;
-                    case 'Ahead'
-                        x_relation = environment.x_relation;
-                        task_agents_mask = (Alloc_ == t);
-                        n_participants = sum(x_relation(i, task_agents_mask)) + 1;
-                end
-                
-                if environment.Setting.BubbleRadius == 0
+                if isfield(environment.Setting, 'k_Mode') && strcmp(environment.Setting.k_Mode, 'GapBased_test')
                     n_participants = 1;
+                else
+                    switch Type
+                        case 'Default'
+                            current_members = (Alloc_ == ones(n,1)*t);
+                            current_members(i) = 1;
+                            n_participants = sum(current_members);
+                        case 'Bubble'
+                            current_members = (Alloc_ == ones(n,1)*t);
+                            current_members = current_members & MST_bubble(:,i);
+                            current_members(i) = 1;
+                            n_participants = sum(current_members);
+                        case 'BubbleAhead'
+                            current_members = (Alloc_ == ones(n,1)*t);
+                            current_members = current_members & MST_bubble(:,i);
+                            current_members(i) = 1;
+                            n_participants = sum(x_relation(i, current_members)) + 1;
+                        case 'Ahead'
+                            x_relation = environment.x_relation;
+                            task_agents_mask = (Alloc_ == t);
+                            n_participants = sum(x_relation(i, task_agents_mask)) + 1;
+                    end
                 end
                 
                 % Store information for this task
@@ -364,7 +360,7 @@ while a_satisfied~=n
     Satisfied_history(:,Case) = Satisfied;
     iteration_history(Case) = iteration;
 
-    if Case >= 500 && debug_log
+    if Case >= 50 && debug_log
         % 숫자 헤더 (9칸씩 같은 "CASE n")
         header1 = repelem("CASE " + string(1:ceil(4500/9)), 9);  % 자르기 X
         
@@ -403,7 +399,10 @@ while a_satisfied~=n
         
         disp('check 500 case');
     end
-    
+
+    if Case > 5000
+        disp('Case is: ' + string(Case));
+    end
     Case = Case + 1;  % Increment Case after recording
 end
 

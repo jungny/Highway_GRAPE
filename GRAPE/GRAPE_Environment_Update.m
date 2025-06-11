@@ -25,6 +25,11 @@ function environment = GRAPE_Environment_Update(List, Parameter, Setting, past_e
     
     % transition_distance = 300 + 15*Parameter.Map.Lane^2;
     % raw_weights = zeros(Parameter.Map.Lane,1);
+    if isnan(Setting.BubbleRadius) || Setting.BubbleRadius > 200
+        considerationRange = 200;
+    else
+        considerationRange = Setting.BubbleRadius;
+    end
 
     Util_type = Setting.Util_type;
     switch Util_type
@@ -91,8 +96,100 @@ function environment = GRAPE_Environment_Update(List, Parameter, Setting, past_e
                     %     weights = [0; 0; 1];
                     % end
 
+                elseif isfield(Setting, 'k_Mode') && strcmp(Setting.k_Mode, 'GapBased_test')
+                    obj = List.Vehicle.Object{vehicle_id};
+                    currentLane = obj.Lane;
+                    weights = ones(Parameter.Map.Lane, 1);
+                    
+                    % 현재 차선
+                    [cur_front_vehicle, front_dist] = GetFrontVehicle(obj, currentLane, List, Parameter, Setting, vehicle_ids, vehicle_lanes, vehicle_locations, vehicle_targetlanes, vehicle_alloclanes);
+                    [cur_rear_vehicle, rear_dist] = GetRearVehicle(obj, currentLane, List, Parameter, Setting, vehicle_ids, vehicle_lanes, vehicle_locations, vehicle_targetlanes, vehicle_alloclanes);
+                    if isempty(cur_front_vehicle)
+                        front_dist = considerationRange;
+                    end
+                    if isempty(cur_rear_vehicle)
+                        rear_dist = considerationRange;
+                    end
+                    if startsWith(past_env.Type, 'Ahead') || startsWith(past_env.Type, 'BubbleAhead')
+                        weights(currentLane) = front_dist;
+                    else
+                        weights(currentLane) = (front_dist + rear_dist);
+                    end
+                    
+                    % 왼쪽 차선
+                    if currentLane > 1
+                        leftLane = currentLane - 1;
+                        [left_front_vehicle, left_front_dist] = GetFrontVehicle(obj, leftLane, List, Parameter, Setting, vehicle_ids, vehicle_lanes, vehicle_locations, vehicle_targetlanes, vehicle_alloclanes);
+                        [left_rear_vehicle, left_rear_dist] = GetRearVehicle(obj, leftLane, List, Parameter, Setting, vehicle_ids, vehicle_lanes, vehicle_locations, vehicle_targetlanes, vehicle_alloclanes);
+                        if isempty(left_front_vehicle)
+                            left_front_dist = considerationRange;
+                        end
+                        if isempty(left_rear_vehicle)
+                            left_rear_dist = considerationRange;
+                        end
+                        if startsWith(past_env.Type, 'Ahead') || startsWith(past_env.Type, 'BubbleAhead')
+                            weights(leftLane) = left_front_dist;
+                        else
+                            weights(leftLane) = (left_front_dist + left_rear_dist);
+                        end
+                    end
+                    
+                    % 오른쪽 차선
+                    if currentLane < Parameter.Map.Lane
+                        rightLane = currentLane + 1;
+                        [right_front_vehicle, right_front_dist] = GetFrontVehicle(obj, rightLane, List, Parameter, Setting, vehicle_ids, vehicle_lanes, vehicle_locations, vehicle_targetlanes, vehicle_alloclanes);
+                        [right_rear_vehicle, right_rear_dist] = GetRearVehicle(obj, rightLane, List, Parameter, Setting, vehicle_ids, vehicle_lanes, vehicle_locations, vehicle_targetlanes, vehicle_alloclanes);
+                        if isempty(right_front_vehicle)
+                            right_front_dist = considerationRange;
+                        end
+                        if isempty(right_rear_vehicle)
+                            right_rear_dist = considerationRange;
+                        end
+                        if startsWith(past_env.Type, 'Ahead') || startsWith(past_env.Type, 'BubbleAhead')
+                            weights(rightLane) = right_front_dist;
+                        else
+                            weights(rightLane) = (right_front_dist + right_rear_dist);
+                        end
+                    end
+
+                    % Through vehicle인 경우에만 task demand 억제 로직 적용
+                    % 현재 차선이 아닌 다른 차선들에 대해 억제 로직 적용
+                    all_lanes_congested = true;  % 모든 차선이 혼잡한지 확인하는 플래그
+                    for lane = 1:Parameter.Map.Lane
+                        if lane ~= currentLane
+                            % 이미 계산된 정보 재활용
+                            if lane == currentLane - 1  % 왼쪽 차선
+                                front_dist = left_front_dist;
+                                rear_dist = left_rear_dist;
+                            elseif lane == currentLane + 1  % 오른쪽 차선
+                                front_dist = right_front_dist;
+                                rear_dist = right_rear_dist;
+                            end
+                            
+                            % Ahead 또는 BubbleAhead 타입인 경우 rear_dist 무시
+                            if startsWith(Setting.NumberOfParticipants, 'Ahead') || startsWith(Setting.NumberOfParticipants, 'BubbleAhead')
+                                % 해당 차선이 혼잡한지 확인 (front_dist만 고려)
+                                if front_dist <= Parameter.TaskDemandCrowdedRange/2
+                                    weights(lane) = 0;  % 혼잡한 차선의 weight을 0으로 설정
+                                else
+                                    all_lanes_congested = false;  % 하나라도 혼잡하지 않은 차선이 있으면 false
+                                end
+                            else
+                                % 기존 로직: front_dist와 rear_dist 모두 고려
+                                if (front_dist <= Parameter.TaskDemandCrowdedRange) || ...
+                                    (rear_dist <= Parameter.TaskDemandCrowdedRange)
+                                    weights(lane) = 0;  % 혼잡한 차선의 weight을 0으로 설정
+                                else
+                                    all_lanes_congested = false;  % 하나라도 혼잡하지 않은 차선이 있으면 false
+                                end
+                            end
+                        end
+                    end
+                    % 모든 차선이 혼잡한 경우 현재 차선의 weight을 1로 설정
+                    if all_lanes_congested
+                        weights(currentLane) = 1;
+                    end
                 else
-                
                     obj = List.Vehicle.Object{vehicle_id};
                     currentLane = obj.Lane;
                     % decelflag = false;
@@ -116,10 +213,10 @@ function environment = GRAPE_Environment_Update(List, Parameter, Setting, past_e
                     cur_front_dist = front_dist; 
                     cur_rear_dist = rear_dist;
                     if isempty(cur_front_vehicle)
-                        cur_front_dist = 200;
+                        cur_front_dist = considerationRange;
                     end
                     if isempty(cur_rear_vehicle)
-                        cur_rear_dist = 200;
+                        cur_rear_dist = considerationRange;
                     end
                     
                     % Ahead 또는 BubbleAhead 타입인 경우 rear_dist 무시
@@ -137,10 +234,10 @@ function environment = GRAPE_Environment_Update(List, Parameter, Setting, past_e
                         left_front_dist = front_dist;
                         left_rear_dist = rear_dist;
                         if isempty(left_front_vehicle)
-                            left_front_dist = 200;
+                            left_front_dist = considerationRange;
                         end
                         if isempty(left_rear_vehicle)
-                            left_rear_dist = 200;
+                            left_rear_dist = considerationRange;
                         end
                         
                         % Ahead 또는 BubbleAhead 타입인 경우 rear_dist 무시
@@ -163,10 +260,10 @@ function environment = GRAPE_Environment_Update(List, Parameter, Setting, past_e
                         right_front_dist = front_dist;
                         right_rear_dist = rear_dist;
                         if isempty(right_front_vehicle)
-                            right_front_dist = 200;
+                            right_front_dist = considerationRange;
                         end
                         if isempty(right_rear_vehicle)
-                            right_rear_dist = 200;
+                            right_rear_dist = considerationRange;
                         end
                         
                         % Ahead 또는 BubbleAhead 타입인 경우 rear_dist 무시
@@ -215,12 +312,22 @@ function environment = GRAPE_Environment_Update(List, Parameter, Setting, past_e
                                 rear_dist = right_rear_dist;
                             end
                             
-                            % 해당 차선이 혼잡한지 확인
-                            if (front_dist <= Parameter.TaskDemandCrowdedRange) || ...
-                                (rear_dist <= Parameter.TaskDemandCrowdedRange)
-                                weights(lane) = 0;  % 혼잡한 차선의 weight을 0으로 설정
+                            % Ahead 또는 BubbleAhead 타입인 경우 rear_dist 무시
+                            if startsWith(Setting.NumberOfParticipants, 'Ahead') || startsWith(Setting.NumberOfParticipants, 'BubbleAhead')
+                                % 해당 차선이 혼잡한지 확인 (front_dist만 고려)
+                                if front_dist <= Parameter.TaskDemandCrowdedRange/2
+                                    weights(lane) = 0;  % 혼잡한 차선의 weight을 0으로 설정
+                                else
+                                    all_lanes_congested = false;  % 하나라도 혼잡하지 않은 차선이 있으면 false
+                                end
                             else
-                                all_lanes_congested = false;  % 하나라도 혼잡하지 않은 차선이 있으면 false
+                                % 기존 로직: front_dist와 rear_dist 모두 고려
+                                if (front_dist <= Parameter.TaskDemandCrowdedRange) || ...
+                                    (rear_dist <= Parameter.TaskDemandCrowdedRange)
+                                    weights(lane) = 0;  % 혼잡한 차선의 weight을 0으로 설정
+                                else
+                                    all_lanes_congested = false;  % 하나라도 혼잡하지 않은 차선이 있으면 false
+                                end
                             end
                         end
                     end

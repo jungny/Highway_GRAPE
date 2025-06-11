@@ -2,7 +2,7 @@ function run_single_simulation(config)
 % === 기본 설정 ===
 Simulation.Setting = struct();
 Simulation.Setting.GRAPEmode = config.GRAPEmode;
-Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250514_0528';
+Simulation.Setting.SaveFolder = 'C:\Users\nana\Desktop\250514_0528';
 Simulation.Setting.RecordExcel = config.RecordExcel;
 Simulation.Setting.RecordLog = 0;
 Simulation.Setting.RecordVideo = config.RecordVideo;
@@ -25,6 +25,7 @@ videomemo = [videomemo sprintf('_%d%%_', ExitRatio)];
 
 Simulation.Setting.k = config.k;
 Simulation.Setting.kList = config.k;
+Simulation.Setting.k_Mode = config.k_Mode;
 Simulation.Setting.BubbleRadiusList = [];
 
 if strcmpi(config.Strategy, "Bubble") || strcmpi(config.Strategy, "BubbleAhead")
@@ -95,7 +96,7 @@ end
 
 % 🔹 엑셀 파일 경로 설정
 timestamp = string(datetime('now', 'Format', 'HH-mm'));
-ExcelSaveFolder = 'C:\Users\user\Desktop\ExcelRecord';
+ExcelSaveFolder = 'C:\Users\nana\Desktop\ExcelRecord';
 filename = fullfile(ExcelSaveFolder, [videomemo '.xlsx']);
 
 % 🔹 실험할 참가자 모드 설정
@@ -400,7 +401,7 @@ for Iteration = 1:Simulation.Setting.Iterations
                     travel_times = [travel_times, travel_time]; %#ok<AGROW>
                     
                     if Simulation.Setting.RecordLog 
-                        SaveFolder = 'C:\Users\user\Desktop\250423_0430';
+                        SaveFolder = 'C:\Users\nana\Desktop\250423_0430';
                         logFileName = fullfile(SaveFolder, ...
                             [videomemo '_log.txt']);
                         fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
@@ -436,7 +437,7 @@ for Iteration = 1:Simulation.Setting.Iterations
                     end
 
                     if Simulation.Setting.RecordLog 
-                        SaveFolder = 'C:\Users\user\Desktop\250430_0514';
+                        SaveFolder = 'C:\Users\nana\Desktop\250430_0514';
                         logFileName = fullfile(SaveFolder, ...
                             [videomemo '_log.txt']);
                         fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
@@ -480,7 +481,7 @@ for Iteration = 1:Simulation.Setting.Iterations
 
         total_exited_vehicles = exit_success_count + exit_fail_count;
         if TotalVehicles ~= total_exited_vehicles
-            disp("something wrong here");
+            %disp("something wrong here");
         end
 
         avg_travel_time = round(mean(travel_times), 3);
@@ -489,7 +490,7 @@ for Iteration = 1:Simulation.Setting.Iterations
         end
         
         if Simulation.Setting.RecordLog
-            SaveFolder = 'C:\Users\user\Desktop\250326_0409';
+            SaveFolder = 'C:\Users\nana\Desktop\250326_0409';
             logFileName = fullfile(SaveFolder, ...
                 [videomemo '_log.txt']);
             fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기

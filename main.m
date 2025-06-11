@@ -7,7 +7,7 @@ Simulation.Setting.Window = 1000;
 Simulation.Setting.Draw = 1;
 Simulation.Setting.StopOnGrapeError = 1;
 Simulation.Setting.PauseTime = 0; % 0: No pause. >0: Pause duration in seconds (Default: 0.01)
-Simulation.Setting.SaveFolder = 'C:\Users\user\Desktop\250514_0528';
+Simulation.Setting.SaveFolder = 'C:\Users\nana\Desktop\250514_0528';
 
 Simulation.Setting.RecordLog = 0;    % 1: Record log file, 0: Do not record
 Simulation.Setting.RecordVideo = 0;  % 1: Record video file, 0: Do not record
@@ -103,7 +103,7 @@ end
 
 % 🔹 엑셀 파일 경로 설정
 timestamp = string(datetime('now', 'Format', 'HH-mm'));
-ExcelSaveFolder = 'C:\Users\user\Desktop\ExcelRecord';
+ExcelSaveFolder = 'C:\Users\nana\Desktop\ExcelRecord';
 filename = fullfile(ExcelSaveFolder, [videomemo '.xlsx']);
 
 % 🔹 실험할 참가자 모드 설정
@@ -410,7 +410,7 @@ for Iteration = 1:Simulation.Setting.Iterations
                     travel_times = [travel_times, travel_time]; %#ok<AGROW>
                     
                     if Simulation.Setting.RecordLog 
-                        SaveFolder = 'C:\Users\user\Desktop\250423_0430';
+                        SaveFolder = 'C:\Users\nana\Desktop\250423_0430';
                         logFileName = fullfile(SaveFolder, ...
                             [videomemo '_log.txt']);
                         fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
@@ -446,7 +446,7 @@ for Iteration = 1:Simulation.Setting.Iterations
                     end
 
                     if Simulation.Setting.RecordLog 
-                        SaveFolder = 'C:\Users\user\Desktop\250430_0514';
+                        SaveFolder = 'C:\Users\nana\Desktop\250430_0514';
                         logFileName = fullfile(SaveFolder, ...
                             [videomemo '_log.txt']);
                         fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
@@ -499,7 +499,7 @@ for Iteration = 1:Simulation.Setting.Iterations
         end
         
         if Simulation.Setting.RecordLog
-            SaveFolder = 'C:\Users\user\Desktop\250326_0409';
+            SaveFolder = 'C:\Users\nana\Desktop\250326_0409';
             logFileName = fullfile(SaveFolder, ...
                 [videomemo '_log.txt']);
             fileID = fopen(logFileName, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
