@@ -23,6 +23,7 @@ classdef Vehicle < handle
         PolitenessFactor
         IsChangingLane
         AllocLaneDuringGRAPE
+        ExitReadiness    % 'Ex' or 'Th' indicating if vehicle is approaching exit
     end
 
     properties(Hidden = false) % Properties
@@ -135,20 +136,20 @@ classdef Vehicle < handle
                                obj.Location * Parameter.Map.Scale;  % Exit까지 거리
             
             if obj.DistanceToExit <= 200+200
-                exit_index = 'Ex';
+                obj.ExitReadiness = 'Ex';
                 % disp(distance_to_exit);
             else
-                exit_index = 'Th';
+                obj.ExitReadiness = 'Th';
             end
 
             if Parameter.Label
-                obj.Text = text(x_center+6, y_center+0.1, sprintf('       %d   %s', obj.ID, exit_index), ...
+                obj.Text = text(x_center+6, y_center+0.1, sprintf('       %d   %s', obj.ID, obj.ExitReadiness), ...
                     'HorizontalAlignment', 'center', ...
                     'VerticalAlignment', 'middle', ...
                     'Parent', obj.Object, ...
                     'FontSize', 8, 'Color', 'black');
             else
-                 obj.Text = text(x_center, y_center+0.1, sprintf('        %s', exit_index), ...
+                 obj.Text = text(x_center, y_center+0.1, sprintf('        %s', obj.ExitReadiness), ...
                     'HorizontalAlignment', 'center', ...
                     'VerticalAlignment', 'middle', ...
                     'Parent', obj.Object, ...
@@ -370,18 +371,18 @@ classdef Vehicle < handle
                                 obj.Location * Parameter.Map.Scale;  % Exit까지 거리
 
             if obj.DistanceToExit <= 200+200
-                exit_index = 'Ex';
+                obj.ExitReadiness = 'Ex';
             else
-                exit_index = 'Th';
+                obj.ExitReadiness = 'Th';
             end
 
             if Draw
                 if Parameter.Label
                     % String이 실제로 바뀔 때만 set
                     if ~isempty(obj.LaneAlloc)
-                        new_str = sprintf('%d     %d   %s', obj.LaneAlloc, obj.ID, exit_index);
+                        new_str = sprintf('%d     %d   %s', obj.LaneAlloc, obj.ID, obj.ExitReadiness);
                     else
-                        new_str = sprintf('%d     %d   %s', obj.Lane, obj.ID, exit_index);
+                        new_str = sprintf('%d     %d   %s', obj.Lane, obj.ID, obj.ExitReadiness);
                     end
                     if ~strcmp(get(obj.Text, 'String'), new_str)
                         set(obj.Text, 'String', new_str);

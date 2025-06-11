@@ -20,6 +20,9 @@ function [output] = Task_Allocation_SC_visual(input)
 %   - a_utility;    Resulted individual utility for each agent; n by 1 matrix
 %   - iteration;    Resulted number of iteration for convergence;   1 by 1   matrix
 
+%% Debug flag
+debug_log = false;  % Set to true to enable detailed logging
+
 %% Interface (Input)
 Alloc_existing = input.Alloc_existing;
 Flag_display = input.Flag_display;
@@ -35,8 +38,20 @@ List = environment.List;
 Alloc_history = zeros(n,10);
 Satisfied_history = zeros(n,10);
 MAX_CASE = 10000;
+%% Debug history variables
+if debug_log
+    MAX_CASE = 500;
+    Best_task_history = zeros(n, MAX_CASE);
+    % Each row represents an agent, columns are organized as:
+    % [t_demand_1, n_participants_1, util_value_1, t_demand_2, n_participants_2, util_value_2, ...]
+    util_history = zeros(n, MAX_CASE * m * 3);
+    valid_agent_history = zeros(n, MAX_CASE);
+end
 iteration_history = zeros(1, MAX_CASE);
-Case = 0;
+Case = 1;  % Start from 1 instead of 0
+
+
+
 %% Initialisation
 
 a_satisfied = 0; % # Agents who satisfy the current partition
@@ -93,6 +108,9 @@ while a_satisfied~=n
 
     for i=1:n % For Each Agent 
         
+        if Case == 496 && i == 49
+            disp('debug point');
+        end
         %%%%% Line 5 of Algorithm 1
         Alloc_ = agent(i).Alloc;
         current_task = Alloc_(i); % Currently-selected task
@@ -153,6 +171,44 @@ while a_satisfied~=n
         [Best_utility,Best_task] = max(Candidate);
         %%%%% End of Line 5 of Algorithm 1
         
+        % Log Best task and util information
+        if debug_log
+            Best_task_history(i, Case) = Best_task;
+            
+            for t = 1:m
+                % Calculate n_participants for this specific task
+                switch Type
+                    case 'Default'
+                        current_members = (Alloc_ == ones(n,1)*t);
+                        current_members(i) = 1;
+                        n_participants = sum(current_members);
+                    case 'Bubble'
+                        current_members = (Alloc_ == ones(n,1)*t);
+                        current_members = current_members & MST_bubble(:,i);
+                        current_members(i) = 1;
+                        n_participants = sum(current_members);
+                    case 'BubbleAhead'
+                        current_members = (Alloc_ == ones(n,1)*t);
+                        current_members = current_members & MST_bubble(:,i);
+                        current_members(i) = 1;
+                        n_participants = sum(x_relation(i, current_members)) + 1;
+                    case 'Ahead'
+                        x_relation = environment.x_relation;
+                        task_agents_mask = (Alloc_ == t);
+                        n_participants = sum(x_relation(i, task_agents_mask)) + 1;
+                end
+                
+                if environment.Setting.BubbleRadius == 0
+                    n_participants = 1;
+                end
+                
+                % Store information for this task
+                col_offset = (Case-1) * m * 3 + (t-1) * 3;
+                util_history(i, col_offset + 1) = environment.t_demand(t,i);  % t_demand
+                util_history(i, col_offset + 2) = n_participants;           % n_participants
+                util_history(i, col_offset + 3) = Candidate(t);             % util_value
+            end
+        end
         
         %%%%% Line 6-11 of Algorithm 1
         if Best_utility == 0
@@ -240,6 +296,11 @@ while a_satisfied~=n
         [~,agent_neighbour_index] = max(Timestamp_agent_maxiteration);
         valid_agent_id = set_neighbour_agent_id_(agent_neighbour_index);  % Find out "deciding agent" 
         
+        % Log valid agent information
+        if debug_log
+            valid_agent_history(i, Case) = valid_agent_id;
+        end
+        
         % Update local information from the deciding agent's local information
         agent_(i).Alloc = agent(valid_agent_id).Alloc;
         agent_(i).time_stamp = agent(valid_agent_id).time_stamp;
@@ -293,7 +354,6 @@ while a_satisfied~=n
     
     
     %% Save data for visualisation
-    Case = Case + 1;
     Alloc_known_ = zeros(n,1);
     Satisfied = zeros(n,1);
     for i=1:n
@@ -304,9 +364,47 @@ while a_satisfied~=n
     Satisfied_history(:,Case) = Satisfied;
     iteration_history(Case) = iteration;
 
-    if Case > 5000
-        disp('check 5000 case');
+    if Case >= 500 && debug_log
+        % 숫자 헤더 (9칸씩 같은 "CASE n")
+        header1 = repelem("CASE " + string(1:ceil(4500/9)), 9);  % 자르기 X
+        
+        % 문자열 헤더 (3칸씩 같은 'L1_demand', 'L1_participants', 'L1_utility', ...)
+        lane_headers = ["L1_demand", "L1_participants", "L1_utility", ...
+                       "L2_demand", "L2_participants", "L2_utility", ...
+                       "L3_demand", "L3_participants", "L3_utility"];
+        header2 = repmat(lane_headers, 1, ceil(4500/9));  % 9개씩 반복
+        
+        % 합치기 (2행 x 4500열짜리 cell)
+        header_cell = [cellstr(header1); cellstr(header2)];
+        
+        % 데이터도 cell로 변환
+        data_cell = num2cell(util_history);  % 예: 82x4500
+        
+        % 전체 저장용 cell 만들기
+        csv_data = [header_cell; data_cell];  % 84x4500
+        
+        % Vehicle 정보 저장
+        vehicle_info = zeros(n, 3);  % [vehicle_id, location, exit_readiness]
+        for i = 1:n
+            vehicle_id = List.Vehicle.Active(i, 1);
+            vehicle_info(i, 1) = vehicle_id;  % vehicle_id
+            vehicle_info(i, 2) = List.Vehicle.Active(i, 4)/100;  % location
+            % ExitReadiness를 숫자로 변환 (Ex=1, Th=0)
+            vehicle_info(i, 3) = strcmp(List.Vehicle.Object{vehicle_id}.ExitReadiness, 'Ex');
+        end
+        vehicle_table = array2table(vehicle_info, 'VariableNames', {'vehicle_id', 'location', 'exit_readiness'});
+        
+        % Excel 파일에 여러 시트로 저장
+        filename = 'C:\Users\nana\Downloads\GRAPE_history2.xlsx';
+        writecell(csv_data, filename, 'Sheet', 'util_history');
+        writematrix(valid_agent_history, filename, 'Sheet', 'valid_agent_history');
+        writematrix(Best_task_history, filename, 'Sheet', 'Best_task_history');
+        writetable(vehicle_table, filename, 'Sheet', 'vehicle_info');
+        
+        disp('check 500 case');
     end
+    
+    Case = Case + 1;  % Increment Case after recording
 end
 
 if environment.Setting.GRAPEmode ~= 0 % 1(Greedy) or 2(CycleGreedy) 
@@ -355,6 +453,11 @@ else
     output.visual.Satisfied_history = Satisfied_history;
     output.visual.iteration_history = iteration_history;
 
+    if debug_log
+        output.visual.Best_task_history = Best_task_history;
+        output.visual.util_history = util_history;
+        output.visual.valid_agent_history = valid_agent_history;
+    end
 
 end
 end

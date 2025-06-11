@@ -33,7 +33,7 @@ function CreateDefaultWindow(Map)
     WindowHeight = WindowWidth / AspectRatio;
 
     WindowX = 0;
-    WindowY = ScreenHeight - WindowHeight - 90; % 통일된 Y 위치
+    WindowY = ScreenHeight - WindowHeight - 55; % 통일된 Y 위치
 
     figure('Name', 'Default Highway View');
     set(gcf, 'Position', [WindowX, WindowY, WindowWidth, WindowHeight]);

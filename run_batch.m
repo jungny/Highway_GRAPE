@@ -19,8 +19,8 @@ for i = 1:height(T)
         config.ExitRate = exitRate;
         config.GRAPEmode = mode;
         config.RecordExcel = 0;
-        config.RecordVideo = 1; % Excel 기록 시 0(false)로 설정
-        config.Iterations = 1; % Excel 기록 시 5로 설정
+        config.RecordVideo = 0; % Excel 기록 시 0(false)로 설정
+        config.Iterations = 5; % Excel 기록 시 5로 설정
 
         run_single_simulation(config);
         close all;
