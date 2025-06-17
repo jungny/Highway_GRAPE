@@ -2,7 +2,7 @@ function run_single_simulation(config)
 % === 기본 설정 ===
 Simulation.Setting = struct();
 Simulation.Setting.GRAPEmode = config.GRAPEmode;
-Simulation.Setting.SaveFolder = 'C:\Users\nana\Desktop\250514_0528';
+Simulation.Setting.SaveFolder = 'C:\Users\nana\Desktop\250528_0612';
 Simulation.Setting.RecordExcel = config.RecordExcel;
 Simulation.Setting.RecordLog = 0;
 Simulation.Setting.RecordVideo = config.RecordVideo;
@@ -33,10 +33,10 @@ if strcmpi(config.Strategy, "Bubble") || strcmpi(config.Strategy, "BubbleAhead")
 end
 
 Simulation.Setting.Window = 1000;
-Simulation.Setting.Draw = 1;
+Simulation.Setting.Draw = 0;
 Simulation.Setting.StopOnGrapeError = 1;
 Simulation.Setting.PauseTime = 0;
-Simulation.Setting.InitialRandomSeed = 1;
+Simulation.Setting.InitialRandomSeed = config.InitialRandomSeed;
 Simulation.Setting.Iterations = config.Iterations;
 cycle_GRAPE = 5; % GRAPE instance per 5 seconds
 Simulation.Setting.SpawnMode = 'auto';

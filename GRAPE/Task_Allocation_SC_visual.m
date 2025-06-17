@@ -360,7 +360,7 @@ while a_satisfied~=n
     Satisfied_history(:,Case) = Satisfied;
     iteration_history(Case) = iteration;
 
-    if Case >= 50 && debug_log
+    if Case >= 500 && debug_log
         % 숫자 헤더 (9칸씩 같은 "CASE n")
         header1 = repelem("CASE " + string(1:ceil(4500/9)), 9);  % 자르기 X
         
@@ -391,7 +391,7 @@ while a_satisfied~=n
         vehicle_table = array2table(vehicle_info, 'VariableNames', {'vehicle_id', 'location', 'exit_readiness'});
         
         % Excel 파일에 여러 시트로 저장
-        filename = 'C:\Users\nana\Downloads\GRAPE_history2.xlsx';
+        filename = 'C:\Users\nana\Downloads\112_4_84s_history.xlsx';
         writecell(csv_data, filename, 'Sheet', 'util_history');
         writematrix(valid_agent_history, filename, 'Sheet', 'valid_agent_history');
         writematrix(Best_task_history, filename, 'Sheet', 'Best_task_history');
