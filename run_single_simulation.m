@@ -34,9 +34,9 @@ if strcmpi(config.Strategy, "Bubble") || strcmpi(config.Strategy, "BubbleAhead")
 end
 
 Simulation.Setting.Window = 1000;
-Simulation.Setting.Draw = 1;
+Simulation.Setting.Draw = 0;
 %🧊t fix parameter. tFix = NaN means no freezing. MaxCase = tFix * n_agents
-Simulation.Setting.tFixParam = 2;
+Simulation.Setting.tFixParam = config.tFixParam;
 
 Simulation.Setting.StopOnGrapeError = 1;
 Simulation.Setting.PauseTime = 0;
@@ -659,5 +659,72 @@ for Iteration = 1:Simulation.Setting.Iterations
     end
     % 마지막 결과 저장 수정 (10개 컬럼에 맞춤)
     results(Iteration, :) = result_row;
+end
+
+% 모든 랜덤시드 완료 후 평균 계산 및 저장
+if Simulation.Setting.RecordExcel && randomSeed == 5 %Simulation.Setting.Iterations % =5
+    % 현재 Excel 파일에서 모든 랜덤시드 데이터 읽기
+    
+    % 현재 시트의 모든 데이터 읽기
+    current_data = readcell(filename, 'Sheet', sheet_name);
+    
+    % 헤더 제거하고 데이터만 추출
+    data_only = current_data(2:end, :);  % 첫 번째 행(헤더) 제외
+    
+    % 숫자 데이터로 변환
+    numeric_data = cell2mat(data_only);
+    
+    % 모든 랜덤시드의 평균 계산
+    avg_data = mean(numeric_data, 1);
+    
+    % 평균 데이터를 현재 Excel 파일에 추가
+    avg_row = cell(1, 10);
+    avg_row{1} = 'AVERAGE';  % 첫 번째 열은 'AVERAGE'로 표시
+    for i = 2:10
+        avg_row{i} = avg_data(i);
+    end
+    
+    % 평균 행을 현재 Excel 파일에 추가
+    writecell(avg_row, filename, 'Sheet', sheet_name, 'WriteMode', 'append');
+    disp(['Added average row to current file: ', sheet_name]);
+    
+    % TotalData.xlsx 파일 처리
+    total_data_file = fullfile(base_folder, 'TotalData.xlsx');
+    
+    if ~exist(total_data_file, 'file')
+        error('TotalData.xlsx file not found in %s', base_folder);
+    end
+    
+    % Sheet 이름 결정
+    if isnan(Simulation.Setting.tFixParam)
+        sheet_name_total = 'GRAPE_NoFix';
+    else
+        sheet_name_total = sub_folder;  % sub_folder와 동일
+    end
+    
+    % Sheet 존재 확인
+    if ~ismember(sheet_name_total, sheetnames(total_data_file))
+        error('Sheet "%s" not found in TotalData.xlsx', sheet_name_total);
+    end
+    
+    % TotalData.xlsx 파일에서 해당 sheet 읽기 (200개 row, O열까지만)
+    total_data = readcell(total_data_file, 'Sheet', sheet_name_total, 'Range', 'A1:O200');
+    
+    % A열에서 config.ID와 일치하는 행 찾기
+    config_ids = total_data(:, 1);
+    matching_row = find(cellfun(@(x) isequal(x, config.ID), config_ids));
+    
+    if isempty(matching_row)
+        error('Config ID %d not found in sheet "%s" of TotalData.xlsx', config.ID, sheet_name_total);
+    end
+    
+    % 일치하는 행이 있으면 G열부터 평균 데이터 업데이트
+    for i = 1:9  % 9개 평균값 (Average Case부터 Through Speed STD까지)
+        % 특정 셀만 업데이트 (G열부터 시작)
+        cell_range = sprintf('%s%d', char('G' + i - 1), matching_row);
+        writecell({avg_data(i+1)}, total_data_file, 'Sheet', sheet_name_total, 'Range', cell_range);
+    end
+    
+    disp(['Updated TotalData.xlsx sheet "', sheet_name_total, '" for config ID: ', num2str(config.ID)]);
 end
 end

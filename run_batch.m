@@ -1,9 +1,9 @@
 clc; clear;
 
 T = readtable('param_combinations.csv');
-%T = T(ismember(T.ID, 85:106) | ismember(T.ID, 172:180), :);
-T = T(T.ID == 1, :);
-%T = T(ismember(T.ID, [35,37]), :);
+%T = T(ismember(T.ID, 36:39) | ismember(T.ID, 147:152), :);
+T = T(T.ID == 35, :);
+%T = T(ismember(T.ID, [2,8]), :);
 
 for i = 1:height(T)
     ID = T.ID(i);
@@ -21,10 +21,11 @@ for i = 1:height(T)
         config.k_Mode = k_Mode;
         config.ExitRate = exitRate;
         config.GRAPEmode = mode;
+        config.tFixParam = 2; % NoFix이면 NaN
         config.RecordExcel = 1;
         config.RecordVideo = 0; % Excel 기록 시 0(false)로 설정
         config.Iterations = 1; % Excel 기록 시 5로 설정
-        config.InitialRandomSeed = 1; % Debug 시에만 1에서 변경
+        config.InitialRandomSeed = 5; % Debug 시에만 1에서 변경
 
         run_single_simulation(config);
         close all;

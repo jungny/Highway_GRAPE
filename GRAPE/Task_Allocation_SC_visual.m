@@ -108,7 +108,7 @@ while a_satisfied~=n
         environment = GRAPE_Environment_Update(List,environment.Parameter,environment.Setting,environment);
         List = environment.List;
     elseif ~isnan(environment.Setting.tFixParam)
-        disp("Case has not reached %d = tFixParam %.0f x %d", n * environment.Setting.tFixParam, environment.Setting.tFixParam, n); 
+        fprintf("Case has reached %d = tFixParam %.0f x %d\n", n * environment.Setting.tFixParam, environment.Setting.tFixParam, n);
     end
 
     for i=1:n % For Each Agent 
