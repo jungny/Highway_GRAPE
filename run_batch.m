@@ -13,7 +13,7 @@ for i = 1:height(T)
     k_Mode = T.k_Mode(i);
     exitRate = T.ExitRate(i);
 
-    for mode = [0,2] % [0, 2]. 0: GRAPE, 2: CycleGreedy
+    for mode = 0 % [0, 2]. 0: GRAPE, 2: CycleGreedy
         config.ID = ID;
         config.Strategy = strategy;
         config.BubbleRadius = radius;
@@ -23,7 +23,7 @@ for i = 1:height(T)
         config.GRAPEmode = mode;
         config.RecordExcel = 1;
         config.RecordVideo = 0; % Excel 기록 시 0(false)로 설정
-        config.Iterations = 5; % Excel 기록 시 5로 설정
+        config.Iterations = 1; % Excel 기록 시 5로 설정
         config.InitialRandomSeed = 1; % Debug 시에만 1에서 변경
 
         run_single_simulation(config);

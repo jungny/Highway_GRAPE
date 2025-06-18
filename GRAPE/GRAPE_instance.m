@@ -184,10 +184,10 @@ function G = GRAPE_instance(environment)
 
     %%%% Method (1): All Agents are deployed at once
     [output] = Task_Allocation_SC_visual(input); % Consiering Strongly-connected environment
-    % Output : Alloc / a_utility / iteration
+    % Output : Alloc / a_utility / iteration / Case
 
     G.Alloc = output.Alloc;
-
+    G.Case = output.Case;
     if environment.Setting.GRAPEmode == 0 % means GRAPE done 
         G.a_utility = output.a_utility;
         G.iteration = output.iteration;

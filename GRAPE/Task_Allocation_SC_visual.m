@@ -22,7 +22,6 @@ function [output] = Task_Allocation_SC_visual(input)
 
 %% Debug flag
 debug_log = false;  % Set to true to enable detailed logging
-freeze_flag = false;
 
 %% Interface (Input)
 Alloc_existing = input.Alloc_existing;
@@ -104,10 +103,12 @@ Timestamp_agent_current = zeros(n,1);
 %% GRAPE Algorithm
 while a_satisfied~=n
 
-    % Conditionally execute environment update based on freeze_flag
-    if ~freeze_flag || (freeze_flag && Case <= n * 2)
+    % Conditionally execute environment update
+    if isnan(environment.Setting.tFixParam) || Case <= n * environment.Setting.tFixParam
         environment = GRAPE_Environment_Update(List,environment.Parameter,environment.Setting,environment);
         List = environment.List;
+    elseif ~isnan(environment.Setting.tFixParam)
+        disp("Case has not reached %d = tFixParam %.0f x %d", n * environment.Setting.tFixParam, environment.Setting.tFixParam, n); 
     end
 
     for i=1:n % For Each Agent 
@@ -489,6 +490,7 @@ else
     output.Alloc = Alloc_known_; % Alloc_known_
     output.a_utility = a_utility;
     output.iteration = iteration;
+    output.Case = Case;
 
     output.visual.Alloc_history = Alloc_history;
     output.visual.Satisfied_history = Satisfied_history;

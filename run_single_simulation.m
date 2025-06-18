@@ -99,9 +99,40 @@ end
 % end
 
 % 🔹 엑셀 파일 경로 설정
-timestamp = string(datetime('now', 'Format', 'HH-mm'));
-ExcelSaveFolder = 'C:\Users\nana\Desktop\ExcelRecord';
-filename = fullfile(ExcelSaveFolder, [videomemo '.xlsx']);
+% timestamp = string(datetime('now', 'Format', 'HH-mm'));
+% ExcelSaveFolder = 'C:\Users\nana\Desktop\ExcelRecord';
+
+% Create folder path based on tFixParam
+base_folder = 'C:\\Users\\nana\\Desktop\\ExcelRecord';
+
+if isnan(Simulation.Setting.tFixParam)
+    sub_folder = 'NoFix';
+else
+    tFixValue = Simulation.Setting.tFixParam;
+    if tFixValue == round(tFixValue)
+        % Integer values
+        sub_folder = sprintf('tFix%d', round(tFixValue));
+    else
+        % Float values - use decimal format and replace dots with underscores
+        sub_folder = sprintf('tFix%.2f', tFixValue);
+        % Remove trailing zeros but keep the decimal point if needed
+        sub_folder = regexprep(sub_folder, '0+$', '');
+        sub_folder = regexprep(sub_folder, '\.$', '');
+        % Replace dots with underscores for folder name safety
+        sub_folder = strrep(sub_folder, '.', '_');
+    end
+end
+
+% Create full folder path
+full_folder = fullfile(base_folder, sub_folder);
+
+% Create folder if it doesn't exist
+if ~exist(full_folder, 'dir')
+    mkdir(full_folder);
+end
+
+filename = fullfile(full_folder, [videomemo '.xlsx']);
+
 
 % 🔹 실험할 참가자 모드 설정
 switch config.Strategy
@@ -138,7 +169,7 @@ end
 if Simulation.Setting.RecordExcel
     num_simulations = Simulation.Setting.Iterations;
     % 각 mode별로 결과를 저장할 셀 배열 초기화
-    results = cell(num_simulations, 9); % random seed, avg speed, std speed, road capacity, exit fail rate, exit avg speed, exit speed std, through avg speed, through speed std
+    results = cell(num_simulations, 10); % random seed, Average Case, avg speed, std speed, road capacity, exit fail rate, exit avg speed, exit speed std, through avg speed, through speed std
 end
 
 for Iteration = 1:Simulation.Setting.Iterations
@@ -147,7 +178,7 @@ for Iteration = 1:Simulation.Setting.Iterations
     Simulation.Setting.RandomSeed = randomSeed;
 
     % 현재 random seed에 대한 결과 저장할 행 초기화
-    result_row = cell(1, 9);
+    result_row = cell(1, 10);  % 9에서 10으로 증가 (Average Case 추가)
     result_row{1} = randomSeed;  % 첫 번째 칸에 random seed 저장
 
     for mode_idx = 1:num_modes
@@ -184,6 +215,8 @@ for Iteration = 1:Simulation.Setting.Iterations
         exit_success_count = 0;
         TotalVehicles = 0;
         
+        % GRAPE Case 수집을 위한 배열 추가
+        grape_cases = [];
 
         Parameter = GetParameters(Simulation.Setting);
         GetWindow(Parameter.Map,Simulation.Setting)
@@ -294,6 +327,10 @@ for Iteration = 1:Simulation.Setting.Iterations
                         GRAPE_output = GRAPE_instance(environment);
                         % ex: GRAPE_output.Alloc = [1,2] -> 첫번째 차량은 1차선, 두번째 차량은 2차선 할당
                         lane_alloc = GRAPE_output.Alloc;
+                        
+                        % GRAPE Case 수집
+                        grape_cases = [grape_cases, GRAPE_output.Case];
+                        
                         if any(lane_alloc == 0)
                             fileID = fopen(Simulation.Setting.LogFile, 'a', 'n', 'utf-8');  % append 모드로 파일 열기
                             fprintf(fileID, 'VOID TASK at %d \n', Iteration);
@@ -563,14 +600,23 @@ for Iteration = 1:Simulation.Setting.Iterations
         std_through_speed = std_through_speed * 3.6;
         
         % 결과 행에 저장
-        result_row{2} = avg_speed;
-        result_row{3} = std_speed;
-        result_row{4} = road_capacity;
-        result_row{5} = exit_fail_rate;
-        result_row{6} = avg_exit_speed;
-        result_row{7} = std_exit_speed;
-        result_row{8} = avg_through_speed;
-        result_row{9} = std_through_speed;
+        % Average Case 계산
+        if isempty(grape_cases)
+            avg_case = NaN;
+        else
+            avg_case = mean(grape_cases);
+        end
+        result_row{2} = avg_case;
+        result_row{3} = avg_speed;
+        result_row{4} = std_speed;
+        result_row{5} = road_capacity;
+        result_row{6} = exit_fail_rate;
+        result_row{7} = avg_exit_speed;
+        result_row{8} = std_exit_speed;
+        result_row{9} = avg_through_speed;
+        result_row{10} = std_through_speed;
+        
+        
         
         % 현재 mode의 결과를 해당 시트에 저장
         if Simulation.Setting.RecordExcel
@@ -579,7 +625,7 @@ for Iteration = 1:Simulation.Setting.Iterations
             % 소수점은 p로 대체
             sheet_name = regexprep(sheet_name, '\.', 'p');
             sheet_name = regexprep(sheet_name, '[^a-zA-Z0-9_]', '');
-            headers = {'Random Seed', 'Average Speed (km/h)', 'Speed STD (km/h)', 'Passed Vehicles', 'Exit Fail Rate', ...
+            headers = {'Random Seed', 'Average Case', 'Average Speed (km/h)', 'Speed STD (km/h)', 'Passed Vehicles', 'Exit Fail Rate', ...
                       'Exit Avg Speed (km/h)', 'Exit Speed STD (km/h)', 'Through Avg Speed (km/h)', 'Through Speed STD (km/h)'};
 
             if ~isfile(filename)
@@ -611,7 +657,7 @@ for Iteration = 1:Simulation.Setting.Iterations
         clear Parameter List Seed environment GRAPE_output;
 
     end
-    result_row{2} = TotalVehicles;
+    % 마지막 결과 저장 수정 (10개 컬럼에 맞춤)
     results(Iteration, :) = result_row;
 end
 end
