@@ -1,5 +1,9 @@
 ID,Strategy,BubbleRadius,k,k_Mode,ExitRate
+1,Bubble,35.0,1.0,k,80
+2,BubbleAhead,200.0,1.0,k,50
 3,Bubble,0.0,1.0,k,80
+4,Ahead,,1,k,20
+5,BubbleAhead,200,1,k,50
 6,Ahead,0.0,1,k,20
 8,Bubble,100.0,1.0,k,80
 9,Bubble,10.0,1.0,k,50

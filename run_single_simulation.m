@@ -27,13 +27,17 @@ Simulation.Setting.k = config.k;
 Simulation.Setting.kList = config.k;
 Simulation.Setting.k_Mode = config.k_Mode;
 Simulation.Setting.BubbleRadiusList = [];
+Simulation.Setting.ParmeterCombiID = config.ID;
 
 if strcmpi(config.Strategy, "Bubble") || strcmpi(config.Strategy, "BubbleAhead")
     Simulation.Setting.BubbleRadiusList = config.BubbleRadius;
 end
 
 Simulation.Setting.Window = 1000;
-Simulation.Setting.Draw = 0;
+Simulation.Setting.Draw = 1;
+%🧊t fix parameter. tFix = NaN means no freezing. MaxCase = tFix * n_agents
+Simulation.Setting.tFixParam = 2;
+
 Simulation.Setting.StopOnGrapeError = 1;
 Simulation.Setting.PauseTime = 0;
 Simulation.Setting.InitialRandomSeed = config.InitialRandomSeed;
@@ -140,6 +144,7 @@ end
 for Iteration = 1:Simulation.Setting.Iterations
     randomSeed = Simulation.Setting.InitialRandomSeed + Iteration - 1;
     rng(randomSeed)
+    Simulation.Setting.RandomSeed = randomSeed;
 
     % 현재 random seed에 대한 결과 저장할 행 초기화
     result_row = cell(1, 9);

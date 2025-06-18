@@ -22,6 +22,7 @@ function [output] = Task_Allocation_SC_visual(input)
 
 %% Debug flag
 debug_log = false;  % Set to true to enable detailed logging
+freeze_flag = false;
 
 %% Interface (Input)
 Alloc_existing = input.Alloc_existing;
@@ -103,8 +104,11 @@ Timestamp_agent_current = zeros(n,1);
 %% GRAPE Algorithm
 while a_satisfied~=n
 
-    environment = GRAPE_Environment_Update(List,environment.Parameter,environment.Setting,environment);
-    List = environment.List;
+    % Conditionally execute environment update based on freeze_flag
+    if ~freeze_flag || (freeze_flag && Case <= n * 2)
+        environment = GRAPE_Environment_Update(List,environment.Parameter,environment.Setting,environment);
+        List = environment.List;
+    end
 
     for i=1:n % For Each Agent 
         
@@ -360,22 +364,22 @@ while a_satisfied~=n
     Satisfied_history(:,Case) = Satisfied;
     iteration_history(Case) = iteration;
 
-    if Case >= 500 && debug_log
+    if debug_log && a_satisfied == n   %Case >= 500 && debug_log
         % 숫자 헤더 (9칸씩 같은 "CASE n")
-        header1 = repelem("CASE " + string(1:ceil(4500/9)), 9);  % 자르기 X
+        header1 = repelem("CASE " + string(1:Case), 9);  % 자르기 X
         
         % 문자열 헤더 (3칸씩 같은 'L1_demand', 'L1_participants', 'L1_utility', ...)
         lane_headers = ["L1_demand", "L1_participants", "L1_utility", ...
                        "L2_demand", "L2_participants", "L2_utility", ...
                        "L3_demand", "L3_participants", "L3_utility"];
-        header2 = repmat(lane_headers, 1, ceil(4500/9));  % 9개씩 반복
+        header2 = repmat(lane_headers, 1, Case);  % 9개씩 반복
         
         % 합치기 (2행 x 4500열짜리 cell)
         header_cell = [cellstr(header1); cellstr(header2)];
         
         % 데이터도 cell로 변환
-        data_cell = num2cell(util_history);  % 예: 82x4500
-        
+        %data_cell = num2cell(util_history);  % 예: 82x4500
+        data_cell = num2cell(util_history(:, 1:Case * m * 3));
         % 전체 저장용 cell 만들기
         csv_data = [header_cell; data_cell];  % 84x4500
         
@@ -391,7 +395,45 @@ while a_satisfied~=n
         vehicle_table = array2table(vehicle_info, 'VariableNames', {'vehicle_id', 'location', 'exit_readiness'});
         
         % Excel 파일에 여러 시트로 저장
-        filename = 'C:\Users\nana\Downloads\112_4_84s_history.xlsx';
+        a = environment.Setting.ParmeterCombiID;
+        b = environment.Setting.RandomSeed;
+        
+        % Create folder path based on tFixParam
+        base_folder = 'C:\\Users\\nana\\Desktop\\ExcelRecord';
+        
+        if isnan(environment.Setting.tFixParam)
+            sub_folder = 'NoFix';
+        else
+            tFixValue = environment.Setting.tFixParam;
+            if tFixValue == round(tFixValue)
+                % Integer values
+                sub_folder = sprintf('tFix%d', round(tFixValue));
+            else
+                % Float values - use decimal format and replace dots with underscores
+                sub_folder = sprintf('tFix%.2f', tFixValue);
+                % Remove trailing zeros but keep the decimal point if needed
+                sub_folder = regexprep(sub_folder, '0+$', '');
+                sub_folder = regexprep(sub_folder, '\.$', '');
+                % Replace dots with underscores for folder name safety
+                sub_folder = strrep(sub_folder, '.', '_');
+            end
+        end
+        
+        % Create full folder path
+        full_folder = fullfile(base_folder, sub_folder);
+        
+        % Create folder if it doesn't exist
+        if ~exist(full_folder, 'dir')
+            mkdir(full_folder);
+        end
+        
+        % Generate filename
+        if freeze_flag
+            filename = fullfile(full_folder, sprintf('ID%d_%dthRS_freeze_history.xlsx', a, b));
+        else
+            filename = fullfile(full_folder, sprintf('ID%d_%dthRS_no_freeze_history.xlsx', a, b));
+        end
+        
         writecell(csv_data, filename, 'Sheet', 'util_history');
         writematrix(valid_agent_history, filename, 'Sheet', 'valid_agent_history');
         writematrix(Best_task_history, filename, 'Sheet', 'Best_task_history');
